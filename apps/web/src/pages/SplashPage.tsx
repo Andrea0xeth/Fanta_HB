@@ -1,26 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Fingerprint, Sparkles, PartyPopper } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { Countdown } from '../components/Countdown';
 
+type ViewState = 'splash' | 'video-pre' | 'auth' | 'video-post' | 'loading';
+
 export const SplashPage: React.FC = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, isLoading } = useGame();
-  const [showAuth, setShowAuth] = useState(false);
+  const [viewState, setViewState] = useState<ViewState>('splash');
   const [nickname, setNickname] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [showPWAPrompt, setShowPWAPrompt] = useState(false);
+  const [showPostVideo, setShowPostVideo] = useState(false); // Flag per video post
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Target date for the event (3 days from now for demo)
   const eventDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
+  // Redirect solo se già autenticato ALL'AVVIO (non dopo login)
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && viewState === 'splash' && !showPostVideo) {
+      // Se già autenticato all'avvio, vai direttamente alla home
       navigate('/home', { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, viewState, showPostVideo]);
 
   // Check if PWA can be installed
   useEffect(() => {
@@ -32,22 +38,48 @@ export const SplashPage: React.FC = () => {
     setTimeout(checkPWA, 2000);
   }, []);
 
+  // Handle "Entra nel Game" click - show pre-registration video
+  const handleEnterGame = () => {
+    setViewState('video-pre');
+  };
+
+  // When pre-registration video ends, show auth form
+  const handlePreVideoEnd = () => {
+    setViewState('auth');
+  };
+
+  // Handle authentication
   const handleAuth = async () => {
     setAuthLoading(true);
+    setShowPostVideo(true); // Imposta il flag PRIMA del login
     
-    // Simulate passkey authentication
     try {
-      // In production, this would use WebAuthn API
-      // navigator.credentials.create() / navigator.credentials.get()
       await login(nickname);
+      // After successful login, show post-registration video
+      setViewState('video-post');
+      setAuthLoading(false);
     } catch (error) {
       console.error('Auth failed:', error);
-    } finally {
+      setShowPostVideo(false);
       setAuthLoading(false);
     }
   };
 
-  if (isLoading) {
+  // When post-registration video ends, navigate to home
+  const handlePostVideoEnd = () => {
+    navigate('/home', { replace: true });
+  };
+
+  // Skip video handler
+  const handleSkipVideo = () => {
+    if (viewState === 'video-pre') {
+      setViewState('auth');
+    } else if (viewState === 'video-post') {
+      navigate('/home', { replace: true });
+    }
+  };
+
+  if (isLoading && viewState === 'splash') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-dark">
         <motion.div
@@ -55,6 +87,60 @@ export const SplashPage: React.FC = () => {
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           className="w-12 h-12 border-4 border-coral-500 border-t-transparent rounded-full"
         />
+      </div>
+    );
+  }
+
+  // Video Pre-Iscrizione
+  if (viewState === 'video-pre') {
+    return (
+      <div className="min-h-screen bg-dark flex flex-col items-center justify-center relative">
+        <video
+          ref={videoRef}
+          src="/videos/BenvenutoPreIscrizione.mp4"
+          autoPlay
+          playsInline
+          onEnded={handlePreVideoEnd}
+          className="w-full h-full object-contain max-h-screen"
+        />
+        
+        {/* Skip button */}
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2 }}
+          onClick={handleSkipVideo}
+          className="absolute bottom-8 right-4 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm text-white/70 hover:bg-white/20 transition-colors"
+        >
+          Salta →
+        </motion.button>
+      </div>
+    );
+  }
+
+  // Video Post-Iscrizione
+  if (viewState === 'video-post') {
+    return (
+      <div className="min-h-screen bg-dark flex flex-col items-center justify-center relative">
+        <video
+          ref={videoRef}
+          src="/videos/BenvenutoPostiscrizione.mp4"
+          autoPlay
+          playsInline
+          onEnded={handlePostVideoEnd}
+          className="w-full h-full object-contain max-h-screen"
+        />
+        
+        {/* Skip button */}
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2 }}
+          onClick={handleSkipVideo}
+          className="absolute bottom-8 right-4 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm text-white/70 hover:bg-white/20 transition-colors"
+        >
+          Salta →
+        </motion.button>
       </div>
     );
   }
@@ -136,10 +222,10 @@ export const SplashPage: React.FC = () => {
         transition={{ delay: 0.5 }}
       >
         <AnimatePresence mode="wait">
-          {!showAuth ? (
+          {viewState === 'splash' ? (
             <motion.button
               key="enter"
-              onClick={() => setShowAuth(true)}
+              onClick={handleEnterGame}
               className="btn-primary w-full flex items-center justify-center gap-3 text-lg py-4"
               whileTap={{ scale: 0.98 }}
               exit={{ opacity: 0, y: -20 }}
@@ -147,7 +233,7 @@ export const SplashPage: React.FC = () => {
               <Fingerprint size={24} />
               Entra nel Game
             </motion.button>
-          ) : (
+          ) : viewState === 'auth' ? (
             <motion.div
               key="auth"
               initial={{ opacity: 0, y: 20 }}
@@ -183,18 +269,18 @@ export const SplashPage: React.FC = () => {
               </button>
               
               <button
-                onClick={() => setShowAuth(false)}
+                onClick={() => setViewState('splash')}
                 className="w-full text-center text-gray-500 text-sm"
               >
                 Annulla
               </button>
             </motion.div>
-          )}
+          ) : null}
         </AnimatePresence>
 
         {/* PWA Install Prompt */}
         <AnimatePresence>
-          {showPWAPrompt && (
+          {showPWAPrompt && viewState === 'splash' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
