@@ -1,0 +1,22 @@
+{
+  "name": "30diciaccio-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Il gioco del 30° compleanno di Di Ciaccio - Monorepo",
+  "scripts": {
+    "dev": "pnpm --filter @30diciaccio/web dev",
+    "build": "pnpm --filter @30diciaccio/web build",
+    "preview": "pnpm --filter @30diciaccio/web preview",
+    "lint": "pnpm -r lint",
+    "db:migrate": "supabase db push",
+    "db:reset": "supabase db reset",
+    "db:types": "supabase gen types typescript --local > packages/shared/src/database.types.ts"
+  },
+  "keywords": ["birthday", "game", "pwa", "supabase"],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=18"
+  }
+}
