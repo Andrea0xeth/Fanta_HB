@@ -1,0 +1,238 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
+
+/* Custom Theme - Tailwind v4 */
+@theme {
+  /* Festive Colors */
+  --color-coral-50: #fff1f0;
+  --color-coral-100: #ffe4e1;
+  --color-coral-200: #ffcdc8;
+  --color-coral-300: #ffaaa1;
+  --color-coral-400: #ff7a6b;
+  --color-coral-500: #FF6B6B;
+  --color-coral-600: #ed4545;
+  --color-coral-700: #c83232;
+  --color-coral-800: #a52d2d;
+  --color-coral-900: #882b2b;
+
+  --color-turquoise-50: #effefa;
+  --color-turquoise-100: #c8fff1;
+  --color-turquoise-200: #92fee4;
+  --color-turquoise-300: #53f5d4;
+  --color-turquoise-400: #4ECDC4;
+  --color-turquoise-500: #09beb0;
+  --color-turquoise-600: #049990;
+  --color-turquoise-700: #087a75;
+  --color-turquoise-800: #0c615e;
+  --color-turquoise-900: #0f514e;
+
+  --color-party-50: #fffde7;
+  --color-party-100: #fffcc1;
+  --color-party-200: #fff686;
+  --color-party-300: #FFE66D;
+  --color-party-400: #fdd835;
+  --color-party-500: #ecbb0c;
+  --color-party-600: #cc9107;
+  --color-party-700: #a3680a;
+  --color-party-800: #865111;
+  --color-party-900: #724214;
+
+  --color-dark: #1A1A1A;
+  --color-light: #F8F9FA;
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Poppins', system-ui, sans-serif;
+
+  /* Animations */
+  --animate-bounce-slow: bounce 2s infinite;
+  --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
+  --animate-slide-up: slideUp 0.3s ease-out;
+  --animate-slide-down: slideDown 0.3s ease-out;
+  --animate-fade-in: fadeIn 0.5s ease-out;
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 107, 107, 0.5); }
+    50% { box-shadow: 0 0 40px rgba(255, 107, 107, 0.8); }
+  }
+
+  @keyframes slideUp {
+    0% { transform: translateY(20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes slideDown {
+    0% { transform: translateY(-20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+}
+
+/* Base Styles */
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-dark text-white antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  
+  /* PWA iOS specific fixes */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      min-height: -webkit-fill-available;
+    }
+  }
+}
+
+/* Component Styles */
+@layer components {
+  /* Gradient backgrounds */
+  .gradient-coral {
+    @apply bg-gradient-to-r from-coral-500 to-coral-400;
+  }
+  
+  .gradient-turquoise {
+    @apply bg-gradient-to-r from-turquoise-400 to-turquoise-500;
+  }
+  
+  .gradient-party {
+    @apply bg-gradient-to-r from-coral-500 via-party-300 to-turquoise-400;
+  }
+  
+  .gradient-card {
+    @apply bg-gradient-to-br from-gray-800 to-gray-900;
+  }
+  
+  /* Glass effect */
+  .glass {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20;
+  }
+  
+  /* Card styles */
+  .card {
+    @apply bg-gray-800/80 backdrop-blur-sm rounded-2xl p-4 border border-gray-700/50;
+  }
+  
+  .card-interactive {
+    @apply bg-gray-800/80 backdrop-blur-sm rounded-2xl p-4 border border-gray-700/50 
+           transition-all duration-200 active:scale-[0.98] hover:border-coral-500/50;
+  }
+  
+  /* Button styles */
+  .btn-primary {
+    @apply px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-coral-500 to-coral-400
+           shadow-lg transition-all duration-200 
+           active:scale-95 cursor-pointer;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-turquoise-400 to-turquoise-500
+           shadow-lg transition-all duration-200 
+           active:scale-95 cursor-pointer;
+  }
+  
+  .btn-ghost {
+    @apply px-6 py-3 rounded-xl font-semibold text-white bg-white/10 
+           border border-white/20 transition-all duration-200 
+           active:scale-95 hover:bg-white/20 cursor-pointer;
+  }
+  
+  /* Input styles */
+  .input {
+    @apply w-full px-4 py-3 bg-gray-800/80 border border-gray-700 rounded-xl
+           text-white placeholder-gray-500 focus:outline-none focus:border-coral-500
+           focus:ring-2 focus:ring-coral-500/20 transition-all duration-200;
+  }
+  
+  /* Badge styles */
+  .badge {
+    @apply px-2 py-0.5 text-xs font-semibold rounded-full;
+  }
+  
+  .badge-coral {
+    @apply px-2 py-0.5 text-xs font-semibold rounded-full bg-coral-500/20 text-coral-400;
+  }
+  
+  .badge-turquoise {
+    @apply px-2 py-0.5 text-xs font-semibold rounded-full bg-turquoise-400/20 text-turquoise-400;
+  }
+  
+  .badge-party {
+    @apply px-2 py-0.5 text-xs font-semibold rounded-full bg-party-300/20 text-party-300;
+  }
+  
+  /* Bottom Navigation */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-lg 
+           border-t border-gray-800 px-2 z-50;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .nav-item {
+    @apply flex flex-col items-center justify-center py-2 px-3 rounded-xl
+           transition-all duration-200 text-gray-500;
+  }
+  
+  .nav-item-active {
+    @apply flex flex-col items-center justify-center py-2 px-3 rounded-xl
+           transition-all duration-200 text-coral-500 bg-coral-500/10;
+  }
+  
+  /* Safe area padding */
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .pt-safe {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+}
+
+/* Utility Styles */
+@layer utilities {
+  /* Scrollbar hide */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-coral-500 via-party-300 to-turquoise-400;
+  }
+  
+  /* Glow effects */
+  .glow-coral {
+    box-shadow: 0 0 30px rgba(255, 107, 107, 0.4);
+  }
+  
+  .glow-turquoise {
+    box-shadow: 0 0 30px rgba(78, 205, 196, 0.4);
+  }
+
+  /* Line clamp */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
