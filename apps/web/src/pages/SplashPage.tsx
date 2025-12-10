@@ -270,7 +270,7 @@ export const SplashPage: React.FC = () => {
       </motion.div>
 
       {/* PWA Install Prompt - Shows automatically when app is not installed */}
-      {viewState === 'splash' && <PWAInstallPrompt delay={500} autoShow={true} />}
+      {viewState === 'splash' && <PWAInstallPrompt delay={500} autoShow={true} forceShow={true} />}
 
       {/* Footer */}
       <motion.p 

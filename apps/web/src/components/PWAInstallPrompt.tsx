@@ -6,40 +6,63 @@ import { usePWAInstall } from '../hooks/usePWAInstall';
 interface PWAInstallPromptProps {
   delay?: number; // Delay in milliseconds before showing the prompt
   autoShow?: boolean; // Automatically show the prompt when installable
+  forceShow?: boolean; // Force show the prompt regardless of other conditions (except isInstalled)
 }
 
 export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ 
   delay = 500,
-  autoShow = true 
+  autoShow = true,
+  forceShow = false
 }) => {
-  const { isInstallable, isInstalled, isIOS, promptInstall } = usePWAInstall();
+  const { isInstallable, isInstalled, isIOS, promptInstall, canShowPrompt } = usePWAInstall();
   const [showPrompt, setShowPrompt] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    // Debug logging
+    console.log('PWAInstallPrompt - isInstalled:', isInstalled, 'isInstallable:', isInstallable, 'canShowPrompt:', canShowPrompt, 'isIOS:', isIOS);
+
     // Check if user has previously dismissed the prompt (only for 1 hour now)
     const dismissedKey = 'pwa-install-dismissed';
     const dismissedTime = localStorage.getItem(dismissedKey);
     const oneHourAgo = Date.now() - 60 * 60 * 1000; // Reduced from 24 hours to 1 hour
 
     if (dismissedTime && parseInt(dismissedTime) > oneHourAgo) {
+      console.log('PWAInstallPrompt - User dismissed within last hour');
       setDismissed(true);
       return;
     }
 
-    // Auto-show prompt immediately (or after minimal delay) if installable
-    if (autoShow && isInstallable && !isInstalled && !dismissed) {
+    // FORCE SHOW: Auto-show prompt if not installed and auto-show is enabled
+    // Show regardless of browser support - we'll show instructions for all platforms
+    // If forceShow is true, ignore dismissed state
+    const shouldShow = forceShow 
+      ? (!isInstalled) 
+      : (autoShow && !isInstalled && !dismissed);
+    
+    if (shouldShow) {
+      console.log('PWAInstallPrompt - Will show prompt after delay:', delay);
       const timer = setTimeout(() => {
+        console.log('PWAInstallPrompt - Showing prompt now!');
         setShowPrompt(true);
       }, delay);
 
       return () => clearTimeout(timer);
+    } else {
+      console.log('PWAInstallPrompt - Not showing:', { autoShow, isInstalled, dismissed, forceShow });
     }
-  }, [isInstallable, isInstalled, autoShow, delay, dismissed]);
+  }, [isInstalled, autoShow, delay, dismissed, isInstallable, canShowPrompt, isIOS, forceShow]);
 
   const handleInstall = async () => {
-    const installed = await promptInstall();
-    if (installed) {
+    // If we have the deferred prompt, use it
+    if (promptInstall) {
+      const installed = await promptInstall();
+      if (installed) {
+        setShowPrompt(false);
+      }
+    } else {
+      // If no prompt available, just close and let user install manually
+      // (This handles cases where beforeinstallprompt wasn't fired)
       setShowPrompt(false);
     }
   };
@@ -55,10 +78,14 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
     }, 60 * 60 * 1000);
   };
 
-  // Don't show if already installed or not installable
-  if (isInstalled || !isInstallable || dismissed) {
+  // Don't show if already installed or dismissed
+  if (isInstalled || dismissed) {
     return null;
   }
+
+  // Always show prompt if not installed (we'll handle iOS vs Android differently)
+  // This ensures the prompt appears regardless of browser API support
+  // Note: We check showPrompt state to control visibility
 
   // iOS instructions (no programmatic install)
   if (isIOS) {
@@ -173,13 +200,33 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
                 </div>
                 
                 <div className="w-full space-y-3">
-                  <button
-                    onClick={handleInstall}
-                    className="btn-primary w-full flex items-center justify-center gap-3 py-4 text-base font-bold shadow-xl"
-                  >
-                    <Download size={22} />
-                    Installa ora
-                  </button>
+                  {isInstallable ? (
+                    <button
+                      onClick={handleInstall}
+                      className="btn-primary w-full flex items-center justify-center gap-3 py-4 text-base font-bold shadow-xl"
+                    >
+                      <Download size={22} />
+                      Installa ora
+                    </button>
+                  ) : (
+                    <div className="bg-dark/70 rounded-xl p-4 w-full border border-white/10">
+                      <p className="text-sm text-gray-300 mb-2 font-semibold">Come installare:</p>
+                      <ol className="text-sm text-gray-200 space-y-1.5 text-left">
+                        <li className="flex items-start gap-2">
+                          <span className="font-bold text-coral-400">1.</span>
+                          <span>Clicca sul menu del browser (tre puntini)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="font-bold text-coral-400">2.</span>
+                          <span>Seleziona <span className="font-semibold text-white">"Installa app"</span> o <span className="font-semibold text-white">"Aggiungi alla schermata Home"</span></span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="font-bold text-coral-400">3.</span>
+                          <span>Conferma l'installazione</span>
+                        </li>
+                      </ol>
+                    </div>
+                  )}
                   
                   <button
                     onClick={handleDismiss}
