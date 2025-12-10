@@ -16,29 +16,73 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
 }) => {
   const { isInstallable, isInstalled, isIOS, promptInstall, canShowPrompt } = usePWAInstall();
   const [showPrompt, setShowPrompt] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+
+  // Monitor isInstalled and close prompt automatically when app is installed
+  useEffect(() => {
+    if (isInstalled) {
+      console.log('PWAInstallPrompt - App installed! Closing prompt.');
+      setShowPrompt(false);
+      return;
+    }
+
+    // Periodic check to detect if app was installed (in case events don't fire)
+    const checkInterval = setInterval(() => {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches || 
+                        (window.navigator as any).standalone === true;
+      if (standalone) {
+        console.log('PWAInstallPrompt - Detected standalone mode! Closing prompt.');
+        setShowPrompt(false);
+        clearInterval(checkInterval);
+      }
+    }, 1000); // Check every second
+
+    return () => clearInterval(checkInterval);
+  }, [isInstalled]);
+
+  // Prevent closing with ESC key or other keyboard shortcuts
+  useEffect(() => {
+    if (!showPrompt) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent ESC, F5, Ctrl+R, etc.
+      if (e.key === 'Escape' || 
+          e.key === 'F5' || 
+          (e.ctrlKey && e.key === 'r') ||
+          (e.ctrlKey && e.key === 'R') ||
+          (e.metaKey && e.key === 'r')) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('PWAInstallPrompt - Prevented close attempt with key:', e.key);
+        return false;
+      }
+    };
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Prevent page unload while prompt is showing
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [showPrompt]);
 
   useEffect(() => {
     // Debug logging
     console.log('PWAInstallPrompt - isInstalled:', isInstalled, 'isInstallable:', isInstallable, 'canShowPrompt:', canShowPrompt, 'isIOS:', isIOS);
 
-    // Check if user has previously dismissed the prompt (only for 1 hour now)
-    const dismissedKey = 'pwa-install-dismissed';
-    const dismissedTime = localStorage.getItem(dismissedKey);
-    const oneHourAgo = Date.now() - 60 * 60 * 1000; // Reduced from 24 hours to 1 hour
-
-    if (dismissedTime && parseInt(dismissedTime) > oneHourAgo) {
-      console.log('PWAInstallPrompt - User dismissed within last hour');
-      setDismissed(true);
-      return;
-    }
-
     // FORCE SHOW: Auto-show prompt if not installed and auto-show is enabled
     // Show regardless of browser support - we'll show instructions for all platforms
-    // If forceShow is true, ignore dismissed state
+    // If forceShow is true, always show if not installed
     const shouldShow = forceShow 
       ? (!isInstalled) 
-      : (autoShow && !isInstalled && !dismissed);
+      : (autoShow && !isInstalled);
     
     if (shouldShow) {
       console.log('PWAInstallPrompt - Will show prompt after delay:', delay);
@@ -49,37 +93,26 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
 
       return () => clearTimeout(timer);
     } else {
-      console.log('PWAInstallPrompt - Not showing:', { autoShow, isInstalled, dismissed, forceShow });
+      console.log('PWAInstallPrompt - Not showing:', { autoShow, isInstalled, forceShow });
     }
-  }, [isInstalled, autoShow, delay, dismissed, isInstallable, canShowPrompt, isIOS, forceShow]);
+  }, [isInstalled, autoShow, delay, isInstallable, canShowPrompt, isIOS, forceShow]);
 
   const handleInstall = async () => {
     // If we have the deferred prompt, use it
     if (promptInstall) {
       const installed = await promptInstall();
+      // Don't close manually - let the useEffect handle it when isInstalled becomes true
       if (installed) {
-        setShowPrompt(false);
+        // The prompt will close automatically via the useEffect that monitors isInstalled
+        console.log('PWAInstallPrompt - Installation accepted, waiting for isInstalled to update...');
       }
-    } else {
-      // If no prompt available, just close and let user install manually
-      // (This handles cases where beforeinstallprompt wasn't fired)
-      setShowPrompt(false);
     }
+    // If no prompt available, the user must install manually
+    // The prompt will remain open until isInstalled becomes true
   };
 
-  const handleDismiss = () => {
-    setShowPrompt(false);
-    setDismissed(true);
-    // Remember dismissal for only 1 hour (much shorter)
-    localStorage.setItem('pwa-install-dismissed', Date.now().toString());
-    // Show again after 1 hour
-    setTimeout(() => {
-      localStorage.removeItem('pwa-install-dismissed');
-    }, 60 * 60 * 1000);
-  };
-
-  // Don't show if already installed or dismissed
-  if (isInstalled || dismissed) {
+  // Don't show if already installed
+  if (isInstalled) {
     return null;
   }
 
@@ -93,22 +126,32 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
       <AnimatePresence>
         {showPrompt && (
           <>
-            {/* Overlay scuro che blocca l'interazione */}
+            {/* Overlay scuro che blocca l'interazione - NON CHIUDIBILE */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9998]"
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[9998]"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                // NON permettere la chiusura cliccando sull'overlay
+              }}
+              onContextMenu={(e) => e.preventDefault()}
             />
             
-            {/* Prompt modale centrale */}
+            {/* Prompt modale centrale - NON CHIUDIBILE */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-auto"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                // NON permettere la chiusura cliccando fuori dal modale
+              }}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <div className="glass rounded-3xl p-6 shadow-2xl max-w-md w-full border-2 border-coral-500/30 relative">
                 <div className="flex flex-col items-center text-center gap-4">
@@ -145,12 +188,11 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
                     </ol>
                   </div>
                   
-                  <button
-                    onClick={handleDismiss}
-                    className="w-full px-4 py-2.5 text-gray-400 hover:text-white transition-colors text-sm underline"
-                  >
-                    Ho capito, continua
-                  </button>
+                  <div className="w-full p-3 bg-coral-500/20 rounded-lg border border-coral-500/30">
+                    <p className="text-sm text-coral-300 text-center font-semibold">
+                      ⚠️ Devi installare l'app per continuare
+                    </p>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -165,22 +207,32 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
     <AnimatePresence>
       {showPrompt && (
         <>
-          {/* Overlay scuro che blocca l'interazione */}
+          {/* Overlay scuro che blocca l'interazione - NON CHIUDIBILE */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9998]"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[9998]"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              // NON permettere la chiusura cliccando sull'overlay
+            }}
+            onContextMenu={(e) => e.preventDefault()}
           />
           
-          {/* Prompt modale centrale */}
+          {/* Prompt modale centrale - NON CHIUDIBILE */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-auto"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              // NON permettere la chiusura cliccando fuori dal modale
+            }}
+            onContextMenu={(e) => e.preventDefault()}
           >
             <div className="glass rounded-3xl p-6 shadow-2xl max-w-md w-full border-2 border-coral-500/30 relative">
               <div className="flex flex-col items-center text-center gap-4">
@@ -228,12 +280,11 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
                     </div>
                   )}
                   
-                  <button
-                    onClick={handleDismiss}
-                    className="w-full px-4 py-2.5 text-gray-400 hover:text-white transition-colors text-sm underline"
-                  >
-                    Dopo, continua senza installare
-                  </button>
+                  <div className="w-full p-3 bg-coral-500/20 rounded-lg border border-coral-500/30">
+                    <p className="text-sm text-coral-300 text-center font-semibold">
+                      ⚠️ Devi installare l'app per continuare
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
