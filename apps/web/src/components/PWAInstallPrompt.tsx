@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, X, Smartphone } from 'lucide-react';
+import { Download, Smartphone, Sparkles } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface PWAInstallPromptProps {
@@ -9,7 +9,7 @@ interface PWAInstallPromptProps {
 }
 
 export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ 
-  delay = 2000,
+  delay = 500,
   autoShow = true 
 }) => {
   const { isInstallable, isInstalled, isIOS, promptInstall } = usePWAInstall();
@@ -17,17 +17,17 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Check if user has previously dismissed the prompt
+    // Check if user has previously dismissed the prompt (only for 1 hour now)
     const dismissedKey = 'pwa-install-dismissed';
     const dismissedTime = localStorage.getItem(dismissedKey);
-    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const oneHourAgo = Date.now() - 60 * 60 * 1000; // Reduced from 24 hours to 1 hour
 
-    if (dismissedTime && parseInt(dismissedTime) > oneDayAgo) {
+    if (dismissedTime && parseInt(dismissedTime) > oneHourAgo) {
       setDismissed(true);
       return;
     }
 
-    // Auto-show prompt after delay if installable
+    // Auto-show prompt immediately (or after minimal delay) if installable
     if (autoShow && isInstallable && !isInstalled && !dismissed) {
       const timer = setTimeout(() => {
         setShowPrompt(true);
@@ -47,8 +47,12 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   const handleDismiss = () => {
     setShowPrompt(false);
     setDismissed(true);
-    // Remember dismissal for 24 hours
+    // Remember dismissal for only 1 hour (much shorter)
     localStorage.setItem('pwa-install-dismissed', Date.now().toString());
+    // Show again after 1 hour
+    setTimeout(() => {
+      localStorage.removeItem('pwa-install-dismissed');
+    }, 60 * 60 * 1000);
   };
 
   // Don't show if already installed or not installable
@@ -61,46 +65,69 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
     return (
       <AnimatePresence>
         {showPrompt && (
-          <motion.div
-            initial={{ opacity: 0, y: 100 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 100 }}
-            className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-safe"
-            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-          >
-            <div className="glass rounded-2xl p-5 shadow-2xl max-w-md mx-auto border border-white/10">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-gradient-to-br from-coral-500 to-turquoise-500 rounded-xl flex items-center justify-center">
-                    <Smartphone className="w-6 h-6 text-white" />
+          <>
+            {/* Overlay scuro che blocca l'interazione */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9998]"
+              onClick={(e) => e.stopPropagation()}
+            />
+            
+            {/* Prompt modale centrale */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="glass rounded-3xl p-6 shadow-2xl max-w-md w-full border-2 border-coral-500/30 relative">
+                <div className="flex flex-col items-center text-center gap-4">
+                  <div className="w-20 h-20 bg-gradient-to-br from-coral-500 to-turquoise-500 rounded-2xl flex items-center justify-center shadow-lg">
+                    <Smartphone className="w-10 h-10 text-white" />
                   </div>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-white font-semibold text-lg mb-1">
-                    Installa l'app
-                  </h3>
-                  <p className="text-gray-300 text-sm mb-3">
-                    Aggiungi questa app alla tua schermata Home per un'esperienza migliore!
-                  </p>
-                  <div className="bg-dark/50 rounded-lg p-3 mb-3">
-                    <p className="text-xs text-gray-400 mb-2 font-medium">Come installare:</p>
-                    <ol className="text-xs text-gray-300 space-y-1 list-decimal list-inside">
-                      <li>Tocca il pulsante <span className="font-semibold text-white">Condividi</span> <span className="text-gray-500">(□↑)</span></li>
-                      <li>Seleziona <span className="font-semibold text-white">"Aggiungi alla schermata Home"</span></li>
-                      <li>Conferma con <span className="font-semibold text-white">"Aggiungi"</span></li>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-white font-bold text-2xl flex items-center justify-center gap-2">
+                      <Sparkles className="w-6 h-6 text-party-300" />
+                      Installa l'app
+                      <Sparkles className="w-6 h-6 text-party-300" />
+                    </h3>
+                    <p className="text-gray-300 text-base">
+                      Per un'esperienza migliore, aggiungi questa app alla tua schermata Home!
+                    </p>
+                  </div>
+                  
+                  <div className="bg-dark/70 rounded-xl p-4 w-full border border-white/10">
+                    <p className="text-sm text-gray-300 mb-3 font-semibold">Come installare:</p>
+                    <ol className="text-sm text-gray-200 space-y-2 text-left">
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-coral-400">1.</span>
+                        <span>Tocca il pulsante <span className="font-semibold text-white">Condividi</span> <span className="text-gray-400">(□↑)</span> in basso</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-coral-400">2.</span>
+                        <span>Seleziona <span className="font-semibold text-white">"Aggiungi alla schermata Home"</span></span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-coral-400">3.</span>
+                        <span>Conferma con <span className="font-semibold text-white">"Aggiungi"</span></span>
+                      </li>
                     </ol>
                   </div>
+                  
+                  <button
+                    onClick={handleDismiss}
+                    className="w-full px-4 py-2.5 text-gray-400 hover:text-white transition-colors text-sm underline"
+                  >
+                    Ho capito, continua
+                  </button>
                 </div>
-                <button
-                  onClick={handleDismiss}
-                  className="flex-shrink-0 text-gray-400 hover:text-white transition-colors"
-                  aria-label="Chiudi"
-                >
-                  <X size={20} />
-                </button>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     );
@@ -110,53 +137,61 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   return (
     <AnimatePresence>
       {showPrompt && (
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 100 }}
-          className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-safe"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-        >
-          <div className="glass rounded-2xl p-5 shadow-2xl max-w-md mx-auto border border-white/10">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-gradient-to-br from-coral-500 to-turquoise-500 rounded-xl flex items-center justify-center">
-                  <Download className="w-6 h-6 text-white" />
+        <>
+          {/* Overlay scuro che blocca l'interazione */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9998]"
+            onClick={(e) => e.stopPropagation()}
+          />
+          
+          {/* Prompt modale centrale */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="glass rounded-3xl p-6 shadow-2xl max-w-md w-full border-2 border-coral-500/30 relative">
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="w-20 h-20 bg-gradient-to-br from-coral-500 to-turquoise-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Download className="w-10 h-10 text-white" />
                 </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-white font-semibold text-lg mb-1">
-                  Installa l'app
-                </h3>
-                <p className="text-gray-300 text-sm mb-4">
-                  Installa questa app per un'esperienza migliore e per giocare offline!
-                </p>
-                <div className="flex gap-2">
+                
+                <div className="space-y-2">
+                  <h3 className="text-white font-bold text-2xl flex items-center justify-center gap-2">
+                    <Sparkles className="w-6 h-6 text-party-300" />
+                    Installa l'app
+                    <Sparkles className="w-6 h-6 text-party-300" />
+                  </h3>
+                  <p className="text-gray-300 text-base">
+                    Installa questa app per un'esperienza migliore e per giocare offline!
+                  </p>
+                </div>
+                
+                <div className="w-full space-y-3">
                   <button
                     onClick={handleInstall}
-                    className="btn-primary flex-1 flex items-center justify-center gap-2 py-2.5 text-sm"
+                    className="btn-primary w-full flex items-center justify-center gap-3 py-4 text-base font-bold shadow-xl"
                   >
-                    <Download size={18} />
+                    <Download size={22} />
                     Installa ora
                   </button>
+                  
                   <button
                     onClick={handleDismiss}
-                    className="px-4 py-2.5 text-gray-400 hover:text-white transition-colors text-sm"
+                    className="w-full px-4 py-2.5 text-gray-400 hover:text-white transition-colors text-sm underline"
                   >
-                    Dopo
+                    Dopo, continua senza installare
                   </button>
                 </div>
               </div>
-              <button
-                onClick={handleDismiss}
-                className="flex-shrink-0 text-gray-400 hover:text-white transition-colors"
-                aria-label="Chiudi"
-              >
-                <X size={20} />
-              </button>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </>
       )}
     </AnimatePresence>
   );
