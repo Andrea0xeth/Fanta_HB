@@ -71,7 +71,7 @@ export const SplashPage: React.FC = () => {
 
   if (isLoading && viewState === 'splash') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-dark">
+      <div className="h-screen flex items-center justify-center bg-dark overflow-hidden">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
@@ -84,7 +84,7 @@ export const SplashPage: React.FC = () => {
   // Video Pre-Iscrizione
   if (viewState === 'video-pre') {
     return (
-      <div className="min-h-screen bg-dark flex flex-col items-center justify-center relative">
+      <div className="h-screen bg-dark flex flex-col items-center justify-center relative overflow-hidden">
         <video
           ref={videoRef}
           src="/videos/BenvenutoPreIscrizione.mp4"
@@ -111,7 +111,7 @@ export const SplashPage: React.FC = () => {
   // Video Post-Iscrizione
   if (viewState === 'video-post') {
     return (
-      <div className="min-h-screen bg-dark flex flex-col items-center justify-center relative">
+      <div className="h-screen bg-dark flex flex-col items-center justify-center relative overflow-hidden">
         <video
           ref={videoRef}
           src="/videos/BenvenutoPostiscrizione.mp4"
@@ -136,7 +136,7 @@ export const SplashPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark flex flex-col items-center justify-between p-6 pt-safe overflow-hidden relative">
+    <div className="h-screen bg-dark flex flex-col items-center justify-between p-6 pt-safe overflow-hidden relative">
       {/* Background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(20)].map((_, i) => (
