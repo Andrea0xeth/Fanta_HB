@@ -791,12 +791,16 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       // Assicurati che il giorno sia sempre tra 1 e 3 (il constraint del database lo richiede)
       const giornoRaw = gameState.giorno_corrente;
       const giornoCorrente = (giornoRaw >= 1 && giornoRaw <= 3) ? giornoRaw : 1;
-      await supabase
-        .from('user_quest_assignments')
-        .update({ completed_at: new Date().toISOString() } as any)
+      const { error: updateError } = await (supabase
+        .from('user_quest_assignments') as any)
+        .update({ completed_at: new Date().toISOString() })
         .eq('user_id', user.id)
         .eq('quest_id', questId)
         .eq('giorno', giornoCorrente);
+      
+      if (updateError) {
+        console.error('Errore aggiornamento quest completata:', updateError);
+      }
 
       // Aggiorna lo stato locale
       const provaData: any = data;

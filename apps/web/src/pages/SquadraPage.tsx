@@ -134,7 +134,15 @@ export const SquadraPage: React.FC = () => {
                   {index + 1}
                 </div>
                 <Avatar 
-                  user={member.avatar ? { ...member, avatar: member.avatar } : { ...member, avatar: undefined }} 
+                  user={{ 
+                    id: member.id, 
+                    nickname: member.nickname, 
+                    avatar: (member as any).avatar,
+                    punti_personali: member.punti,
+                    squadra_id: null,
+                    is_admin: false,
+                    created_at: ''
+                  }} 
                   size="md" 
                 />
                 <div className="flex-1 min-w-0">

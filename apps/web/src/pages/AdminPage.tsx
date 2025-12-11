@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Swords, Gift, Users, Search, Plus, Check, X, Trophy, Shuffle } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { GaraCard } from '../components/GaraCard';
+import { Avatar } from '../components/Avatar';
 // import { ClassificaGaraModal } from '../components/ClassificaGaraModal';
 // import { CreaGaraModal } from '../components/CreaGaraModal';
-import type { Gara } from '../types';
+// import type { Gara } from '../types';
 
 type TabType = 'gare' | 'bonus' | 'squadre';
 
@@ -27,15 +28,14 @@ export const AdminPage: React.FC = () => {
   const [bonusPoints, setBonusPoints] = useState('');
   const [bonusMotivo, setBonusMotivo] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
-  // const [selectedGaraForClassifica, setSelectedGaraForClassifica] = useState<Gara | null>(null);
-  // const [showCreaGara, setShowCreaGara] = useState(false);
+  const [_selectedGaraForClassifica, setSelectedGaraForClassifica] = useState<any>(null);
+  const [_showCreaGara, setShowCreaGara] = useState(false);
 
-  // Listener per aprire il modal classifica
+  // Listener per aprire il modal classifica (placeholder per futuro)
   // useEffect(() => {
   //   const handleOpenClassifica = (event: CustomEvent) => {
   //     setSelectedGaraForClassifica(event.detail.gara);
   //   };
-
   //   window.addEventListener('open-classifica-modal' as any, handleOpenClassifica as EventListener);
   //   return () => {
   //     window.removeEventListener('open-classifica-modal' as any, handleOpenClassifica as EventListener);
