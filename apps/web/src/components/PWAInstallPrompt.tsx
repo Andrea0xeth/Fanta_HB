@@ -17,6 +17,16 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   const { isInstallable, isInstalled, isIOS, promptInstall, canShowPrompt } = usePWAInstall();
   const [showPrompt, setShowPrompt] = useState(false);
 
+  // Non mostrare il prompt se siamo su localhost (sviluppo)
+  const isLocalhost = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === '[::1]' ||
+    window.location.hostname.startsWith('192.168.') ||
+    window.location.hostname.startsWith('10.') ||
+    window.location.hostname.startsWith('172.')
+  );
+
   // Monitor isInstalled and close prompt automatically when app is installed
   useEffect(() => {
     if (isInstalled) {
@@ -71,6 +81,12 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   }, [showPrompt]);
 
   useEffect(() => {
+    // Non mostrare se siamo su localhost
+    if (isLocalhost) {
+      setShowPrompt(false);
+      return;
+    }
+
     // FORCE SHOW: Auto-show prompt if not installed and auto-show is enabled
     // Show regardless of browser support - we'll show instructions for all platforms
     // If forceShow is true, always show if not installed
@@ -85,7 +101,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
 
       return () => clearTimeout(timer);
     }
-  }, [isInstalled, autoShow, delay, isInstallable, canShowPrompt, isIOS, forceShow]);
+  }, [isInstalled, autoShow, delay, isInstallable, canShowPrompt, isIOS, forceShow, isLocalhost]);
 
   const handleInstall = async () => {
     // If we have the deferred prompt, use it
@@ -98,8 +114,8 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
     // The prompt will remain open until isInstalled becomes true
   };
 
-  // Don't show if already installed
-  if (isInstalled) {
+  // Don't show if already installed or on localhost
+  if (isInstalled || isLocalhost) {
     return null;
   }
 

@@ -529,11 +529,17 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
           let avatarUrl: string | null = null;
           if (registrationData.foto_profilo) {
             console.log('[Register] 📸 Caricamento avatar...');
-            avatarUrl = await uploadAvatar(registrationData.foto_profilo, userId);
-            if (!avatarUrl) {
-              throw new Error('Errore durante il caricamento della foto profilo');
+            try {
+              avatarUrl = await uploadAvatar(registrationData.foto_profilo, userId);
+              if (!avatarUrl) {
+                throw new Error('Errore durante il caricamento della foto profilo: URL non restituito');
+              }
+              console.log('[Register] ✅ Avatar caricato:', avatarUrl);
+            } catch (error) {
+              console.error('[Register] ❌ Errore caricamento avatar:', error);
+              const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto durante il caricamento';
+              throw new Error(`Errore durante il caricamento della foto profilo: ${errorMessage}`);
             }
-            console.log('[Register] ✅ Avatar caricato:', avatarUrl);
           }
 
           // Crea l'utente nel database usando la funzione RPC (bypassa cache PostgREST)

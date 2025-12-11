@@ -80,7 +80,19 @@ export const SplashPage: React.FC = () => {
 
   // Gestisci il video quando cambia viewState
   useEffect(() => {
-    if ((viewState === 'video-pre' || viewState === 'video-post') && videoRef.current) {
+    if (viewState !== 'video-pre' && viewState !== 'video-post') {
+      return;
+    }
+
+    let cleanupFunctions: (() => void)[] = [];
+
+    // Aspetta che il video sia montato nel DOM
+    const timeoutId = setTimeout(() => {
+      if (!videoRef.current) {
+        console.warn('Video ref non disponibile');
+        return;
+      }
+
       const video = videoRef.current;
       
       // Reset video
@@ -89,7 +101,9 @@ export const SplashPage: React.FC = () => {
       
       // Funzione per far partire il video
       const startVideo = () => {
-        const playPromise = video.play();
+        if (!videoRef.current) return;
+        
+        const playPromise = videoRef.current.play();
         if (playPromise !== undefined) {
           playPromise
             .then(() => {
@@ -110,25 +124,41 @@ export const SplashPage: React.FC = () => {
       // Forza il caricamento del video
       video.load();
       
-      // Prova a far partire immediatamente
-      // Se il video è già caricato abbastanza, parte subito
-      if (video.readyState >= 2) { // HAVE_CURRENT_DATA o superiore
-        startVideo();
-      } else {
-        // Altrimenti aspetta che sia caricato
-        const handleCanPlay = () => {
+      // Gestori eventi per quando il video è pronto
+      const handleCanPlay = () => {
+        if (videoRef.current && videoRef.current.paused) {
           startVideo();
-        };
-        
-        video.addEventListener('canplay', handleCanPlay, { once: true });
-        video.addEventListener('loadeddata', handleCanPlay, { once: true });
-        
-        return () => {
-          video.removeEventListener('canplay', handleCanPlay);
-          video.removeEventListener('loadeddata', handleCanPlay);
-        };
+        }
+      };
+      
+      const handleLoadedData = () => {
+        if (videoRef.current && videoRef.current.paused) {
+          startVideo();
+        }
+      };
+      
+      // Aggiungi listener
+      video.addEventListener('canplay', handleCanPlay, { once: true });
+      video.addEventListener('loadeddata', handleLoadedData, { once: true });
+      
+      // Salva cleanup functions
+      cleanupFunctions.push(() => {
+        if (videoRef.current) {
+          videoRef.current.removeEventListener('canplay', handleCanPlay);
+          videoRef.current.removeEventListener('loadeddata', handleLoadedData);
+        }
+      });
+      
+      // Prova a far partire immediatamente se già caricato
+      if (video.readyState >= 2) {
+        startVideo();
       }
-    }
+    }, 150);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      cleanupFunctions.forEach(cleanup => cleanup());
+    };
   }, [viewState]);
 
   // Handle "Entra nel Game" click - show choice between login and register
@@ -172,13 +202,7 @@ export const SplashPage: React.FC = () => {
   const handleRegister = () => {
     setShowContinueButton(false); // Reset continue button state
     setViewState('video-pre');
-    // Reset video when changing to video state
-    setTimeout(() => {
-      if (videoRef.current) {
-        videoRef.current.currentTime = 0;
-        videoRef.current.play().catch(console.error);
-      }
-    }, 100);
+    // Il video partirà automaticamente grazie all'useEffect
   };
 
   // When pre-registration video ends, show continue button
@@ -321,11 +345,26 @@ export const SplashPage: React.FC = () => {
             src="/videos/BenvenutoPreIscrizione.mp4"
             autoPlay
             playsInline
+            muted={false}
             onEnded={handlePreVideoEnd}
             onLoadedData={() => {
-              if (videoRef.current) {
-                videoRef.current.play().catch(console.error);
+              if (videoRef.current && videoRef.current.paused) {
+                videoRef.current.play().catch((err) => {
+                  console.error('Errore play onLoadedData:', err);
+                  setShowContinueButton(true);
+                });
               }
+            }}
+            onCanPlay={() => {
+              if (videoRef.current && videoRef.current.paused) {
+                videoRef.current.play().catch((err) => {
+                  console.error('Errore play onCanPlay:', err);
+                  setShowContinueButton(true);
+                });
+              }
+            }}
+            onPlay={() => {
+              console.log('✅ Video in riproduzione');
             }}
             className="w-full h-full object-cover"
           />

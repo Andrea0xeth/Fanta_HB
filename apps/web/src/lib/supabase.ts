@@ -70,25 +70,62 @@ export const uploadAvatar = async (
   file: File, 
   userId: string
 ): Promise<string | null> => {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `avatars/${userId}/${Date.now()}.${fileExt}`;
-  
-  const { data, error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(fileName, file, {
-      cacheControl: '3600',
-      upsert: false,
+  try {
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const fileName = `avatars/${userId}/${Date.now()}.${fileExt}`;
+    
+    console.log('[Upload Avatar] Inizio upload:', {
+      fileName,
+      fileSize: file.size,
+      fileType: file.type,
+      userId
     });
+    
+    const { data, error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || 'image/jpeg',
+      });
 
-  if (error) {
-    console.error('Upload avatar error:', error);
-    return null;
+    if (error) {
+      console.error('[Upload Avatar] Errore upload:', error);
+      console.error('[Upload Avatar] Dettagli errore:', {
+        message: error.message,
+        statusCode: error.statusCode,
+        error: error.error
+      });
+      
+      // Se l'errore è relativo ai permessi, fornisci un messaggio più chiaro
+      if (error.message?.includes('new row violates row-level security') || 
+          error.message?.includes('permission denied') ||
+          error.statusCode === '403') {
+        throw new Error('Permessi insufficienti per caricare l\'immagine. Verifica le policy del bucket storage.');
+      }
+      
+      throw new Error(`Errore upload: ${error.message || 'Errore sconosciuto'}`);
+    }
+
+    if (!data) {
+      throw new Error('Nessun dato restituito dall\'upload');
+    }
+
+    console.log('[Upload Avatar] Upload completato:', data.path);
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(data.path);
+
+    if (!urlData?.publicUrl) {
+      throw new Error('Impossibile ottenere l\'URL pubblico del file');
+    }
+
+    console.log('[Upload Avatar] URL pubblico:', urlData.publicUrl);
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('[Upload Avatar] Errore completo:', error);
+    throw error; // Rilancia l'errore per gestirlo nel contesto
   }
-
-  // Get public URL
-  const { data: urlData } = supabase.storage
-    .from(STORAGE_BUCKET)
-    .getPublicUrl(data.path);
-
-  return urlData.publicUrl;
 };
