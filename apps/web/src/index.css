@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Indie+Flower&family=Caveat:wght@400;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Boogaloo&family=Bubblegum+Sans&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Modak&family=Sniglet&family=Chela+One&family=Coiny&family=Concert+One&display=swap');
 
 /* Custom Theme - Tailwind v4 */
 @theme {
@@ -526,11 +527,11 @@
     }
   }
 
-  /* LED Outline Effect - Solo contorni LED sottili con font arrotondato - Meno luminoso */
+  /* LED Outline Effect - Solo contorni LED con font molto arrotondato (stile DC-10) */
   .neon-red-orange {
-    font-family: 'Fredoka', 'Boogaloo', 'Bubblegum Sans', sans-serif;
-    color: transparent; /* Interno trasparente - solo contorni LED */
-    -webkit-text-stroke: 0.6px #ff6b35; /* Stroke sottile per contorno LED */
+    font-family: 'Modak', 'Sniglet', 'Chela One', 'Coiny', 'Concert One', 'Fredoka', 'Boogaloo', 'Bubblegum Sans', sans-serif;
+    color: transparent !important; /* Centro completamente trasparente - solo contorni */
+    -webkit-text-stroke: 1.2px #ff6b35; /* Stroke più spesso per contorno visibile */
     text-shadow:
       0 0 1px rgba(255, 0, 0, 0.6),
       0 0 2px rgba(255, 0, 0, 0.5),
@@ -539,8 +540,8 @@
       0 0 6px rgba(255, 107, 53, 0.3),
       0 0 8px rgba(255, 107, 53, 0.2);
     filter: drop-shadow(0 0 4px rgba(255, 68, 68, 0.3));
-    font-weight: 700; /* Bold per font arrotondato */
-    letter-spacing: 0.05em;
+    font-weight: 400; /* Modak e altri font bubbly sono già bold di default */
+    letter-spacing: 0.02em;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
   }
@@ -564,10 +565,10 @@
   }
 
   /* Neon Flicker Animation - More noticeable flicker */
-  /* LED Flicker Animation - Solo contorni LED sottili - Meno luminoso */
+  /* LED Flicker Animation - Solo contorni LED - Meno luminoso */
   @keyframes neon-flicker {
     0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-      -webkit-text-stroke: 0.6px #ff6b35;
+      -webkit-text-stroke: 1.2px #ff6b35;
       text-shadow:
         0 0 1px rgba(255, 0, 0, 0.6),
         0 0 2px rgba(255, 0, 0, 0.5),
@@ -579,7 +580,7 @@
       opacity: 1;
     }
     20%, 24%, 55% {
-      -webkit-text-stroke: 0.5px #ff4444;
+      -webkit-text-stroke: 1px #ff4444;
       text-shadow:
         0 0 0.5px rgba(255, 68, 68, 0.4),
         0 0 1px rgba(255, 68, 68, 0.3),
