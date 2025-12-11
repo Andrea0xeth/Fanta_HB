@@ -565,12 +565,12 @@ export const SplashPage: React.FC = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
           style={{
-            WebkitTextStroke: '1.5px #ffffff',
+            WebkitTextStroke: '1px #ffffff',
             textShadow: `
+              0 0 1px #ffffff,
               0 0 2px #ffffff,
-              0 0 4px #ffffff,
-              0 0 6px #ffffff,
-              0 0 8px #ffffff
+              0 0 3px #ffffff,
+              0 0 4px #ffffff
             `
           }}
         >

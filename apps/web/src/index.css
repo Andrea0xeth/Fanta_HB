@@ -459,162 +459,125 @@
   .neon-red-orange {
     font-family: 'Kalam', 'Caveat', cursive;
     color: #ff4444;
-    -webkit-text-stroke: 2px #ff0000;
+    -webkit-text-stroke: 1.5px #ff0000;
     text-shadow:
-      0 0 3px #ff0000,
-      0 0 6px #ff0000,
-      0 0 9px #ff4444,
-      0 0 12px #ff4444,
-      0 0 18px #ff6b35,
-      0 0 24px #ff6b35,
-      0 0 30px #ff6b35,
-      0 0 36px #ff6b35;
+      0 0 2px #ff0000,
+      0 0 4px #ff0000,
+      0 0 6px #ff4444,
+      0 0 8px #ff6b35;
     font-weight: 700;
     letter-spacing: 0.05em;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
-    /* Rimuovi filter blur per effetto più netto */
   }
 
   .neon-white {
     font-family: 'Kalam', 'Caveat', cursive;
     color: #ffffff;
-    -webkit-text-stroke: 2px #ffffff;
+    -webkit-text-stroke: 1.5px #ffffff;
     text-shadow:
-      0 0 3px #ffffff,
+      0 0 2px #ffffff,
+      0 0 4px #ffffff,
       0 0 6px #ffffff,
-      0 0 9px #ffffff,
-      0 0 12px #ffffff,
-      0 0 18px #ffffff,
-      0 0 24px #ffffff,
-      0 0 30px #ffffff;
+      0 0 8px #ffffff;
     font-weight: 700;
     letter-spacing: 0.03em;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
-    /* Rimuovi filter blur per effetto più netto */
   }
 
-  /* Neon Flicker Animation - Sharp, non-blurred */
+  /* Neon Flicker Animation - Minimal blur */
   @keyframes neon-flicker {
     0%, 100% {
       text-shadow:
-        0 0 3px #ff0000,
-        0 0 6px #ff0000,
-        0 0 9px #ff4444,
-        0 0 12px #ff4444,
-        0 0 18px #ff6b35,
-        0 0 24px #ff6b35,
-        0 0 30px #ff6b35,
-        0 0 36px #ff6b35;
+        0 0 2px #ff0000,
+        0 0 4px #ff0000,
+        0 0 6px #ff4444,
+        0 0 8px #ff6b35;
       opacity: 1;
     }
     41.99% {
       text-shadow:
-        0 0 3px #ff0000,
-        0 0 6px #ff0000,
-        0 0 9px #ff4444,
-        0 0 12px #ff4444,
-        0 0 18px #ff6b35,
-        0 0 24px #ff6b35,
-        0 0 30px #ff6b35,
-        0 0 36px #ff6b35;
+        0 0 2px #ff0000,
+        0 0 4px #ff0000,
+        0 0 6px #ff4444,
+        0 0 8px #ff6b35;
       opacity: 1;
     }
     42% {
       text-shadow:
         0 0 1px #ff0000,
         0 0 2px #ff0000;
-      opacity: 0.85;
+      opacity: 0.9;
     }
     43% {
       text-shadow:
         0 0 1px #ff0000,
         0 0 2px #ff0000;
-      opacity: 0.85;
+      opacity: 0.9;
     }
     43.01% {
       text-shadow:
-        0 0 3px #ff0000,
-        0 0 6px #ff0000,
-        0 0 9px #ff4444,
-        0 0 12px #ff4444,
-        0 0 18px #ff6b35,
-        0 0 24px #ff6b35,
-        0 0 30px #ff6b35,
-        0 0 36px #ff6b35;
+        0 0 2px #ff0000,
+        0 0 4px #ff0000,
+        0 0 6px #ff4444,
+        0 0 8px #ff6b35;
       opacity: 1;
     }
     45.99% {
       text-shadow:
-        0 0 3px #ff0000,
-        0 0 6px #ff0000,
-        0 0 9px #ff4444,
-        0 0 12px #ff4444,
-        0 0 18px #ff6b35,
-        0 0 24px #ff6b35,
-        0 0 30px #ff6b35,
-        0 0 36px #ff6b35;
+        0 0 2px #ff0000,
+        0 0 4px #ff0000,
+        0 0 6px #ff4444,
+        0 0 8px #ff6b35;
       opacity: 1;
     }
     46% {
       text-shadow:
         0 0 1px #ff0000,
         0 0 2px #ff0000;
-      opacity: 0.9;
+      opacity: 0.92;
     }
     47% {
       text-shadow:
         0 0 1px #ff0000,
         0 0 2px #ff0000;
-      opacity: 0.9;
+      opacity: 0.92;
     }
     47.01% {
       text-shadow:
-        0 0 3px #ff0000,
-        0 0 6px #ff0000,
-        0 0 9px #ff4444,
-        0 0 12px #ff4444,
-        0 0 18px #ff6b35,
-        0 0 24px #ff6b35,
-        0 0 30px #ff6b35,
-        0 0 36px #ff6b35;
+        0 0 2px #ff0000,
+        0 0 4px #ff0000,
+        0 0 6px #ff4444,
+        0 0 8px #ff6b35;
       opacity: 1;
     }
     52.99% {
       text-shadow:
-        0 0 3px #ff0000,
-        0 0 6px #ff0000,
-        0 0 9px #ff4444,
-        0 0 12px #ff4444,
-        0 0 18px #ff6b35,
-        0 0 24px #ff6b35,
-        0 0 30px #ff6b35,
-        0 0 36px #ff6b35;
+        0 0 2px #ff0000,
+        0 0 4px #ff0000,
+        0 0 6px #ff4444,
+        0 0 8px #ff6b35;
       opacity: 1;
     }
     53% {
       text-shadow:
         0 0 1px #ff0000,
         0 0 2px #ff0000;
-      opacity: 0.88;
+      opacity: 0.9;
     }
     54% {
       text-shadow:
         0 0 1px #ff0000,
         0 0 2px #ff0000;
-      opacity: 0.88;
+      opacity: 0.9;
     }
     54.01% {
       text-shadow:
-        0 0 3px #ff0000,
-        0 0 6px #ff0000,
-        0 0 9px #ff4444,
-        0 0 12px #ff4444,
-        0 0 18px #ff6b35,
-        0 0 24px #ff6b35,
-        0 0 30px #ff6b35,
-        0 0 36px #ff6b35;
+        0 0 2px #ff0000,
+        0 0 4px #ff0000,
+        0 0 6px #ff4444,
+        0 0 8px #ff6b35;
       opacity: 1;
     }
   }
@@ -622,120 +585,99 @@
   @keyframes neon-flicker-white {
     0%, 100% {
       text-shadow:
-        0 0 3px #ffffff,
+        0 0 2px #ffffff,
+        0 0 4px #ffffff,
         0 0 6px #ffffff,
-        0 0 9px #ffffff,
-        0 0 12px #ffffff,
-        0 0 18px #ffffff,
-        0 0 24px #ffffff,
-        0 0 30px #ffffff;
+        0 0 8px #ffffff;
       opacity: 1;
     }
     41.99% {
       text-shadow:
-        0 0 3px #ffffff,
+        0 0 2px #ffffff,
+        0 0 4px #ffffff,
         0 0 6px #ffffff,
-        0 0 9px #ffffff,
-        0 0 12px #ffffff,
-        0 0 18px #ffffff,
-        0 0 24px #ffffff,
-        0 0 30px #ffffff;
+        0 0 8px #ffffff;
       opacity: 1;
     }
     42% {
       text-shadow:
         0 0 1px #ffffff,
         0 0 2px #ffffff;
-      opacity: 0.85;
+      opacity: 0.9;
     }
     43% {
       text-shadow:
         0 0 1px #ffffff,
         0 0 2px #ffffff;
-      opacity: 0.85;
+      opacity: 0.9;
     }
     43.01% {
       text-shadow:
-        0 0 3px #ffffff,
+        0 0 2px #ffffff,
+        0 0 4px #ffffff,
         0 0 6px #ffffff,
-        0 0 9px #ffffff,
-        0 0 12px #ffffff,
-        0 0 18px #ffffff,
-        0 0 24px #ffffff,
-        0 0 30px #ffffff;
+        0 0 8px #ffffff;
       opacity: 1;
     }
     45.99% {
       text-shadow:
-        0 0 3px #ffffff,
+        0 0 2px #ffffff,
+        0 0 4px #ffffff,
         0 0 6px #ffffff,
-        0 0 9px #ffffff,
-        0 0 12px #ffffff,
-        0 0 18px #ffffff,
-        0 0 24px #ffffff,
-        0 0 30px #ffffff;
+        0 0 8px #ffffff;
       opacity: 1;
     }
     46% {
       text-shadow:
         0 0 1px #ffffff,
         0 0 2px #ffffff;
-      opacity: 0.9;
+      opacity: 0.92;
     }
     47% {
       text-shadow:
         0 0 1px #ffffff,
         0 0 2px #ffffff;
-      opacity: 0.9;
+      opacity: 0.92;
     }
     47.01% {
       text-shadow:
-        0 0 3px #ffffff,
+        0 0 2px #ffffff,
+        0 0 4px #ffffff,
         0 0 6px #ffffff,
-        0 0 9px #ffffff,
-        0 0 12px #ffffff,
-        0 0 18px #ffffff,
-        0 0 24px #ffffff,
-        0 0 30px #ffffff;
+        0 0 8px #ffffff;
       opacity: 1;
     }
     52.99% {
       text-shadow:
-        0 0 3px #ffffff,
+        0 0 2px #ffffff,
+        0 0 4px #ffffff,
         0 0 6px #ffffff,
-        0 0 9px #ffffff,
-        0 0 12px #ffffff,
-        0 0 18px #ffffff,
-        0 0 24px #ffffff,
-        0 0 30px #ffffff;
+        0 0 8px #ffffff;
       opacity: 1;
     }
     53% {
       text-shadow:
         0 0 1px #ffffff,
         0 0 2px #ffffff;
-      opacity: 0.88;
+      opacity: 0.9;
     }
     54% {
       text-shadow:
         0 0 1px #ffffff,
         0 0 2px #ffffff;
-      opacity: 0.88;
+      opacity: 0.9;
     }
     54.01% {
       text-shadow:
-        0 0 3px #ffffff,
+        0 0 2px #ffffff,
+        0 0 4px #ffffff,
         0 0 6px #ffffff,
-        0 0 9px #ffffff,
-        0 0 12px #ffffff,
-        0 0 18px #ffffff,
-        0 0 24px #ffffff,
-        0 0 30px #ffffff;
+        0 0 8px #ffffff;
       opacity: 1;
     }
   }
 
-  /* 3D Lighting Effect - Sharp glow, less blur */
+  /* 3D Lighting Effect - Minimal blur, more readable */
   .neon-3d-glow {
     position: relative;
     padding: 20px;
@@ -747,21 +689,20 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 130%;
-    height: 130%;
+    width: 120%;
+    height: 120%;
     background: radial-gradient(
       ellipse at center,
-      rgba(255, 68, 68, 0.4) 0%,
-      rgba(255, 107, 53, 0.25) 20%,
-      rgba(255, 107, 53, 0.1) 40%,
-      transparent 65%
+      rgba(255, 68, 68, 0.2) 0%,
+      rgba(255, 107, 53, 0.1) 30%,
+      transparent 60%
     );
     border-radius: 50%;
     pointer-events: none;
     z-index: -1;
     animation: pulse-glow-neon 3s ease-in-out infinite;
-    /* Ridotto blur per effetto più netto */
-    filter: blur(8px);
+    /* Blur minimo per leggibilità */
+    filter: blur(3px);
   }
 
   .neon-3d-glow::after {
@@ -770,20 +711,20 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 160%;
-    height: 160%;
+    width: 140%;
+    height: 140%;
     background: radial-gradient(
       ellipse at center,
-      rgba(255, 68, 68, 0.15) 0%,
-      rgba(255, 107, 53, 0.08) 25%,
-      transparent 50%
+      rgba(255, 68, 68, 0.08) 0%,
+      rgba(255, 107, 53, 0.04) 25%,
+      transparent 45%
     );
     border-radius: 50%;
     pointer-events: none;
     z-index: -2;
     animation: pulse-glow-neon-outer 4s ease-in-out infinite;
-    /* Ridotto blur per effetto più netto */
-    filter: blur(12px);
+    /* Blur minimo */
+    filter: blur(4px);
   }
 
   .neon-3d-glow-white {
@@ -797,21 +738,20 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 130%;
-    height: 130%;
+    width: 120%;
+    height: 120%;
     background: radial-gradient(
       ellipse at center,
-      rgba(255, 255, 255, 0.45) 0%,
-      rgba(255, 255, 255, 0.25) 20%,
-      rgba(255, 255, 255, 0.1) 40%,
-      transparent 65%
+      rgba(255, 255, 255, 0.25) 0%,
+      rgba(255, 255, 255, 0.12) 30%,
+      transparent 60%
     );
     border-radius: 50%;
     pointer-events: none;
     z-index: -1;
     animation: pulse-glow-neon 3.5s ease-in-out infinite;
-    /* Ridotto blur per effetto più netto */
-    filter: blur(8px);
+    /* Blur minimo per leggibilità */
+    filter: blur(3px);
   }
 
   .neon-3d-glow-white::after {
@@ -820,20 +760,20 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 160%;
-    height: 160%;
+    width: 140%;
+    height: 140%;
     background: radial-gradient(
       ellipse at center,
-      rgba(255, 255, 255, 0.18) 0%,
-      rgba(255, 255, 255, 0.09) 25%,
-      transparent 50%
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.05) 25%,
+      transparent 45%
     );
     border-radius: 50%;
     pointer-events: none;
     z-index: -2;
     animation: pulse-glow-neon-outer 4.5s ease-in-out infinite;
-    /* Ridotto blur per effetto più netto */
-    filter: blur(12px);
+    /* Blur minimo */
+    filter: blur(4px);
   }
 
   @keyframes pulse-glow-neon {
