@@ -362,7 +362,7 @@ export const SplashPage: React.FC = () => {
           transition={{ duration: 0.3 }}
         >
           {!isSecureContext && (
-            <div className="glass border border-yellow-500/50 rounded-xl p-3 mb-3">
+            <div className="glass border border-yellow-500/50 rounded-2xl p-3 mb-3">
               <p className="text-xs text-yellow-400 text-center">
               ⚠️ Per usare Face ID/Touch ID, accedi tramite HTTPS o localhost
               </p>
@@ -455,7 +455,7 @@ export const SplashPage: React.FC = () => {
           
           {/* Debug panel */}
           {showDebug && (
-            <div className="mt-2 p-3 glass rounded-lg">
+            <div className="mt-2 p-3 glass rounded-2xl">
               <WebAuthnDebug />
             </div>
           )}
@@ -562,7 +562,7 @@ export const SplashPage: React.FC = () => {
               {(!window.isSecureContext && 
                 window.location.hostname !== 'localhost' && 
                 window.location.hostname !== '127.0.0.1') && (
-                <div className="glass border border-yellow-500/50 rounded-xl p-3 mb-3">
+                <div className="glass border border-yellow-500/50 rounded-2xl p-3 mb-3">
                   <p className="text-xs text-yellow-400 text-center">
                     ⚠️ Per usare Face ID/Touch ID, accedi tramite HTTPS o localhost
                   </p>

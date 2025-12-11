@@ -38,7 +38,7 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
     >
       {/* Header - Compact */}
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-coral-500 to-turquoise-400 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-coral-500 to-turquoise-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
           {prova.user.nickname.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
@@ -61,15 +61,15 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
       </div>
 
       {/* Content Preview - Compact */}
-      <div className="mb-2 rounded-xl overflow-hidden glass p-2">
+      <div className="mb-2 rounded-2xl overflow-hidden glass p-2.5">
         {prova.tipo === 'foto' && (
-          <div className="aspect-video glass rounded-lg flex items-center justify-center">
+          <div className="aspect-video glass rounded-xl flex items-center justify-center">
             <Image className="text-gray-600" size={32} />
             <span className="text-gray-600 ml-2 text-xs">Anteprima foto</span>
           </div>
         )}
         {prova.tipo === 'video' && (
-          <div className="aspect-video glass rounded-lg flex items-center justify-center">
+          <div className="aspect-video glass rounded-xl flex items-center justify-center">
             <Video className="text-gray-600" size={32} />
             <span className="text-gray-600 ml-2 text-xs">Anteprima video</span>
           </div>
@@ -96,11 +96,11 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
       </div>
 
       {/* Vote Buttons - Compact */}
-      <div className="flex gap-1.5">
+      <div className="flex gap-2">
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => onVote(prova.id, false)}
-          className="flex-1 py-2 rounded-xl glass border border-red-500/30 text-red-400 font-semibold text-xs flex items-center justify-center gap-1"
+          className="flex-1 py-2.5 rounded-2xl glass border border-red-500/30 text-red-400 font-semibold text-xs flex items-center justify-center gap-1"
         >
           <X size={14} />
           Rifiuta
@@ -108,7 +108,7 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => onVote(prova.id, true)}
-          className="flex-1 py-2 rounded-xl glass border border-green-500/30 text-green-400 font-semibold text-xs flex items-center justify-center gap-1"
+          className="flex-1 py-2.5 rounded-2xl glass border border-green-500/30 text-green-400 font-semibold text-xs flex items-center justify-center gap-1"
         >
           <Check size={14} />
           Valida

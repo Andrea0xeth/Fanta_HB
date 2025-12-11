@@ -57,11 +57,11 @@ export const LeaderboardPage: React.FC = () => {
   return (
     <div className="min-h-full bg-dark flex flex-col">
       {/* Header - Fixed, compact */}
-      <div className="flex-shrink-0 glass-strong px-3 pt-safe pb-2">
+      <div className="flex-shrink-0 glass-strong px-4 pt-safe pb-3">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-2"
+          className="text-center mb-3"
         >
           <Trophy className="w-8 h-8 text-party-300 mx-auto mb-1" />
           <h1 className="text-lg font-display font-bold">Classifica</h1>
@@ -69,10 +69,10 @@ export const LeaderboardPage: React.FC = () => {
         </motion.div>
 
         {/* Tab Switcher - Compact */}
-        <div className="glass rounded-xl p-0.5 flex gap-0.5">
+        <div className="glass rounded-2xl p-1 flex gap-1">
           <button
             onClick={() => setActiveTab('squadre')}
-            className={`flex-1 py-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
+            className={`flex-1 py-2 rounded-xl font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
               activeTab === 'squadre' 
                 ? 'bg-coral-500 text-white' 
                 : 'text-gray-400'
@@ -83,7 +83,7 @@ export const LeaderboardPage: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('singoli')}
-            className={`flex-1 py-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
+            className={`flex-1 py-2 rounded-xl font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
               activeTab === 'singoli' 
                 ? 'bg-coral-500 text-white' 
                 : 'text-gray-400'
@@ -95,8 +95,8 @@ export const LeaderboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Content - Scrollable, passes under navbar */}
-      <div className="flex-1 px-3 py-2 pb-24">
+      {/* Content - Scrollable, passes under navbar - 8pt grid spacing */}
+      <div className="flex-1 px-4 py-3 pb-28">
         <AnimatePresence mode="wait">
           {activeTab === 'squadre' ? (
             <motion.div
@@ -107,7 +107,7 @@ export const LeaderboardPage: React.FC = () => {
               className="space-y-3"
             >
               {/* Top 3 Podium - Compact */}
-              <div className="flex items-end justify-center gap-2 py-3 mb-2">
+              <div className="flex items-end justify-center gap-3 py-4 mb-4">
                 {/* 2nd Place */}
                 {leaderboardSquadre[1] && (
                   <motion.div
@@ -117,7 +117,7 @@ export const LeaderboardPage: React.FC = () => {
                     className="text-center"
                   >
                     <div className="text-2xl mb-1">{leaderboardSquadre[1].emoji}</div>
-                    <div className="w-14 h-14 glass rounded-t-xl flex items-end justify-center pb-1">
+                    <div className="w-16 h-16 glass rounded-t-2xl flex items-end justify-center pb-1.5">
                       <span className="text-lg font-bold text-gray-300">2</span>
                     </div>
                     <p className="text-xs font-semibold mt-1 truncate max-w-[60px]">
@@ -136,7 +136,7 @@ export const LeaderboardPage: React.FC = () => {
                   >
                     <Crown className="w-5 h-5 text-party-300 mx-auto mb-0.5" />
                     <div className="text-3xl mb-1">{leaderboardSquadre[0].emoji}</div>
-                    <div className="w-16 h-20 bg-gradient-to-t from-party-300/50 to-party-300/20 rounded-t-xl flex items-end justify-center pb-1">
+                    <div className="w-18 h-22 bg-gradient-to-t from-party-300/50 to-party-300/20 rounded-t-2xl flex items-end justify-center pb-2">
                       <span className="text-xl font-bold text-party-300">1</span>
                     </div>
                     <p className="text-xs font-semibold mt-1 truncate max-w-[70px]">
@@ -155,7 +155,7 @@ export const LeaderboardPage: React.FC = () => {
                     className="text-center"
                   >
                     <div className="text-2xl mb-1">{leaderboardSquadre[2].emoji}</div>
-                    <div className="w-14 h-12 bg-orange-500/30 rounded-t-xl flex items-end justify-center pb-1">
+                    <div className="w-16 h-14 bg-orange-500/30 rounded-t-2xl flex items-end justify-center pb-1.5">
                       <span className="text-lg font-bold text-orange-400">3</span>
                     </div>
                     <p className="text-xs font-semibold mt-1 truncate max-w-[60px]">
@@ -166,8 +166,8 @@ export const LeaderboardPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Rest of leaderboard - Compact */}
-              <div className="space-y-1.5">
+              {/* Rest of leaderboard - Compact - 8pt grid */}
+              <div className="space-y-2">
                 {leaderboardSquadre.slice(3).map((squadra, index) => (
                   <motion.div
                     key={squadra.id}
@@ -201,7 +201,7 @@ export const LeaderboardPage: React.FC = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-1.5 pt-2"
+              className="space-y-2 pt-3"
             >
               {/* Formula explanation - Compact */}
               <div className="card text-center mb-2 py-1.5">

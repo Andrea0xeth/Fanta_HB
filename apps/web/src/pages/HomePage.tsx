@@ -31,13 +31,13 @@ export const HomePage: React.FC = () => {
   return (
     <div className="min-h-full bg-dark flex flex-col">
       {/* Header - Fixed, compact */}
-      <div className="flex-shrink-0 glass-strong px-3 pt-safe pb-2">
-        <div className="flex items-center justify-between mb-2">
+      <div className="flex-shrink-0 glass-strong px-4 pt-safe pb-3">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <motion.button 
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowProfile(true)}
-              className="w-9 h-9 rounded-full bg-gradient-to-br from-coral-500 to-turquoise-400 flex items-center justify-center text-white font-bold text-sm"
+              className="w-10 h-10 rounded-2xl bg-gradient-to-br from-coral-500 to-turquoise-400 flex items-center justify-center text-white font-bold text-sm"
             >
               {user?.nickname?.charAt(0).toUpperCase() || 'G'}
             </motion.button>
@@ -65,7 +65,7 @@ export const HomePage: React.FC = () => {
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="gradient-party rounded-2xl p-2.5 mb-2"
+          className="gradient-party rounded-3xl p-3 mb-3"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ export const HomePage: React.FC = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="card flex items-center justify-between py-2"
+            className="card flex items-center justify-between py-3"
           >
             <div className="flex items-center gap-2">
               <span className="text-2xl">{mySquadra.emoji}</span>
@@ -108,18 +108,18 @@ export const HomePage: React.FC = () => {
         )}
       </div>
 
-      {/* Content - Scrollable, passes under navbar */}
-      <div className="flex-1 px-3 py-2 pb-24 space-y-3">
+      {/* Content - Scrollable, passes under navbar - 8pt grid spacing */}
+      <div className="flex-1 px-4 py-3 pb-28 space-y-4">
         {/* Quest Section */}
         <section>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="font-display font-bold text-sm flex items-center gap-1.5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-display font-bold text-sm flex items-center gap-2">
               🎯 Quest del Giorno
             </h2>
             <span className="text-[10px] text-gray-500">{quests.length} disponibili</span>
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-3">
             {quests.map((quest, index) => (
               <motion.div
                 key={quest.id}
@@ -139,7 +139,7 @@ export const HomePage: React.FC = () => {
         {/* Next Gara Section */}
         {nextGara && (
           <section>
-            <h2 className="font-display font-bold text-sm flex items-center gap-1.5 mb-2">
+            <h2 className="font-display font-bold text-sm flex items-center gap-2 mb-3">
               <Swords size={16} className="text-coral-500" />
               Prossima Gara
             </h2>

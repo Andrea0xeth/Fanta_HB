@@ -59,8 +59,8 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
         style={{ background: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.3)' }}
       >
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center text-lg flex-shrink-0">
-            <Check className="text-green-400" size={18} />
+          <div className="w-12 h-12 rounded-2xl bg-green-500/20 flex items-center justify-center text-xl flex-shrink-0">
+            <Check className="text-green-400" size={20} />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-green-400 line-through opacity-70 text-sm truncate">
@@ -81,7 +81,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
     >
       {/* Header - Compact */}
       <div className="flex items-center gap-2">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-coral-500/20 to-party-300/20 flex items-center justify-center text-lg flex-shrink-0">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-coral-500/20 to-party-300/20 flex items-center justify-center text-xl flex-shrink-0">
           {quest.emoji}
         </div>
         <div className="flex-1 min-w-0">
@@ -124,7 +124,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                 {quest.tipo_prova.includes('foto') && (
                   <button
                     onClick={() => setSelectedType('foto')}
-                    className={`flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all ${
+                    className={`flex-1 py-2.5 rounded-2xl flex flex-col items-center gap-0.5 transition-all ${
                       selectedType === 'foto' 
                         ? 'bg-coral-500 text-white' 
                         : 'glass text-gray-400'

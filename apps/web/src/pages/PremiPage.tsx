@@ -95,7 +95,7 @@ export const PremiPage: React.FC = () => {
   return (
     <div className="min-h-full bg-dark flex flex-col">
       {/* Header - Fixed, compact */}
-      <div className="flex-shrink-0 glass-strong px-3 pt-safe pb-2">
+      <div className="flex-shrink-0 glass-strong px-4 pt-safe pb-3">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -125,8 +125,8 @@ export const PremiPage: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Content - Scrollable, passes under navbar */}
-      <div className="flex-1 px-3 py-2 pb-24 space-y-3">
+      {/* Content - Scrollable, passes under navbar - 8pt grid spacing */}
+      <div className="flex-1 px-4 py-3 pb-28 space-y-4">
         {/* Categories */}
         {(['squadra', 'singolo', 'giornaliero', 'speciale'] as const).map((tipo) => {
           const premi = mockPremi.filter(p => p.tipo === tipo);
@@ -136,14 +136,14 @@ export const PremiPage: React.FC = () => {
           
           return (
             <section key={tipo}>
-              <h2 className="font-display font-bold text-sm mb-2 flex items-center gap-1.5">
-                <div className={`p-1 rounded-lg ${bg}`}>
+              <h2 className="font-display font-bold text-sm mb-3 flex items-center gap-2">
+                <div className={`p-2 rounded-2xl ${bg}`}>
                   <Icon size={14} className={text} />
                 </div>
                 Premi {tipoLabels[tipo]}
               </h2>
               
-              <div className="grid gap-2">
+              <div className="grid gap-3">
                 {premi.map((premio, index) => {
                   const progress = (totalPoints / (premio.punti_richiesti || 1)) * 100;
                   const isUnlocked = progress >= 100;
@@ -170,7 +170,7 @@ export const PremiPage: React.FC = () => {
 
                       <div className="flex gap-2">
                         {/* Emoji/Image - Compact */}
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 ${
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 ${
                           isUnlocked 
                             ? 'bg-gradient-to-br from-party-300/30 to-party-300/10' 
                             : 'glass'

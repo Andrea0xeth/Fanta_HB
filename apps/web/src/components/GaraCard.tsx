@@ -54,7 +54,7 @@ export const GaraCard: React.FC<GaraCardProps> = ({ gara, isAdmin, onAssegnaVinc
 
       {/* Team VS - Compact */}
       <div className="flex items-center justify-between mb-2">
-        <div className={`flex-1 text-center p-2 rounded-xl ${
+        <div className={`flex-1 text-center p-3 rounded-2xl ${
           gara.vincitore_id === gara.squadra_a_id 
             ? 'bg-green-500/20 border border-green-500/30' 
             : 'glass'
@@ -96,13 +96,13 @@ export const GaraCard: React.FC<GaraCardProps> = ({ gara, isAdmin, onAssegnaVinc
         <div className="flex gap-1.5">
           <button
             onClick={() => onAssegnaVincitore?.(gara.id, gara.squadra_a_id)}
-            className="flex-1 py-1.5 rounded-xl glass text-xs font-medium transition-colors"
+            className="flex-1 py-2 rounded-2xl glass text-xs font-medium transition-colors"
           >
             {gara.squadra_a?.emoji} Vince
           </button>
           <button
             onClick={() => onAssegnaVincitore?.(gara.id, gara.squadra_b_id)}
-            className="flex-1 py-1.5 rounded-xl glass text-xs font-medium transition-colors"
+            className="flex-1 py-2 rounded-2xl glass text-xs font-medium transition-colors"
           >
             {gara.squadra_b?.emoji} Vince
           </button>
