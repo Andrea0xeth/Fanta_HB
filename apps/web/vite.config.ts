@@ -1,11 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    // HTTPS RICHIESTO per WebAuthn su Safari iOS
+    // Safari iOS blocca WebAuthn su HTTP anche su reti locali
+    // L'utente dovrà accettare il certificato self-signed (normale in sviluppo)
+    https: {}, // Usa il certificato generato da basicSsl()
+    host: true, // Espone su rete locale
+  },
   plugins: [
     react(),
+    basicSsl(), // Genera certificato SSL self-signed per sviluppo
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],

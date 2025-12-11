@@ -304,12 +304,35 @@ export interface Database {
     }
     Functions: {
       assign_random_team: {
-        Args: { user_id: string }
+        Args: { p_user_id: string }
         Returns: string
       }
-      validate_proof: {
-        Args: { prova_id: string }
-        Returns: boolean
+      assign_gara_winner: {
+        Args: { p_gara_id: string; p_vincitore_id: string }
+        Returns: void
+      }
+      check_proof_validation: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      insert_user_with_passkey: {
+        Args: {
+          p_id: string
+          p_nickname: string
+          p_nome?: string | null
+          p_cognome?: string | null
+          p_email?: string | null
+          p_telefono?: string | null
+          p_data_nascita?: string | null
+          p_passkey_id: string
+          p_squadra_id?: string | null
+          p_is_admin?: boolean
+        }
+        Returns: Database['public']['Tables']['users']['Row'][]
+      }
+      login_with_passkey: {
+        Args: { p_passkey_id: string }
+        Returns: Database['public']['Tables']['users']['Row'][]
       }
     }
     Enums: {

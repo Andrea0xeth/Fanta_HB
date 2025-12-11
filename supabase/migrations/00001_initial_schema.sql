@@ -25,6 +25,11 @@ CREATE TABLE IF NOT EXISTS squadre (
 CREATE TABLE IF NOT EXISTS users (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   nickname TEXT NOT NULL,
+  nome TEXT,
+  cognome TEXT,
+  email TEXT,
+  telefono TEXT,
+  data_nascita DATE,
   avatar TEXT,
   passkey_id TEXT UNIQUE,
   squadra_id UUID REFERENCES squadre(id) ON DELETE SET NULL,

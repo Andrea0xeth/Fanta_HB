@@ -4,14 +4,15 @@ import { Fingerprint, Sparkles, PartyPopper } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { Countdown } from '../components/Countdown';
-import { PWAInstallPrompt } from '../components/PWAInstallPrompt';
+// import { PWAInstallPrompt } from '../components/PWAInstallPrompt'; // Disabilitato temporaneamente
+import { WebAuthnDebug } from '../components/WebAuthnDebug';
 import type { RegistrationData } from '../types';
 
-type ViewState = 'splash' | 'video-pre' | 'auth' | 'video-post' | 'loading';
+type ViewState = 'splash' | 'video-pre' | 'auth' | 'auth-choice' | 'video-post' | 'loading';
 
 export const SplashPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated, isLoading } = useGame();
+  const { loginWithPasskey, register, isAuthenticated, isLoading } = useGame();
   const [viewState, setViewState] = useState<ViewState>('splash');
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
     nickname: '',
@@ -23,10 +24,14 @@ export const SplashPage: React.FC = () => {
   });
   const [authLoading, setAuthLoading] = useState(false);
   const [showPostVideo, setShowPostVideo] = useState(false); // Flag per video post
+  const [showDebug, setShowDebug] = useState(false); // Flag per mostrare debug
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Target date for the event (3 days from now for demo)
-  const eventDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+  // Target date for the event: 8 gennaio 2026 alle 00:00 CET
+  // CET = Central European Time (UTC+1 in inverno, UTC+2 in estate)
+  // 8 gennaio 2026 è in inverno, quindi UTC+1
+  // 00:00 CET = 23:00 UTC del giorno precedente
+  const eventDate = new Date('2026-01-08T00:00:00+01:00').toISOString();
 
   // Redirect solo se già autenticato ALL'AVVIO (non dopo login)
   useEffect(() => {
@@ -36,8 +41,30 @@ export const SplashPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate, viewState, showPostVideo]);
 
-  // Handle "Entra nel Game" click - show pre-registration video
+  // Handle "Entra nel Game" click - show choice between login and register
   const handleEnterGame = () => {
+    setViewState('auth-choice');
+  };
+
+  // Handle login choice - try to login with existing passkey
+  const handleLogin = async () => {
+    setAuthLoading(true);
+    setShowPostVideo(true); // Imposta il flag PRIMA del login
+    try {
+      await loginWithPasskey();
+      // After successful login, show post-login video
+      setViewState('video-post');
+      setAuthLoading(false);
+    } catch (error) {
+      console.error('Login failed:', error);
+      alert(error instanceof Error ? error.message : 'Errore durante il login. Registrati se non hai ancora un account.');
+      setShowPostVideo(false);
+      setAuthLoading(false);
+    }
+  };
+
+  // Handle register choice - show pre-registration video then form
+  const handleRegister = () => {
     setViewState('video-pre');
   };
 
@@ -46,7 +73,7 @@ export const SplashPage: React.FC = () => {
     setViewState('auth');
   };
 
-  // Handle authentication with passkey
+  // Handle registration with passkey (crea nuovo account)
   const handleAuth = async () => {
     // Validazione campi obbligatori
     if (!registrationData.nome || !registrationData.cognome || !registrationData.email) {
@@ -55,15 +82,17 @@ export const SplashPage: React.FC = () => {
     }
 
     setAuthLoading(true);
-    setShowPostVideo(true); // Imposta il flag PRIMA del login
+    setShowPostVideo(true); // Imposta il flag PRIMA della registrazione
     
     try {
-      await login(registrationData);
-      // After successful login, show post-registration video
+      // Chiama direttamente register() per creare un nuovo account con nuova passkey
+      // Non provare a fare login prima - l'utente vuole registrarsi!
+      await register(registrationData);
+      // After successful registration, show post-registration video
       setViewState('video-post');
       setAuthLoading(false);
     } catch (error) {
-      console.error('Auth failed:', error);
+      console.error('Registration failed:', error);
       alert(error instanceof Error ? error.message : 'Errore durante la registrazione');
       setShowPostVideo(false);
       setAuthLoading(false);
@@ -265,6 +294,52 @@ export const SplashPage: React.FC = () => {
               <Fingerprint size={24} />
               Entra nel Game
             </motion.button>
+          ) : viewState === 'auth-choice' ? (
+            <motion.div
+              key="auth-choice"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-3 w-full"
+            >
+              <p className="text-sm text-gray-400 text-center mb-4">
+                Hai già un account o vuoi registrarti?
+              </p>
+              
+              <button
+                onClick={handleLogin}
+                disabled={authLoading}
+                className="btn-primary w-full flex items-center justify-center gap-3 py-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {authLoading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"
+                  />
+                ) : (
+                  <>
+                    <Fingerprint size={24} />
+                    Accedi con Passkey
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={handleRegister}
+                disabled={authLoading}
+                className="btn-secondary w-full flex items-center justify-center gap-3 py-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Sparkles size={24} />
+                Registrati (Nuovo Account)
+              </button>
+              
+              <button
+                onClick={() => setViewState('splash')}
+                className="w-full text-center text-gray-500 text-sm py-2"
+              >
+                Indietro
+              </button>
+            </motion.div>
           ) : viewState === 'auth' ? (
             <motion.div
               key="auth"
@@ -356,13 +431,29 @@ export const SplashPage: React.FC = () => {
               >
                 Annulla
               </button>
+              
+              {/* Debug button */}
+              <button
+                onClick={() => setShowDebug(!showDebug)}
+                className="w-full text-center text-gray-400 text-xs py-2 underline"
+              >
+                {showDebug ? 'Nascondi' : 'Mostra'} Debug WebAuthn
+              </button>
+              
+              {/* Debug panel */}
+              {showDebug && (
+                <div className="mt-4 p-4 bg-gray-900 rounded-lg border border-gray-700">
+                  <WebAuthnDebug />
+                </div>
+              )}
             </motion.div>
           ) : null}
         </AnimatePresence>
       </motion.div>
 
       {/* PWA Install Prompt - Shows automatically when app is not installed */}
-      {viewState === 'splash' && <PWAInstallPrompt delay={500} autoShow={true} forceShow={true} />}
+      {/* DISABILITATO TEMPORANEAMENTE */}
+      {/* {viewState === 'splash' && <PWAInstallPrompt delay={500} autoShow={true} forceShow={true} />} */}
 
       {/* Footer */}
       <motion.p 

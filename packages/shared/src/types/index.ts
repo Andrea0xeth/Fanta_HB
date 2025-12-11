@@ -175,3 +175,4 @@ export const isProofValidated = (votiPositivi: number, votiTotali: number): bool
   return (votiPositivi / votiTotali) >= VALIDATION_THRESHOLD;
 };
 
+
