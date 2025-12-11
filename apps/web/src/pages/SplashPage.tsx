@@ -528,8 +528,8 @@ export const SplashPage: React.FC = () => {
 
   return (
     <div className="h-screen bg-dark flex flex-col items-center justify-center p-4 pt-safe overflow-hidden relative">
-      {/* Clown Background - Large and semi-transparent, below falling elements - Top left, slightly off screen */}
-      <div className="absolute pointer-events-none z-0" style={{ top: '-10%', left: '-10%' }}>
+      {/* Clown Background - Large and semi-transparent, below falling elements - Top left, much higher */}
+      <div className="absolute pointer-events-none z-0" style={{ top: '-30%', left: '-10%' }}>
         <img 
           src="/clown.png" 
           alt="Clown Background" 
@@ -641,9 +641,9 @@ export const SplashPage: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* CIRCOLOCO Fuerteventura - White Neon - Larger */}
+        {/* CIRCOLOCO Fuerteventura - White Neon - Larger - Lower position */}
         <motion.div 
-          className="neon-3d-glow-white mb-4"
+          className="neon-3d-glow-white mb-4 mt-12 md:mt-16"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5, duration: 0.6 }}
