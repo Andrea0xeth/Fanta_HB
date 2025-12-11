@@ -1,9 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-
-interface ServiceWorkerRegistration extends ServiceWorkerRegistration {
-  waiting?: ServiceWorker | null;
-  installing?: ServiceWorker | null;
-}
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface UsePWAUpdateOptions {
   autoUpdateDelay?: number; // Tempo in ms prima dell'aggiornamento automatico (0 = disabilitato)
@@ -14,7 +9,55 @@ export const usePWAUpdate = (options: UsePWAUpdateOptions = {}) => {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const autoUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const updateServiceWorkerRef = useRef<(() => Promise<void>) | null>(null);
+
+  const updateServiceWorker = useCallback(async () => {
+    const currentRegistration = registration;
+    if (!currentRegistration || !currentRegistration.waiting) {
+      return;
+    }
+
+    // Cancella l'aggiornamento automatico se era programmato
+    if (autoUpdateTimeoutRef.current) {
+      clearTimeout(autoUpdateTimeoutRef.current);
+      autoUpdateTimeoutRef.current = null;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      // Invia un messaggio al service worker in attesa per attivarlo
+      currentRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+
+      // Attendi che il nuovo service worker prenda il controllo
+      await new Promise<void>((resolve) => {
+        const handleControllerChange = () => {
+          resolve();
+        };
+        navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange, { once: true });
+        
+        // Fallback: se dopo 3 secondi non c'è stato il cambio, ricarica comunque
+        setTimeout(() => {
+          navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+          resolve();
+        }, 3000);
+      });
+
+      // Ricarica la pagina per usare la nuova versione
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating service worker:', error);
+      setIsUpdating(false);
+      // In caso di errore, prova comunque a ricaricare
+      window.location.reload();
+    }
+  }, [registration]);
+
+  // Salva il riferimento alla funzione per usarla dentro l'useEffect
+  useEffect(() => {
+    updateServiceWorkerRef.current = updateServiceWorker;
+  }, [updateServiceWorker]);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) {
@@ -22,6 +65,13 @@ export const usePWAUpdate = (options: UsePWAUpdateOptions = {}) => {
     }
 
     let registrationInstance: ServiceWorkerRegistration | null = null;
+    
+    // Helper per chiamare update() che potrebbe non essere nel tipo standard
+    const updateRegistration = (reg: ServiceWorkerRegistration) => {
+      if ('update' in reg && typeof reg.update === 'function') {
+        reg.update();
+      }
+    };
 
     // Funzione per controllare se c'è un aggiornamento
     const checkForUpdate = async () => {
@@ -36,9 +86,9 @@ export const usePWAUpdate = (options: UsePWAUpdateOptions = {}) => {
           setUpdateAvailable(true);
           
           // Se è configurato l'aggiornamento automatico, programma il reload
-          if (autoUpdateDelay > 0 && !autoUpdateTimeoutRef.current) {
+          if (autoUpdateDelay > 0 && !autoUpdateTimeoutRef.current && updateServiceWorkerRef.current) {
             autoUpdateTimeoutRef.current = setTimeout(() => {
-              updateServiceWorker();
+              updateServiceWorkerRef.current?.();
             }, autoUpdateDelay);
           }
           return;
@@ -54,9 +104,9 @@ export const usePWAUpdate = (options: UsePWAUpdateOptions = {}) => {
               setUpdateAvailable(true);
               
               // Se è configurato l'aggiornamento automatico, programma il reload
-              if (autoUpdateDelay > 0 && !autoUpdateTimeoutRef.current) {
+              if (autoUpdateDelay > 0 && !autoUpdateTimeoutRef.current && updateServiceWorkerRef.current) {
                 autoUpdateTimeoutRef.current = setTimeout(() => {
-                  updateServiceWorker();
+                  updateServiceWorkerRef.current?.();
                 }, autoUpdateDelay);
               }
             }
@@ -73,9 +123,9 @@ export const usePWAUpdate = (options: UsePWAUpdateOptions = {}) => {
                 setUpdateAvailable(true);
                 
                 // Se è configurato l'aggiornamento automatico, programma il reload
-                if (autoUpdateDelay > 0 && !autoUpdateTimeoutRef.current) {
+                if (autoUpdateDelay > 0 && !autoUpdateTimeoutRef.current && updateServiceWorkerRef.current) {
                   autoUpdateTimeoutRef.current = setTimeout(() => {
-                    updateServiceWorker();
+                    updateServiceWorkerRef.current?.();
                   }, autoUpdateDelay);
                 }
               }
@@ -102,7 +152,7 @@ export const usePWAUpdate = (options: UsePWAUpdateOptions = {}) => {
     // Controlla periodicamente (ogni ora)
     const interval = setInterval(() => {
       if (registrationInstance) {
-        registrationInstance.update();
+        updateRegistration(registrationInstance);
       }
       checkForUpdate();
     }, 60 * 60 * 1000);
@@ -110,7 +160,7 @@ export const usePWAUpdate = (options: UsePWAUpdateOptions = {}) => {
     // Controlla quando la pagina torna in focus
     const handleVisibilityChange = () => {
       if (!document.hidden && registrationInstance) {
-        registrationInstance.update();
+        updateRegistration(registrationInstance);
         checkForUpdate();
       }
     };
@@ -125,48 +175,8 @@ export const usePWAUpdate = (options: UsePWAUpdateOptions = {}) => {
         clearTimeout(autoUpdateTimeoutRef.current);
       }
     };
+    // Nota: updateServiceWorker è accessibile tramite ref, non serve nelle dipendenze
   }, [autoUpdateDelay]);
-
-  const updateServiceWorker = async () => {
-    if (!registration || !registration.waiting) {
-      return;
-    }
-
-    // Cancella l'aggiornamento automatico se era programmato
-    if (autoUpdateTimeoutRef.current) {
-      clearTimeout(autoUpdateTimeoutRef.current);
-      autoUpdateTimeoutRef.current = null;
-    }
-
-    setIsUpdating(true);
-
-    try {
-      // Invia un messaggio al service worker in attesa per attivarlo
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-
-      // Attendi che il nuovo service worker prenda il controllo
-      await new Promise<void>((resolve) => {
-        const handleControllerChange = () => {
-          resolve();
-        };
-        navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange, { once: true });
-        
-        // Fallback: se dopo 3 secondi non c'è stato il cambio, ricarica comunque
-        setTimeout(() => {
-          navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
-          resolve();
-        }, 3000);
-      });
-
-      // Ricarica la pagina per usare la nuova versione
-      window.location.reload();
-    } catch (error) {
-      console.error('Error updating service worker:', error);
-      setIsUpdating(false);
-      // In caso di errore, prova comunque a ricaricare
-      window.location.reload();
-    }
-  };
 
   const dismissUpdate = () => {
     setUpdateAvailable(false);
