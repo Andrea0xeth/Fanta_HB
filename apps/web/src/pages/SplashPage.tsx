@@ -589,19 +589,19 @@ export const SplashPage: React.FC = () => {
           </h1>
         </div>
 
-        {/* Di Ciaccio - 30 - Small subtitle - White with D and C uppercase */}
+        {/* Di Ciaccio - 30 - Small subtitle - White with D and C uppercase - Less visible */}
         <motion.p 
-          className="neon-white text-sm md:text-base font-medium text-center mb-6 tracking-wider -mt-2"
+          className="text-sm md:text-base font-medium text-center mb-6 tracking-wider -mt-2"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          animate={{ opacity: 0.5 }}
           transition={{ delay: 0.3 }}
           style={{
-            WebkitTextStroke: '0.6px #ffffff',
+            WebkitTextStroke: '0.4px #ffffff',
+            color: 'rgba(255, 255, 255, 0.4)',
             textShadow: `
-              0 0 1px #ffffff,
-              0 0 2px #ffffff,
-              0 0 3px #ffffff,
-              0 0 4px #ffffff
+              0 0 0.5px rgba(255, 255, 255, 0.3),
+              0 0 1px rgba(255, 255, 255, 0.3),
+              0 0 1.5px rgba(255, 255, 255, 0.2)
             `
           }}
         >
@@ -624,9 +624,16 @@ export const SplashPage: React.FC = () => {
             CIRCOCIACCIO
           </h2>
           <p 
-            className="neon-white text-xl md:text-2xl font-semibold text-center tracking-wider uppercase mt-1"
+            className="text-xl md:text-2xl font-semibold text-center tracking-wider uppercase mt-1"
             style={{
-              animation: `neon-flicker-white ${flickerTimings.fuerteventura}s infinite`,
+              WebkitTextStroke: '0.4px #ffffff',
+              color: 'rgba(255, 255, 255, 0.4)',
+              opacity: 0.5,
+              textShadow: `
+                0 0 0.5px rgba(255, 255, 255, 0.3),
+                0 0 1px rgba(255, 255, 255, 0.3),
+                0 0 1.5px rgba(255, 255, 255, 0.2)
+              `
             }}
           >
             Fuerteventura
