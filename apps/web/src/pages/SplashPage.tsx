@@ -29,6 +29,14 @@ export const SplashPage: React.FC = () => {
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [showPostContinueButton, setShowPostContinueButton] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  
+  // Genera tempi casuali per il flicker di ogni elemento neon
+  const [flickerTimings] = useState(() => ({
+    dc30: 2.5 + Math.random() * 1.5, // Tra 2.5s e 4s
+    diCiaccio: 2.3 + Math.random() * 1.4, // Tra 2.3s e 3.7s
+    circociaccio: 2.4 + Math.random() * 1.6, // Tra 2.4s e 4s
+    fuerteventura: 2.6 + Math.random() * 1.3, // Tra 2.6s e 3.9s
+  }));
 
   // Target date for the event: 8 gennaio 2026 alle 00:00 CET
   // CET = Central European Time (UTC+1 in inverno, UTC+2 in estate)
@@ -571,7 +579,12 @@ export const SplashPage: React.FC = () => {
       >
         {/* DC-30 - Main Neon Text */}
         <div className="neon-3d-glow mb-0">
-          <h1 className="neon-red-orange neon-flicker text-6xl md:text-7xl font-bold text-center tracking-wider">
+          <h1 
+            className="neon-red-orange text-6xl md:text-7xl font-bold text-center tracking-wider"
+            style={{
+              animation: `neon-flicker ${flickerTimings.dc30}s infinite`,
+            }}
+          >
             DC-30
           </h1>
         </div>
@@ -602,10 +615,20 @@ export const SplashPage: React.FC = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5, duration: 0.6 }}
         >
-          <h2 className="neon-white neon-flicker-white text-4xl md:text-5xl font-bold text-center tracking-wider uppercase">
+          <h2 
+            className="neon-white text-4xl md:text-5xl font-bold text-center tracking-wider uppercase"
+            style={{
+              animation: `neon-flicker-white ${flickerTimings.circociaccio}s infinite`,
+            }}
+          >
             CIRCOCIACCIO
           </h2>
-          <p className="neon-white text-xl md:text-2xl font-semibold text-center tracking-wider uppercase mt-1">
+          <p 
+            className="neon-white text-xl md:text-2xl font-semibold text-center tracking-wider uppercase mt-1"
+            style={{
+              animation: `neon-flicker-white ${flickerTimings.fuerteventura}s infinite`,
+            }}
+          >
             Fuerteventura
           </p>
         </motion.div>
