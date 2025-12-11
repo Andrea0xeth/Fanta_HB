@@ -50,10 +50,12 @@ export const SplashPage: React.FC = () => {
     }
   }, [viewState]);
 
-  // Redirect solo se già autenticato ALL'AVVIO (non dopo login)
+  // Redirect solo se già autenticato ALL'AVVIO (non dopo login/registrazione)
+  // Non fare redirect se stiamo mostrando il video post-benvenuto
   useEffect(() => {
     if (isAuthenticated && viewState === 'splash' && !showPostVideo) {
       // Se già autenticato all'avvio, vai direttamente alla home
+      // Ma NON fare redirect se stiamo per mostrare il video post-benvenuto
       navigate('/home', { replace: true });
     }
   }, [isAuthenticated, navigate, viewState, showPostVideo]);
@@ -88,11 +90,12 @@ export const SplashPage: React.FC = () => {
   // Handle login choice - try to login with existing passkey
   const handleLogin = async () => {
     setAuthLoading(true);
-    setShowPostVideo(true); // Imposta il flag PRIMA del login
+    setShowPostVideo(true); // Imposta il flag PRIMA del login per prevenire redirect automatico
     setShowPostContinueButton(false); // Reset continue button state
     try {
       await loginWithPasskey();
       // After successful login, show post-login video
+      // Il video post-benvenuto viene mostrato nello stesso componente con gli stessi bottoni
       setViewState('video-post');
       setAuthLoading(false);
       // Reset video when changing to video state
@@ -149,13 +152,14 @@ export const SplashPage: React.FC = () => {
     }
 
     setAuthLoading(true);
-    setShowPostVideo(true); // Imposta il flag PRIMA della registrazione
+    setShowPostVideo(true); // Imposta il flag PRIMA della registrazione per prevenire redirect automatico
     
     try {
       // Chiama direttamente register() per creare un nuovo account con nuova passkey
       // Non provare a fare login prima - l'utente vuole registrarsi!
       await register(registrationData);
       // After successful registration, show post-registration video
+      // Il video post-benvenuto viene mostrato nello stesso componente con gli stessi bottoni
       setShowPostContinueButton(false); // Reset continue button state
       setViewState('video-post');
       setAuthLoading(false);
