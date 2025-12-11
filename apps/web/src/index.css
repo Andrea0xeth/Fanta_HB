@@ -526,20 +526,19 @@
     }
   }
 
-  /* LED Outline Effect - Solo contorni LED sottili con font arrotondato */
+  /* LED Outline Effect - Solo contorni LED sottili con font arrotondato - Meno luminoso */
   .neon-red-orange {
     font-family: 'Fredoka', 'Boogaloo', 'Bubblegum Sans', sans-serif;
     color: transparent; /* Interno trasparente - solo contorni LED */
     -webkit-text-stroke: 0.6px #ff6b35; /* Stroke sottile per contorno LED */
     text-shadow:
-      0 0 2px #ff0000,
-      0 0 4px #ff0000,
-      0 0 6px #ff0000,
-      0 0 8px #ff4444,
-      0 0 12px #ff4444,
-      0 0 16px #ff6b35,
-      0 0 20px #ff6b35;
-    filter: drop-shadow(0 0 8px rgba(255, 68, 68, 0.6));
+      0 0 1px rgba(255, 0, 0, 0.6),
+      0 0 2px rgba(255, 0, 0, 0.5),
+      0 0 3px rgba(255, 68, 68, 0.4),
+      0 0 4px rgba(255, 68, 68, 0.3),
+      0 0 6px rgba(255, 107, 53, 0.3),
+      0 0 8px rgba(255, 107, 53, 0.2);
+    filter: drop-shadow(0 0 4px rgba(255, 68, 68, 0.3));
     font-weight: 700; /* Bold per font arrotondato */
     letter-spacing: 0.05em;
     text-rendering: optimizeLegibility;
@@ -565,28 +564,27 @@
   }
 
   /* Neon Flicker Animation - More noticeable flicker */
-  /* LED Flicker Animation - Solo contorni LED sottili */
+  /* LED Flicker Animation - Solo contorni LED sottili - Meno luminoso */
   @keyframes neon-flicker {
     0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
       -webkit-text-stroke: 0.6px #ff6b35;
       text-shadow:
-        0 0 2px #ff0000,
-        0 0 4px #ff0000,
-        0 0 6px #ff0000,
-        0 0 8px #ff4444,
-        0 0 12px #ff4444,
-        0 0 16px #ff6b35,
-        0 0 20px #ff6b35;
-      filter: drop-shadow(0 0 8px rgba(255, 68, 68, 0.6));
+        0 0 1px rgba(255, 0, 0, 0.6),
+        0 0 2px rgba(255, 0, 0, 0.5),
+        0 0 3px rgba(255, 68, 68, 0.4),
+        0 0 4px rgba(255, 68, 68, 0.3),
+        0 0 6px rgba(255, 107, 53, 0.3),
+        0 0 8px rgba(255, 107, 53, 0.2);
+      filter: drop-shadow(0 0 4px rgba(255, 68, 68, 0.3));
       opacity: 1;
     }
     20%, 24%, 55% {
       -webkit-text-stroke: 0.5px #ff4444;
       text-shadow:
-        0 0 1px #ff4444,
-        0 0 2px #ff4444,
-        0 0 4px rgba(255, 68, 68, 0.5);
-      filter: drop-shadow(0 0 4px rgba(255, 68, 68, 0.4));
+        0 0 0.5px rgba(255, 68, 68, 0.4),
+        0 0 1px rgba(255, 68, 68, 0.3),
+        0 0 2px rgba(255, 68, 68, 0.2);
+      filter: drop-shadow(0 0 2px rgba(255, 68, 68, 0.2));
       opacity: 0.7;
     }
   }
@@ -610,7 +608,7 @@
     }
   }
 
-  /* 3D LED Lighting Effect - Ambient glow più intenso */
+  /* 3D LED Lighting Effect - Ambient glow meno intenso */
   .neon-3d-glow {
     position: relative;
     padding: 20px;
@@ -626,9 +624,9 @@
     height: 120%;
     background: radial-gradient(
       ellipse at center,
-      rgba(255, 107, 53, 0.25) 0%,
-      rgba(255, 68, 68, 0.15) 30%,
-      rgba(255, 0, 0, 0.08) 50%,
+      rgba(255, 107, 53, 0.12) 0%,
+      rgba(255, 68, 68, 0.08) 30%,
+      rgba(255, 0, 0, 0.04) 50%,
       transparent 70%
     );
     border-radius: 50%;
@@ -648,9 +646,9 @@
     height: 150%;
     background: radial-gradient(
       ellipse at center,
-      rgba(255, 107, 53, 0.12) 0%,
-      rgba(255, 68, 68, 0.06) 25%,
-      rgba(255, 0, 0, 0.03) 45%,
+      rgba(255, 107, 53, 0.06) 0%,
+      rgba(255, 68, 68, 0.03) 25%,
+      rgba(255, 0, 0, 0.015) 45%,
       transparent 65%
     );
     border-radius: 50%;
