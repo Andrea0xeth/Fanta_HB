@@ -64,3 +64,31 @@ export const deleteProofFile = async (filePath: string): Promise<boolean> => {
 
   return !error;
 };
+
+// Helper per upload avatar utente
+export const uploadAvatar = async (
+  file: File, 
+  userId: string
+): Promise<string | null> => {
+  const fileExt = file.name.split('.').pop();
+  const fileName = `avatars/${userId}/${Date.now()}.${fileExt}`;
+  
+  const { data, error } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(fileName, file, {
+      cacheControl: '3600',
+      upsert: false,
+    });
+
+  if (error) {
+    console.error('Upload avatar error:', error);
+    return null;
+  }
+
+  // Get public URL
+  const { data: urlData } = supabase.storage
+    .from(STORAGE_BUCKET)
+    .getPublicUrl(data.path);
+
+  return urlData.publicUrl;
+};

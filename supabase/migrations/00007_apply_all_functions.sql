@@ -12,7 +12,8 @@ CREATE OR REPLACE FUNCTION insert_user_with_passkey(
   p_telefono TEXT DEFAULT NULL,
   p_data_nascita DATE DEFAULT NULL,
   p_squadra_id UUID DEFAULT NULL,
-  p_is_admin BOOLEAN DEFAULT FALSE
+  p_is_admin BOOLEAN DEFAULT FALSE,
+  p_avatar TEXT DEFAULT NULL
 )
 RETURNS TABLE (
   id UUID,
@@ -32,11 +33,11 @@ RETURNS TABLE (
 BEGIN
   INSERT INTO users (
     id, nickname, nome, cognome, email, telefono, data_nascita,
-    passkey_id, squadra_id, punti_personali, is_admin
+    passkey_id, squadra_id, punti_personali, is_admin, avatar
   )
   VALUES (
     p_id, p_nickname, p_nome, p_cognome, p_email, p_telefono, p_data_nascita,
-    p_passkey_id, p_squadra_id, 0, p_is_admin
+    p_passkey_id, p_squadra_id, 0, p_is_admin, p_avatar
   );
   
   RETURN QUERY

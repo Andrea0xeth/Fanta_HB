@@ -23,6 +23,7 @@ export interface RegistrationData {
   email: string;
   telefono: string;
   data_nascita: string;
+  foto_profilo?: File;
 }
 
 // Team types

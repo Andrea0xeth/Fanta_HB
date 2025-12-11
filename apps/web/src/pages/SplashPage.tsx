@@ -28,6 +28,7 @@ export const SplashPage: React.FC = () => {
   const [showDebug, setShowDebug] = useState(false); // Flag per mostrare debug
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [showPostContinueButton, setShowPostContinueButton] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   
   // Genera tempi casuali per il flicker di ogni elemento neon
@@ -197,6 +198,12 @@ export const SplashPage: React.FC = () => {
       alert('Per favore compila tutti i campi obbligatori (Nome, Cognome, Email)');
       return;
     }
+    
+    // Validazione foto profilo obbligatoria
+    if (!registrationData.foto_profilo) {
+      alert('Per favore carica una foto profilo');
+      return;
+    }
 
     setAuthLoading(true);
     setShowPostVideo(true); // Imposta il flag PRIMA della registrazione per prevenire redirect automatico
@@ -230,8 +237,35 @@ export const SplashPage: React.FC = () => {
   };
 
   // Update registration field
-  const updateField = (field: keyof RegistrationData, value: string) => {
+  const updateField = (field: keyof RegistrationData, value: string | File) => {
     setRegistrationData(prev => ({ ...prev, [field]: value }));
+  };
+  
+  // Handle avatar file selection
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validazione tipo file
+      if (!file.type.startsWith('image/')) {
+        alert('Per favore seleziona un file immagine');
+        return;
+      }
+      
+      // Validazione dimensione (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('L\'immagine deve essere inferiore a 5MB');
+        return;
+      }
+      
+      updateField('foto_profilo', file);
+      
+      // Crea preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // When post-registration video ends, show continue button
@@ -481,9 +515,55 @@ export const SplashPage: React.FC = () => {
             className="input text-center text-sm"
           />
           
+          {/* Foto Profilo Upload */}
+          <div className="space-y-2">
+            <label className="block text-xs text-gray-400 text-center">
+              Foto Profilo *
+            </label>
+            <div className="relative">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+                id="avatar-upload"
+                required
+              />
+              <label
+                htmlFor="avatar-upload"
+                className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-600 rounded-2xl cursor-pointer hover:border-coral-500 transition-colors"
+              >
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover rounded-2xl"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-gray-500">
+                    <svg
+                      className="w-8 h-8 mb-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="text-xs">Clicca per caricare</span>
+                  </div>
+                )}
+              </label>
+            </div>
+          </div>
+          
           <button
             onClick={handleAuth}
-            disabled={authLoading || !registrationData.nome || !registrationData.cognome || !registrationData.email}
+            disabled={authLoading || !registrationData.nome || !registrationData.cognome || !registrationData.email || !registrationData.foto_profilo}
             className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-2 active:scale-95 transition-transform duration-75"
           >
             {authLoading ? (
@@ -529,7 +609,7 @@ export const SplashPage: React.FC = () => {
   return (
     <div className="h-screen bg-dark flex flex-col items-center justify-center p-4 pt-safe overflow-hidden relative">
       {/* Clown Background - Large and semi-transparent, below falling elements - Top left, much higher */}
-      <div className="absolute pointer-events-none z-0" style={{ top: '-30%', left: '-10%' }}>
+      <div className="absolute pointer-events-none z-0" style={{ top: '-20%', left: '-10%' }}>
         <img 
           src="/clown.png" 
           alt="Clown Background" 
@@ -641,9 +721,9 @@ export const SplashPage: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* CIRCOLOCO Fuerteventura - White Neon - Larger - Lower position */}
+        {/* CIRCOLOCO Fuerteventura - White Neon - Larger */}
         <motion.div 
-          className="neon-3d-glow-white mb-4 mt-12 md:mt-16"
+          className="neon-3d-glow-white mb-4"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5, duration: 0.6 }}

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { User, Squadra, Quest, ProvaQuest, Gara, GameState, Notifica, RegistrationData } from '../types';
 import type { Database } from '../lib/database.types';
 import { registerPasskey, authenticateWithPasskey } from '../lib/webauthn';
-import { supabase, isSupabaseConfigured, uploadProofFile } from '../lib/supabase';
+import { supabase, isSupabaseConfigured, uploadProofFile, uploadAvatar } from '../lib/supabase';
 
 interface GameContextType {
   // Auth state
@@ -525,6 +525,17 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       const squadreIds = squadreData?.map((s: any) => s.id) || [];
           const randomSquadraId = squadreIds[Math.floor(Math.random() * squadreIds.length)] || null;
 
+          // Carica avatar se presente
+          let avatarUrl: string | null = null;
+          if (registrationData.foto_profilo) {
+            console.log('[Register] 📸 Caricamento avatar...');
+            avatarUrl = await uploadAvatar(registrationData.foto_profilo, userId);
+            if (!avatarUrl) {
+              throw new Error('Errore durante il caricamento della foto profilo');
+            }
+            console.log('[Register] ✅ Avatar caricato:', avatarUrl);
+          }
+
           // Crea l'utente nel database usando la funzione RPC (bypassa cache PostgREST)
           const { data: userDataArray, error: userError } = await supabase.rpc('insert_user_with_passkey', {
             p_id: userId,
@@ -537,6 +548,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
             p_data_nascita: registrationData.data_nascita || null,
             p_squadra_id: randomSquadraId,
             p_is_admin: registrationData.email?.toLowerCase() === 'admin@30diciaccio.it',
+            p_avatar: avatarUrl,
           } as any);
           
           console.log('[Register] 📝 Risultato inserimento:', { userError, userDataArray });
