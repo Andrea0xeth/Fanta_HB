@@ -14,22 +14,22 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, badge }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 relative ${
+      `flex flex-col items-center justify-center py-1 px-2 rounded-2xl transition-all duration-200 relative ${
         isActive 
-          ? 'text-coral-500 bg-coral-500/10' 
-          : 'text-gray-500 hover:text-gray-300'
+          ? 'text-coral-500' 
+          : 'text-gray-500'
       }`
     }
   >
     <div className="relative">
-      {icon}
+      {React.cloneElement(icon as React.ReactElement, { size: 20 })}
       {badge !== undefined && badge > 0 && (
-        <span className="absolute -top-1 -right-2 w-4 h-4 bg-coral-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white">
+        <span className="absolute -top-0.5 -right-1.5 w-3.5 h-3.5 bg-coral-500 rounded-full text-[9px] font-bold flex items-center justify-center text-white">
           {badge > 9 ? '9+' : badge}
         </span>
       )}
     </div>
-    <span className="text-[10px] mt-1 font-medium">{label}</span>
+    <span className="text-[9px] mt-0.5 font-medium leading-tight">{label}</span>
   </NavLink>
 );
 

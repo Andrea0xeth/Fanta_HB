@@ -9,9 +9,9 @@ interface VerificaCardProps {
 }
 
 const tipoIcon = {
-  foto: <Image size={16} />,
-  video: <Video size={16} />,
-  testo: <FileText size={16} />,
+  foto: <Image size={12} />,
+  video: <Video size={12} />,
+  testo: <FileText size={12} />,
 };
 
 export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => {
@@ -34,54 +34,54 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -100 }}
-      className="card"
+      className="card py-2"
     >
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-coral-500 to-turquoise-400 flex items-center justify-center text-white font-bold">
+      {/* Header - Compact */}
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-coral-500 to-turquoise-400 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
           {prova.user.nickname.charAt(0).toUpperCase()}
         </div>
-        <div className="flex-1">
-          <h4 className="font-semibold">{prova.user.nickname}</h4>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            {tipoIcon[prova.tipo]}
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-sm truncate">{prova.user.nickname}</h4>
+          <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+            {React.cloneElement(tipoIcon[prova.tipo] as React.ReactElement, { size: 12 })}
             <span className="capitalize">{prova.tipo}</span>
             <Clock size={10} />
             <span>{timeAgo()}</span>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-sm font-semibold text-turquoise-400">
+        <div className="text-right flex-shrink-0">
+          <div className="text-xs font-semibold text-turquoise-400">
             {percentuale}%
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-[10px] text-gray-500">
             {prova.voti_totali} voti
           </div>
         </div>
       </div>
 
-      {/* Content Preview */}
-      <div className="mb-4 rounded-xl overflow-hidden bg-gray-900/50 p-4">
+      {/* Content Preview - Compact */}
+      <div className="mb-2 rounded-xl overflow-hidden glass p-2">
         {prova.tipo === 'foto' && (
-          <div className="aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
-            <Image className="text-gray-600" size={48} />
-            <span className="text-gray-600 ml-2">Anteprima foto</span>
+          <div className="aspect-video glass rounded-lg flex items-center justify-center">
+            <Image className="text-gray-600" size={32} />
+            <span className="text-gray-600 ml-2 text-xs">Anteprima foto</span>
           </div>
         )}
         {prova.tipo === 'video' && (
-          <div className="aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
-            <Video className="text-gray-600" size={48} />
-            <span className="text-gray-600 ml-2">Anteprima video</span>
+          <div className="aspect-video glass rounded-lg flex items-center justify-center">
+            <Video className="text-gray-600" size={32} />
+            <span className="text-gray-600 ml-2 text-xs">Anteprima video</span>
           </div>
         )}
         {prova.tipo === 'testo' && (
-          <p className="text-gray-300 text-sm italic">"{prova.contenuto}"</p>
+          <p className="text-gray-300 text-xs italic line-clamp-3">"{prova.contenuto}"</p>
         )}
       </div>
 
-      {/* Progress Bar */}
-      <div className="mb-4">
-        <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+      {/* Progress Bar - Compact */}
+      <div className="mb-2">
+        <div className="h-1.5 glass rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${percentuale}%` }}
@@ -90,27 +90,27 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
             }`}
           />
         </div>
-        <p className="text-xs text-gray-500 mt-1 text-center">
+        <p className="text-[10px] text-gray-500 mt-0.5 text-center">
           {percentuale >= 66 ? '✅ Soglia raggiunta!' : `Serve 66% (ancora ${66 - percentuale}%)`}
         </p>
       </div>
 
-      {/* Vote Buttons */}
-      <div className="flex gap-3">
+      {/* Vote Buttons - Compact */}
+      <div className="flex gap-1.5">
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => onVote(prova.id, false)}
-          className="flex-1 py-3 rounded-xl bg-gray-800 border border-red-500/30 text-red-400 font-semibold flex items-center justify-center gap-2 hover:bg-red-500/10"
+          className="flex-1 py-2 rounded-xl glass border border-red-500/30 text-red-400 font-semibold text-xs flex items-center justify-center gap-1"
         >
-          <X size={18} />
+          <X size={14} />
           Rifiuta
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => onVote(prova.id, true)}
-          className="flex-1 py-3 rounded-xl bg-green-500/20 border border-green-500/30 text-green-400 font-semibold flex items-center justify-center gap-2 hover:bg-green-500/30"
+          className="flex-1 py-2 rounded-xl glass border border-green-500/30 text-green-400 font-semibold text-xs flex items-center justify-center gap-1"
         >
-          <Check size={18} />
+          <Check size={14} />
           Valida
         </motion.button>
       </div>

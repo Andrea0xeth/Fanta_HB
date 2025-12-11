@@ -93,31 +93,31 @@ export const PremiPage: React.FC = () => {
   const totalPoints = Math.round(userPoints * 0.7 + teamPoints * 0.3);
 
   return (
-    <div className="min-h-screen bg-dark">
-      {/* Header */}
-      <div className="bg-gradient-to-b from-gray-900 to-dark px-4 pt-safe pb-4">
+    <div className="h-full bg-dark flex flex-col overflow-hidden">
+      {/* Header - Fixed, compact */}
+      <div className="flex-shrink-0 glass-strong px-3 pt-safe pb-2">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-6"
+          className="text-center mb-2"
         >
-          <Gift className="w-12 h-12 text-party-300 mx-auto mb-2" />
-          <h1 className="text-2xl font-display font-bold">Premi</h1>
-          <p className="text-gray-500 text-sm">Cosa puoi vincere al 30diCiaccioGame!</p>
+          <Gift className="w-8 h-8 text-party-300 mx-auto mb-1" />
+          <h1 className="text-lg font-display font-bold">Premi</h1>
+          <p className="text-gray-500 text-[10px]">Cosa puoi vincere al 30diCiaccioGame!</p>
         </motion.div>
 
-        {/* Points Overview */}
+        {/* Points Overview - Compact */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="gradient-party rounded-2xl p-4"
+          className="gradient-party rounded-2xl p-2.5"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">I tuoi punti totali</p>
-              <p className="text-3xl font-bold text-white">{totalPoints}</p>
+              <p className="text-white/80 text-xs">I tuoi punti totali</p>
+              <p className="text-2xl font-bold text-white">{totalPoints}</p>
             </div>
-            <div className="text-right text-white/80 text-sm">
+            <div className="text-right text-white/80 text-xs">
               <p>Personali: {userPoints}</p>
               <p>Squadra: {teamPoints}</p>
             </div>
@@ -125,8 +125,8 @@ export const PremiPage: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Content */}
-      <div className="px-4 pb-6 space-y-6">
+      {/* Content - Scrollable */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2 space-y-3">
         {/* Categories */}
         {(['squadra', 'singolo', 'giornaliero', 'speciale'] as const).map((tipo) => {
           const premi = mockPremi.filter(p => p.tipo === tipo);
@@ -136,14 +136,14 @@ export const PremiPage: React.FC = () => {
           
           return (
             <section key={tipo}>
-              <h2 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
-                <div className={`p-1.5 rounded-lg ${bg}`}>
-                  <Icon size={18} className={text} />
+              <h2 className="font-display font-bold text-sm mb-2 flex items-center gap-1.5">
+                <div className={`p-1 rounded-lg ${bg}`}>
+                  <Icon size={14} className={text} />
                 </div>
                 Premi {tipoLabels[tipo]}
               </h2>
               
-              <div className="grid gap-4">
+              <div className="grid gap-2">
                 {premi.map((premio, index) => {
                   const progress = (totalPoints / (premio.punti_richiesti || 1)) * 100;
                   const isUnlocked = progress >= 100;
@@ -153,49 +153,49 @@ export const PremiPage: React.FC = () => {
                       key={premio.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className={`card relative overflow-hidden ${
-                        isUnlocked ? 'border-party-300/50 bg-party-300/5' : ''
+                      transition={{ delay: index * 0.05 }}
+                      className={`card relative overflow-hidden py-2 ${
+                        isUnlocked ? 'border-party-300/50' : ''
                       }`}
                     >
                       {/* Unlocked badge */}
                       {isUnlocked && (
-                        <div className="absolute top-2 right-2">
-                          <span className="badge-party flex items-center gap-1">
-                            <Star size={10} />
+                        <div className="absolute top-1.5 right-1.5">
+                          <span className="badge-party flex items-center gap-0.5">
+                            <Star size={8} />
                             Sbloccato!
                           </span>
                         </div>
                       )}
 
-                      <div className="flex gap-4">
-                        {/* Emoji/Image */}
-                        <div className={`w-16 h-16 rounded-xl flex items-center justify-center text-3xl ${
+                      <div className="flex gap-2">
+                        {/* Emoji/Image - Compact */}
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 ${
                           isUnlocked 
                             ? 'bg-gradient-to-br from-party-300/30 to-party-300/10' 
-                            : 'bg-gray-800'
+                            : 'glass'
                         }`}>
                           {premio.immagine}
                         </div>
 
-                        {/* Info */}
+                        {/* Info - Compact */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold mb-1">{premio.titolo}</h3>
-                          <p className="text-sm text-gray-500 mb-2 line-clamp-2">
+                          <h3 className="font-semibold mb-0.5 text-sm truncate">{premio.titolo}</h3>
+                          <p className="text-xs text-gray-500 mb-1.5 line-clamp-2 leading-relaxed">
                             {premio.descrizione}
                           </p>
                           
-                          {/* Progress */}
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className={`${bg} ${text} px-2 py-0.5 rounded-full`}>
+                          {/* Progress - Compact */}
+                          <div className="space-y-0.5">
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span className={`${bg} ${text} px-1.5 py-0.5 rounded-full`}>
                                 {tipoLabels[tipo]}
                               </span>
                               <span className="text-gray-500">
                                 {Math.min(totalPoints, premio.punti_richiesti || 0)}/{premio.punti_richiesti} pts
                               </span>
                             </div>
-                            <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                            <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
                               <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${Math.min(progress, 100)}%` }}
@@ -214,16 +214,16 @@ export const PremiPage: React.FC = () => {
           );
         })}
 
-        {/* Motivation Card */}
+        {/* Motivation Card - Compact */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="card text-center"
+          className="card text-center py-3"
         >
-          <Zap className="w-10 h-10 text-party-300 mx-auto mb-3" />
-          <h3 className="font-bold text-lg mb-2">Continua a giocare!</h3>
-          <p className="text-gray-500 text-sm">
+          <Zap className="w-8 h-8 text-party-300 mx-auto mb-2" />
+          <h3 className="font-bold text-sm mb-1">Continua a giocare!</h3>
+          <p className="text-gray-500 text-xs">
             Completa quest, vinci gare e scala la classifica per sbloccare tutti i premi! 🚀
           </p>
         </motion.div>

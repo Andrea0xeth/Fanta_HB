@@ -40,17 +40,17 @@ export const Countdown: React.FC<CountdownProps> = ({ targetDate, onComplete }) 
 
   const TimeUnit: React.FC<{ value: number; label: string }> = ({ value, label }) => (
     <div className="flex flex-col items-center">
-      <div className="w-16 h-16 bg-gray-800/80 backdrop-blur rounded-xl flex items-center justify-center border border-gray-700">
-        <span className="text-2xl font-bold text-gradient">
+      <div className="glass w-12 h-12 rounded-xl flex items-center justify-center">
+        <span className="text-lg font-bold text-gradient">
           {value.toString().padStart(2, '0')}
         </span>
       </div>
-      <span className="text-xs text-gray-500 mt-1 uppercase tracking-wider">{label}</span>
+      <span className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-wider">{label}</span>
     </div>
   );
 
   return (
-    <div className="flex items-center justify-center gap-2">
+    <div className="flex items-center justify-center gap-1.5">
       {timeLeft.days > 0 && <TimeUnit value={timeLeft.days} label="Giorni" />}
       <TimeUnit value={timeLeft.hours} label="Ore" />
       <TimeUnit value={timeLeft.minutes} label="Min" />

@@ -80,6 +80,8 @@
   
   html {
     scroll-behavior: smooth;
+    height: 100%;
+    overflow: hidden;
   }
   
   body {
@@ -88,12 +90,37 @@
     overscroll-behavior: none;
     user-select: none;
     -webkit-user-select: none;
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
+  
+  /* Ensure interactive elements are clickable */
+  button, a, input, textarea, select {
+    pointer-events: auto !important;
+    -webkit-tap-highlight-color: rgba(255, 107, 107, 0.2);
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* Ensure buttons are always on top and clickable */
+  button[type="button"],
+  button:not([disabled]) {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    touch-action: manipulation;
+  }
+  
+  #root {
+    height: 100%;
+    overflow: hidden;
   }
   
   /* PWA iOS specific fixes */
   @supports (-webkit-touch-callout: none) {
-    body {
-      min-height: -webkit-fill-available;
+    html, body {
+      height: -webkit-fill-available;
     }
   }
 }
@@ -117,79 +144,175 @@
     @apply bg-gradient-to-br from-gray-800 to-gray-900;
   }
   
-  /* Glass effect */
+  /* Liquid Glass effect - iOS style */
   .glass {
-    @apply bg-white/10 backdrop-blur-lg border border-white/20;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
   }
   
-  /* Card styles */
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Card styles - Compact iOS style */
   .card {
-    @apply bg-gray-800/80 backdrop-blur-sm rounded-2xl p-4 border border-gray-700/50;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.15);
   }
   
   .card-interactive {
-    @apply bg-gray-800/80 backdrop-blur-sm rounded-2xl p-4 border border-gray-700/50 
-           transition-all duration-200 active:scale-[0.98] hover:border-coral-500/50;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.15);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: rgba(255, 107, 107, 0.2);
   }
   
-  /* Button styles */
+  .card-interactive:active {
+    transform: scale(0.97);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 107, 107, 0.3);
+  }
+  
+  /* Button styles - iOS compact */
   .btn-primary {
-    @apply px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-coral-500 to-coral-400
-           shadow-lg transition-all duration-200 
-           active:scale-95 cursor-pointer;
+    @apply px-5 py-2.5 rounded-2xl font-semibold text-white;
+    background: linear-gradient(135deg, #FF6B6B 0%, #ff7a6b 100%);
+    box-shadow: 0 4px 16px rgba(255, 107, 107, 0.3);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: rgba(255, 107, 107, 0.3);
+  }
+  
+  .btn-primary:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.2);
   }
   
   .btn-secondary {
-    @apply px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-turquoise-400 to-turquoise-500
-           shadow-lg transition-all duration-200 
-           active:scale-95 cursor-pointer;
+    @apply px-5 py-2.5 rounded-2xl font-semibold text-white;
+    background: linear-gradient(135deg, #4ECDC4 0%, #09beb0 100%);
+    box-shadow: 0 4px 16px rgba(78, 205, 196, 0.3);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: rgba(78, 205, 196, 0.3);
+  }
+  
+  .btn-secondary:active {
+    transform: scale(0.96);
+    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.2);
   }
   
   .btn-ghost {
-    @apply px-6 py-3 rounded-xl font-semibold text-white bg-white/10 
-           border border-white/20 transition-all duration-200 
-           active:scale-95 hover:bg-white/20 cursor-pointer;
+    @apply px-5 py-2.5 rounded-2xl font-semibold text-white;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
   }
   
-  /* Input styles */
+  .btn-ghost:active {
+    transform: scale(0.96);
+    background: rgba(255, 255, 255, 0.12);
+  }
+  
+  /* Input styles - iOS compact */
   .input {
-    @apply w-full px-4 py-3 bg-gray-800/80 border border-gray-700 rounded-xl
-           text-white placeholder-gray-500 focus:outline-none focus:border-coral-500
-           focus:ring-2 focus:ring-coral-500/20 transition-all duration-200;
+    @apply w-full px-3 py-2.5 rounded-2xl text-white placeholder-gray-500;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
-  /* Badge styles */
+  .input:focus {
+    outline: none;
+    border-color: rgba(255, 107, 107, 0.5);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+  }
+  
+  /* Badge styles - Compact */
   .badge {
-    @apply px-2 py-0.5 text-xs font-semibold rounded-full;
+    @apply px-2 py-0.5 text-[10px] font-semibold rounded-full;
   }
   
   .badge-coral {
-    @apply px-2 py-0.5 text-xs font-semibold rounded-full bg-coral-500/20 text-coral-400;
+    @apply px-2 py-0.5 text-[10px] font-semibold rounded-full;
+    background: rgba(255, 107, 107, 0.2);
+    color: #ffaaa1;
+    backdrop-filter: blur(10px);
   }
   
   .badge-turquoise {
-    @apply px-2 py-0.5 text-xs font-semibold rounded-full bg-turquoise-400/20 text-turquoise-400;
+    @apply px-2 py-0.5 text-[10px] font-semibold rounded-full;
+    background: rgba(78, 205, 196, 0.2);
+    color: #92fee4;
+    backdrop-filter: blur(10px);
   }
   
   .badge-party {
-    @apply px-2 py-0.5 text-xs font-semibold rounded-full bg-party-300/20 text-party-300;
+    @apply px-2 py-0.5 text-[10px] font-semibold rounded-full;
+    background: rgba(255, 230, 109, 0.2);
+    color: #FFE66D;
+    backdrop-filter: blur(10px);
   }
   
-  /* Bottom Navigation */
+  /* Bottom Navigation - iOS style glass */
   .bottom-nav {
-    @apply fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-lg 
-           border-t border-gray-800 px-2 z-50;
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    @apply fixed bottom-0 left-0 right-0 z-50;
+    background: rgba(26, 26, 26, 0.8);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 4px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
   }
   
   .nav-item {
-    @apply flex flex-col items-center justify-center py-2 px-3 rounded-xl
+    @apply flex flex-col items-center justify-center py-1.5 px-2 rounded-2xl
            transition-all duration-200 text-gray-500;
+    min-width: 60px;
+    pointer-events: auto;
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(255, 107, 107, 0.2);
   }
   
   .nav-item-active {
-    @apply flex flex-col items-center justify-center py-2 px-3 rounded-xl
-           transition-all duration-200 text-coral-500 bg-coral-500/10;
+    @apply flex flex-col items-center justify-center py-1.5 px-2 rounded-2xl
+           transition-all duration-200 text-coral-500;
+    background: rgba(255, 107, 107, 0.15);
+    backdrop-filter: blur(10px);
+    min-width: 60px;
+    pointer-events: auto;
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(255, 107, 107, 0.2);
   }
   
   /* Safe area padding */

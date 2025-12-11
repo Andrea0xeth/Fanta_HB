@@ -25,19 +25,19 @@ export const SquadraPage: React.FC = () => {
 
   if (!mySquadra) {
     return (
-      <div className="min-h-screen bg-dark flex items-center justify-center">
+      <div className="h-full bg-dark flex items-center justify-center">
         <p className="text-gray-500">Nessuna squadra assegnata</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-dark">
-      {/* Hero Header */}
+    <div className="h-full bg-dark flex flex-col overflow-hidden">
+      {/* Hero Header - Fixed, compact */}
       <div 
-        className="relative px-4 pt-safe pb-6"
+        className="flex-shrink-0 glass-strong px-3 pt-safe pb-2"
         style={{ 
-          background: `linear-gradient(135deg, ${mySquadra.colore}40 0%, transparent 100%)` 
+          background: `linear-gradient(135deg, ${mySquadra.colore}30 0%, rgba(26, 26, 26, 0.8) 100%)` 
         }}
       >
         <motion.div 
@@ -46,116 +46,116 @@ export const SquadraPage: React.FC = () => {
           className="text-center"
         >
           <motion.div
-            animate={{ scale: [1, 1.1, 1] }}
+            animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="text-6xl mb-4"
+            className="text-4xl mb-1"
           >
             {mySquadra.emoji}
           </motion.div>
-          <h1 className="text-3xl font-display font-bold mb-2">{mySquadra.nome}</h1>
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex items-center gap-1 text-gray-400">
-              <Trophy size={16} />
-              <span className="font-semibold">#{myPosition}</span>
+          <h1 className="text-xl font-display font-bold mb-1">{mySquadra.nome}</h1>
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center gap-0.5 text-gray-400">
+              <Trophy size={12} />
+              <span className="font-semibold text-xs">#{myPosition}</span>
             </div>
-            <div className="flex items-center gap-1 text-party-300">
-              <Flame size={16} />
-              <span className="font-bold">{mySquadra.punti_squadra} pts</span>
+            <div className="flex items-center gap-0.5 text-party-300">
+              <Flame size={12} />
+              <span className="font-bold text-sm">{mySquadra.punti_squadra} pts</span>
             </div>
           </div>
         </motion.div>
       </div>
 
-      {/* Content */}
-      <div className="px-4 space-y-6 pb-6 -mt-2">
-        {/* Team Stats Card */}
+      {/* Content - Scrollable */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2 space-y-3">
+        {/* Team Stats Card - Compact */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="card"
+          className="card py-2"
         >
-          <h2 className="font-semibold mb-4 flex items-center gap-2">
-            <Users size={18} className="text-turquoise-400" />
+          <h2 className="font-semibold mb-2 flex items-center gap-1.5 text-sm">
+            <Users size={14} className="text-turquoise-400" />
             Statistiche Squadra
           </h2>
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-3 gap-2 text-center">
             <div>
-              <div className="text-2xl font-bold text-coral-500">{mockMembers.length}</div>
-              <div className="text-xs text-gray-500">Membri</div>
+              <div className="text-lg font-bold text-coral-500">{mockMembers.length}</div>
+              <div className="text-[10px] text-gray-500">Membri</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-turquoise-400">
+              <div className="text-lg font-bold text-turquoise-400">
                 {teamGare.filter(g => g.vincitore_id === mySquadra.id).length}
               </div>
-              <div className="text-xs text-gray-500">Gare Vinte</div>
+              <div className="text-[10px] text-gray-500">Gare Vinte</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-party-300">
+              <div className="text-lg font-bold text-party-300">
                 {Math.round(mockMembers.reduce((acc, m) => acc + m.punti, 0) / mockMembers.length)}
               </div>
-              <div className="text-xs text-gray-500">Media Pts</div>
+              <div className="text-[10px] text-gray-500">Media Pts</div>
             </div>
           </div>
         </motion.div>
 
-        {/* Team Members */}
+        {/* Team Members - Compact */}
         <section>
-          <h2 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
-            <Users size={20} className="text-turquoise-400" />
+          <h2 className="font-display font-bold text-sm mb-2 flex items-center gap-1.5">
+            <Users size={16} className="text-turquoise-400" />
             Membri della Squadra
           </h2>
           
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {mockMembers.map((member, index) => (
               <motion.div
                 key={member.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className={`card flex items-center gap-3 ${
+                className={`card flex items-center gap-2 py-2 ${
                   member.id === user?.id ? 'border-coral-500/50' : ''
                 }`}
               >
-                <div className="w-8 text-center font-bold text-gray-500">
+                <div className="w-5 text-center font-bold text-gray-500 text-xs flex-shrink-0">
                   {index + 1}
                 </div>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-coral-500 to-turquoise-400 flex items-center justify-center text-white font-bold">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-coral-500 to-turquoise-400 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                   {member.nickname.charAt(0).toUpperCase()}
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{member.nickname}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-sm truncate">{member.nickname}</span>
                     {member.isMVP && (
-                      <Crown size={14} className="text-party-300" />
+                      <Crown size={12} className="text-party-300 flex-shrink-0" />
                     )}
                     {member.id === user?.id && (
-                      <span className="badge-coral">Tu</span>
+                      <span className="badge-coral flex-shrink-0">Tu</span>
                     )}
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="font-bold text-turquoise-400">{member.punti}</span>
-                  <span className="text-gray-500 text-sm"> pts</span>
+                <div className="text-right flex-shrink-0">
+                  <span className="font-bold text-turquoise-400 text-sm">{member.punti}</span>
+                  <span className="text-gray-500 text-[10px]"> pts</span>
                 </div>
               </motion.div>
             ))}
           </div>
         </section>
 
-        {/* Team Games */}
+        {/* Team Games - Compact */}
         <section>
-          <h2 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
-            <Swords size={20} className="text-coral-500" />
+          <h2 className="font-display font-bold text-sm mb-2 flex items-center gap-1.5">
+            <Swords size={16} className="text-coral-500" />
             Gare della Squadra
           </h2>
           
           {teamGare.length === 0 ? (
-            <div className="card text-center text-gray-500 py-8">
-              <Swords size={48} className="mx-auto mb-4 opacity-50" />
-              <p>Nessuna gara programmata</p>
+            <div className="card text-center text-gray-500 py-6">
+              <Swords size={32} className="mx-auto mb-2 opacity-50" />
+              <p className="text-xs">Nessuna gara programmata</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-2">
               {teamGare.map((gara) => (
                 <GaraCard key={gara.id} gara={gara} />
               ))}
@@ -163,39 +163,39 @@ export const SquadraPage: React.FC = () => {
           )}
         </section>
 
-        {/* Leaderboard Preview */}
+        {/* Leaderboard Preview - Compact */}
         <section>
-          <h2 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
-            <Trophy size={20} className="text-party-300" />
+          <h2 className="font-display font-bold text-sm mb-2 flex items-center gap-1.5">
+            <Trophy size={16} className="text-party-300" />
             Classifica Squadre
           </h2>
           
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {leaderboardSquadre.slice(0, 5).map((squadra, index) => (
               <motion.div
                 key={squadra.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className={`card flex items-center gap-3 ${
-                  squadra.id === mySquadra.id ? 'border-coral-500/50 bg-coral-500/5' : ''
+                className={`card flex items-center gap-2 py-2 ${
+                  squadra.id === mySquadra.id ? 'border-coral-500/50' : ''
                 }`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${
                   index === 0 ? 'bg-party-300/20 text-party-300' :
                   index === 1 ? 'bg-gray-400/20 text-gray-400' :
                   index === 2 ? 'bg-orange-500/20 text-orange-400' :
-                  'bg-gray-800 text-gray-500'
+                  'glass text-gray-500'
                 }`}>
                   {index + 1}
                 </div>
-                <span className="text-2xl">{squadra.emoji}</span>
-                <div className="flex-1">
-                  <span className="font-semibold">{squadra.nome}</span>
+                <span className="text-xl">{squadra.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold text-sm truncate">{squadra.nome}</span>
                 </div>
-                <div className="text-right">
-                  <span className="font-bold text-turquoise-400">{squadra.punti_squadra}</span>
-                  <span className="text-gray-500 text-sm"> pts</span>
+                <div className="text-right flex-shrink-0">
+                  <span className="font-bold text-turquoise-400 text-sm">{squadra.punti_squadra}</span>
+                  <span className="text-gray-500 text-[10px]"> pts</span>
                 </div>
               </motion.div>
             ))}

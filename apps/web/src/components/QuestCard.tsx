@@ -55,17 +55,18 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
     return (
       <motion.div 
         layout
-        className="card border-green-500/30 bg-green-500/5"
+        className="card border-green-500/30"
+        style={{ background: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.3)' }}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center text-2xl">
-            <Check className="text-green-400" size={24} />
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center text-lg flex-shrink-0">
+            <Check className="text-green-400" size={18} />
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-green-400 line-through opacity-70">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-green-400 line-through opacity-70 text-sm truncate">
               {quest.emoji} {quest.titolo}
             </h3>
-            <p className="text-sm text-gray-500">Completata! +{quest.punti}pts</p>
+            <p className="text-[10px] text-gray-500">Completata! +{quest.punti}pts</p>
           </div>
         </div>
       </motion.div>
@@ -78,29 +79,29 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
       className="card-interactive"
       onClick={() => !isExpanded && setIsExpanded(true)}
     >
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-coral-500/20 to-party-300/20 flex items-center justify-center text-2xl">
+      {/* Header - Compact */}
+      <div className="flex items-center gap-2">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-coral-500/20 to-party-300/20 flex items-center justify-center text-lg flex-shrink-0">
           {quest.emoji}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold truncate">{quest.titolo}</h3>
-            <span className={`badge ${difficultyColors[quest.difficolta]}`}>
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <h3 className="font-semibold truncate text-sm">{quest.titolo}</h3>
+            <span className={`badge ${difficultyColors[quest.difficolta]} flex-shrink-0`}>
               {difficultyLabels[quest.difficolta]}
             </span>
           </div>
-          <div className="flex items-center gap-3 text-sm text-gray-400">
+          <div className="flex items-center gap-2 text-[10px] text-gray-400">
             <span className="text-party-300 font-semibold">{quest.punti}pts</span>
-            <span className="flex items-center gap-1">
-              <Clock size={12} />
+            <span className="flex items-center gap-0.5">
+              <Clock size={10} />
               {timeRemaining()}
             </span>
           </div>
         </div>
         <ChevronRight 
-          className={`text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
-          size={20} 
+          className={`text-gray-500 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} 
+          size={16} 
         />
       </div>
 
@@ -115,48 +116,48 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
             className="overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="pt-4 mt-4 border-t border-gray-700">
-              <p className="text-sm text-gray-400 mb-4">{quest.descrizione}</p>
+            <div className="pt-3 mt-3 border-t border-gray-700/50">
+              <p className="text-xs text-gray-400 mb-3 leading-relaxed">{quest.descrizione}</p>
               
-              {/* Proof Type Selection */}
-              <div className="flex gap-2 mb-4">
+              {/* Proof Type Selection - Compact */}
+              <div className="flex gap-1.5 mb-3">
                 {quest.tipo_prova.includes('foto') && (
                   <button
                     onClick={() => setSelectedType('foto')}
-                    className={`flex-1 py-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
+                    className={`flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all ${
                       selectedType === 'foto' 
                         ? 'bg-coral-500 text-white' 
-                        : 'bg-gray-800 text-gray-400'
+                        : 'glass text-gray-400'
                     }`}
                   >
-                    <Camera size={20} />
-                    <span className="text-xs">Foto</span>
+                    <Camera size={16} />
+                    <span className="text-[10px]">Foto</span>
                   </button>
                 )}
                 {quest.tipo_prova.includes('video') && (
                   <button
                     onClick={() => setSelectedType('video')}
-                    className={`flex-1 py-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
+                    className={`flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all ${
                       selectedType === 'video' 
                         ? 'bg-coral-500 text-white' 
-                        : 'bg-gray-800 text-gray-400'
+                        : 'glass text-gray-400'
                     }`}
                   >
-                    <Video size={20} />
-                    <span className="text-xs">Video</span>
+                    <Video size={16} />
+                    <span className="text-[10px]">Video</span>
                   </button>
                 )}
                 {quest.tipo_prova.includes('testo') && (
                   <button
                     onClick={() => setSelectedType('testo')}
-                    className={`flex-1 py-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
+                    className={`flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all ${
                       selectedType === 'testo' 
                         ? 'bg-coral-500 text-white' 
-                        : 'bg-gray-800 text-gray-400'
+                        : 'glass text-gray-400'
                     }`}
                   >
-                    <FileText size={20} />
-                    <span className="text-xs">Testo</span>
+                    <FileText size={16} />
+                    <span className="text-[10px]">Testo</span>
                   </button>
                 )}
               </div>
@@ -167,24 +168,24 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                   value={proofText}
                   onChange={(e) => setProofText(e.target.value)}
                   placeholder="Descrivi la tua prova..."
-                  className="input mb-4 min-h-[100px] resize-none"
+                  className="input mb-3 min-h-[80px] resize-none text-sm"
                 />
               )}
 
-              {/* Submit button */}
-              <div className="flex gap-2">
+              {/* Submit button - Compact */}
+              <div className="flex gap-1.5">
                 <button
                   onClick={() => setIsExpanded(false)}
-                  className="btn-ghost flex-1"
+                  className="btn-ghost flex-1 text-sm py-2"
                 >
                   Annulla
                 </button>
                 <button
                   onClick={handleProofSubmit}
                   disabled={!selectedType || (selectedType === 'testo' && !proofText)}
-                  className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary flex-1 text-sm py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {selectedType === 'testo' ? 'Invia Prova' : 'Carica Prova'}
+                  {selectedType === 'testo' ? 'Invia' : 'Carica'}
                 </button>
               </div>
             </div>

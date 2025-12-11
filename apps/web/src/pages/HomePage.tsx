@@ -29,103 +29,103 @@ export const HomePage: React.FC = () => {
   const nextGara = gare.find(g => g.stato !== 'completata');
 
   return (
-    <div className="min-h-screen bg-dark">
-      {/* Header */}
-      <div className="bg-gradient-to-b from-gray-900 to-dark px-4 pt-safe pb-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
+    <div className="h-full bg-dark flex flex-col overflow-hidden">
+      {/* Header - Fixed, compact */}
+      <div className="flex-shrink-0 glass-strong px-3 pt-safe pb-2">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
             <motion.button 
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowProfile(true)}
-              className="w-10 h-10 rounded-full bg-gradient-to-br from-coral-500 to-turquoise-400 flex items-center justify-center text-white font-bold"
+              className="w-9 h-9 rounded-full bg-gradient-to-br from-coral-500 to-turquoise-400 flex items-center justify-center text-white font-bold text-sm"
             >
               {user?.nickname?.charAt(0).toUpperCase() || 'G'}
             </motion.button>
             <div>
-              <h1 className="font-display font-bold text-lg text-gradient">30diCiaccioGame</h1>
-              <p className="text-xs text-gray-500">Ciao, {user?.nickname || 'Giocatore'}!</p>
+              <h1 className="font-display font-bold text-base text-gradient leading-tight">30diCiaccioGame</h1>
+              <p className="text-[10px] text-gray-500 leading-tight">Ciao, {user?.nickname || 'Giocatore'}!</p>
             </div>
           </div>
           
           <motion.button 
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowVerifica(true)}
-            className="relative p-2"
+            className="relative p-1.5"
           >
-            <Bell size={24} className="text-gray-400" />
+            <Bell size={20} className="text-gray-400" />
             {pendingVerifications.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-coral-500 rounded-full text-xs font-bold flex items-center justify-center">
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-coral-500 rounded-full text-[10px] font-bold flex items-center justify-center">
                 {pendingVerifications.length}
               </span>
             )}
           </motion.button>
         </div>
 
-        {/* Day Banner */}
+        {/* Day Banner - Compact */}
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="gradient-party rounded-2xl p-4 mb-4"
+          className="gradient-party rounded-2xl p-2.5 mb-2"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Calendar className="text-white" size={24} />
+            <div className="flex items-center gap-2">
+              <Calendar className="text-white" size={18} />
               <div>
-                <h2 className="font-bold text-white">GIORNO {gameState.giorno_corrente} DI 3</h2>
-                <p className="text-white/80 text-sm">Tema: Caos Totale! 🎉</p>
+                <h2 className="font-bold text-white text-sm leading-tight">GIORNO {gameState.giorno_corrente} DI 3</h2>
+                <p className="text-white/80 text-[10px] leading-tight">Tema: Caos Totale! 🎉</p>
               </div>
             </div>
             <div className="text-right">
-              <div className="font-bold text-white text-xl">{user?.punti_personali || 0}</div>
-              <div className="text-white/80 text-xs">punti</div>
+              <div className="font-bold text-white text-lg leading-tight">{user?.punti_personali || 0}</div>
+              <div className="text-white/80 text-[10px] leading-tight">punti</div>
             </div>
           </div>
         </motion.div>
 
-        {/* Team Status */}
+        {/* Team Status - Compact */}
         {mySquadra && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="card flex items-center justify-between"
+            className="card flex items-center justify-between py-2"
           >
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{mySquadra.emoji}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{mySquadra.emoji}</span>
               <div>
-                <h3 className="font-semibold">{mySquadra.nome}</h3>
-                <p className="text-sm text-gray-500">La tua squadra</p>
+                <h3 className="font-semibold text-sm leading-tight">{mySquadra.nome}</h3>
+                <p className="text-[10px] text-gray-500 leading-tight">La tua squadra</p>
               </div>
             </div>
             <div className="text-right">
-              <div className="flex items-center gap-1 text-party-300 font-bold">
-                <Flame size={16} />
+              <div className="flex items-center gap-1 text-party-300 font-bold text-sm leading-tight">
+                <Flame size={14} />
                 {mySquadra.punti_squadra}
               </div>
-              <p className="text-xs text-gray-500">punti squadra</p>
+              <p className="text-[10px] text-gray-500 leading-tight">punti squadra</p>
             </div>
           </motion.div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="px-4 space-y-6 pb-6">
+      {/* Content - Scrollable area only */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-3 py-2 space-y-3">
         {/* Quest Section */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-bold text-lg flex items-center gap-2">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-display font-bold text-sm flex items-center gap-1.5">
               🎯 Quest del Giorno
             </h2>
-            <span className="text-sm text-gray-500">{quests.length} disponibili</span>
+            <span className="text-[10px] text-gray-500">{quests.length} disponibili</span>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-2">
             {quests.map((quest, index) => (
               <motion.div
                 key={quest.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.05 }}
               >
                 <QuestCard 
                   quest={quest} 
@@ -139,8 +139,8 @@ export const HomePage: React.FC = () => {
         {/* Next Gara Section */}
         {nextGara && (
           <section>
-            <h2 className="font-display font-bold text-lg flex items-center gap-2 mb-4">
-              <Swords size={20} className="text-coral-500" />
+            <h2 className="font-display font-bold text-sm flex items-center gap-1.5 mb-2">
+              <Swords size={16} className="text-coral-500" />
               Prossima Gara
             </h2>
             <GaraCard gara={nextGara} />
@@ -163,30 +163,30 @@ export const HomePage: React.FC = () => {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25 }}
-              className="w-full max-h-[85vh] bg-gray-900 rounded-t-3xl p-4 overflow-y-auto"
+              className="w-full max-h-[85vh] glass-strong rounded-t-3xl p-3 overflow-y-auto scrollbar-hide"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display font-bold text-xl flex items-center gap-2">
-                  <CheckCircle2 className="text-turquoise-400" />
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-display font-bold text-lg flex items-center gap-1.5">
+                  <CheckCircle2 className="text-turquoise-400" size={18} />
                   Verifica Quest
                 </h2>
                 <button 
                   onClick={() => setShowVerifica(false)}
-                  className="p-2 hover:bg-gray-800 rounded-full"
+                  className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
                 >
-                  <X size={24} />
+                  <X size={20} />
                 </button>
               </div>
               
               {pendingVerifications.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <CheckCircle2 size={48} className="mx-auto mb-4 opacity-50" />
-                  <p>Nessuna prova da verificare!</p>
-                  <p className="text-sm">Torna più tardi 😊</p>
+                <div className="text-center py-8 text-gray-500">
+                  <CheckCircle2 size={36} className="mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">Nessuna prova da verificare!</p>
+                  <p className="text-xs">Torna più tardi 😊</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {pendingVerifications.map((prova) => (
                     <VerificaCard 
                       key={prova.id} 
@@ -217,25 +217,25 @@ export const HomePage: React.FC = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm bg-gray-900 rounded-3xl p-6"
+              className="w-full max-w-sm glass-strong rounded-3xl p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="text-center mb-6">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-coral-500 to-turquoise-400 flex items-center justify-center text-3xl font-bold text-white mx-auto mb-4">
+              <div className="text-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-coral-500 to-turquoise-400 flex items-center justify-center text-2xl font-bold text-white mx-auto mb-3">
                   {user?.nickname?.charAt(0).toUpperCase() || 'G'}
                 </div>
-                <h2 className="font-bold text-xl">{user?.nickname || 'Giocatore'}</h2>
-                <p className="text-gray-500">Membro di {mySquadra?.nome}</p>
+                <h2 className="font-bold text-lg">{user?.nickname || 'Giocatore'}</h2>
+                <p className="text-gray-500 text-sm">Membro di {mySquadra?.nome}</p>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="card text-center">
-                  <div className="text-2xl font-bold text-coral-500">{user?.punti_personali || 0}</div>
-                  <div className="text-xs text-gray-500">Punti Personali</div>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <div className="card text-center py-2">
+                  <div className="text-xl font-bold text-coral-500">{user?.punti_personali || 0}</div>
+                  <div className="text-[10px] text-gray-500">Punti Personali</div>
                 </div>
-                <div className="card text-center">
-                  <div className="text-2xl font-bold text-turquoise-400">{mySquadra?.punti_squadra || 0}</div>
-                  <div className="text-xs text-gray-500">Punti Squadra</div>
+                <div className="card text-center py-2">
+                  <div className="text-xl font-bold text-turquoise-400">{mySquadra?.punti_squadra || 0}</div>
+                  <div className="text-[10px] text-gray-500">Punti Squadra</div>
                 </div>
               </div>
               
@@ -244,7 +244,7 @@ export const HomePage: React.FC = () => {
                   logout();
                   setShowProfile(false);
                 }}
-                className="w-full py-3 rounded-xl bg-red-500/20 text-red-400 font-semibold"
+                className="w-full py-2.5 rounded-xl glass border border-red-500/30 text-red-400 font-semibold text-sm"
               >
                 Esci dal Game
               </button>
