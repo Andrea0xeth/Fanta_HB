@@ -531,7 +531,7 @@
   .neon-red-orange {
     font-family: 'Modak', 'Sniglet', 'Chela One', 'Coiny', 'Concert One', 'Fredoka', 'Boogaloo', 'Bubblegum Sans', sans-serif;
     color: transparent !important; /* Centro completamente trasparente - solo contorni */
-    -webkit-text-stroke: 1.5px #ff6b35; /* Stroke più spesso per contorno visibile su testo grande */
+    -webkit-text-stroke: 1.2px #ff6b35; /* Stroke più spesso per contorno visibile su testo grande */
     text-shadow:
       0 0 1px rgba(255, 0, 0, 0.6),
       0 0 2px rgba(255, 0, 0, 0.5),
@@ -568,7 +568,7 @@
   /* LED Flicker Animation - Solo contorni LED - Meno luminoso */
   @keyframes neon-flicker {
     0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-      -webkit-text-stroke: 1.5px #ff6b35;
+      -webkit-text-stroke: 1.2px #ff6b35;
       text-shadow:
         0 0 1px rgba(255, 0, 0, 0.6),
         0 0 2px rgba(255, 0, 0, 0.5),

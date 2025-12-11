@@ -528,8 +528,22 @@ export const SplashPage: React.FC = () => {
 
   return (
     <div className="h-screen bg-dark flex flex-col items-center justify-center p-4 pt-safe overflow-hidden relative">
+      {/* Clown Background - Large and semi-transparent, below falling elements */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+        <img 
+          src="/clown.png" 
+          alt="Clown Background" 
+          className="w-full h-full object-contain opacity-20"
+          style={{ 
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            objectFit: 'contain'
+          }}
+        />
+      </div>
+
       {/* Background - Falling Circus Neon Decorations - 20 decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-5">
         {[...Array(20)].map((_, i) => {
           const variants: Array<'clown-face' | 'star' | 'balloon' | 'confetti'> = ['clown-face', 'star', 'balloon', 'confetti'];
           const colors: Array<'red' | 'white' | 'orange'> = ['red', 'white', 'orange'];
