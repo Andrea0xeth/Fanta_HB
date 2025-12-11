@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Fingerprint, Sparkles, PartyPopper } from 'lucide-react';
+import { Fingerprint, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { Countdown } from '../components/Countdown';
@@ -544,35 +544,52 @@ export const SplashPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Compact Logo & Title Section */}
+      {/* Neon Logo & Title Section */}
       <motion.div 
-        className="flex flex-col items-center justify-center relative z-10 mb-6"
+        className="flex flex-col items-center justify-center relative z-10 mb-8"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <motion.div
-          animate={{ scale: [1, 1.03, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="mb-3"
+        {/* DC-30 - Main Neon Text */}
+        <div className="neon-3d-glow mb-4">
+          <h1 className="neon-red-orange neon-flicker text-6xl md:text-7xl font-display font-bold text-center tracking-wider">
+            DC-30
+          </h1>
+        </div>
+
+        {/* Di Ciaccio - 30 - Small subtitle */}
+        <motion.p 
+          className="neon-red-orange text-sm md:text-base font-display font-medium text-center mb-6 tracking-wider lowercase"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          style={{
+            textShadow: `
+              0 0 3px #ff4444,
+              0 0 6px #ff4444,
+              0 0 9px #ff6b35,
+              0 0 12px #ff6b35
+            `
+          }}
         >
-          <PartyPopper className="w-12 h-12 text-party-300 mx-auto" />
+          di ciaccio - 30
+        </motion.p>
+
+        {/* CIRCOLOCO Fuerteventura - White Neon */}
+        <motion.div 
+          className="neon-3d-glow-white mb-4"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+        >
+          <h2 className="neon-white neon-flicker-white text-2xl md:text-3xl font-display font-bold text-center tracking-wider uppercase">
+            CIRCOLOCO
+          </h2>
+          <p className="neon-white text-lg md:text-xl font-display font-semibold text-center tracking-wider uppercase mt-1">
+            Fuerteventura
+          </p>
         </motion.div>
-        
-        <h1 className="text-3xl font-display font-bold text-center mb-1">
-          <span className="text-gradient">30</span>
-          <span className="text-white">di</span>
-          <span className="text-gradient">Ciaccio</span>
-        </h1>
-        <h2 className="text-base font-display font-semibold text-turquoise-400 flex items-center gap-1.5">
-          <Sparkles size={14} />
-          Game
-          <Sparkles size={14} />
-        </h2>
-        
-        <p className="text-gray-400 text-center mt-2 text-xs max-w-xs">
-          Il gioco definitivo per il 30° compleanno più epico di sempre!
-        </p>
       </motion.div>
 
       {/* Compact Countdown */}
