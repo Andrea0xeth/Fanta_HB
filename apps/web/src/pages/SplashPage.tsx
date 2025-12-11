@@ -54,10 +54,14 @@ export const SplashPage: React.FC = () => {
   // Non fare redirect se stiamo mostrando il video post-benvenuto
   useEffect(() => {
     // Non fare redirect se:
-    // 1. Stiamo mostrando il video post
+    // 1. Stiamo mostrando il video post (flag impostato)
     // 2. Siamo già nella schermata video-post
     // 3. Stiamo caricando l'autenticazione
-    if (isAuthenticated && viewState === 'splash' && !showPostVideo && !authLoading) {
+    // 4. Siamo nella schermata auth-choice (stiamo per fare login/registrazione)
+    if (isAuthenticated && 
+        viewState === 'splash' && 
+        !showPostVideo && 
+        !authLoading) {
       // Se già autenticato all'avvio, vai direttamente alla home
       // Ma NON fare redirect se stiamo per mostrare il video post-benvenuto
       navigate('/home', { replace: true });
@@ -68,19 +72,21 @@ export const SplashPage: React.FC = () => {
   useEffect(() => {
     if ((viewState === 'video-pre' || viewState === 'video-post') && videoRef.current) {
       const video = videoRef.current;
+      
+      // Reset video
       video.currentTime = 0;
       video.volume = 1;
       
-      // Assicurati che il video sia caricato prima di farlo partire
-      const handleCanPlay = () => {
+      // Funzione per far partire il video
+      const startVideo = () => {
         const playPromise = video.play();
         if (playPromise !== undefined) {
           playPromise
             .then(() => {
-              console.log('Video avviato con successo');
+              console.log('✅ Video avviato con successo');
             })
             .catch(error => {
-              console.error('Error playing video:', error);
+              console.error('❌ Error playing video:', error);
               // Se l'autoplay fallisce, mostra il bottone continua
               if (viewState === 'video-post') {
                 setShowPostContinueButton(true);
@@ -91,18 +97,27 @@ export const SplashPage: React.FC = () => {
         }
       };
       
-      // Se il video è già caricato, fai partire subito
-      if (video.readyState >= 3) { // HAVE_FUTURE_DATA o superiore
-        handleCanPlay();
+      // Forza il caricamento del video
+      video.load();
+      
+      // Prova a far partire immediatamente
+      // Se il video è già caricato abbastanza, parte subito
+      if (video.readyState >= 2) { // HAVE_CURRENT_DATA o superiore
+        startVideo();
       } else {
         // Altrimenti aspetta che sia caricato
+        const handleCanPlay = () => {
+          startVideo();
+        };
+        
         video.addEventListener('canplay', handleCanPlay, { once: true });
-        video.load(); // Forza il caricamento
+        video.addEventListener('loadeddata', handleCanPlay, { once: true });
+        
+        return () => {
+          video.removeEventListener('canplay', handleCanPlay);
+          video.removeEventListener('loadeddata', handleCanPlay);
+        };
       }
-      
-      return () => {
-        video.removeEventListener('canplay', handleCanPlay);
-      };
     }
   }, [viewState]);
 
@@ -116,28 +131,17 @@ export const SplashPage: React.FC = () => {
     setAuthLoading(true);
     setShowPostVideo(true); // Imposta il flag PRIMA del login per prevenire redirect automatico
     setShowPostContinueButton(false); // Reset continue button state
+    
     try {
       await loginWithPasskey();
-      // After successful login, show post-login video
-      // Il video post-benvenuto viene mostrato nello stesso componente con gli stessi bottoni
+      // DOPO il login riuscito, mostra immediatamente il video post-login
       setAuthLoading(false);
       
-      // Cambia lo stato PRIMA di provare a far partire il video
+      // Cambia immediatamente lo stato per mostrare il video
       setViewState('video-post');
       
-      // Usa un timeout più lungo e assicurati che il video sia caricato
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.currentTime = 0;
-          // Forza il caricamento del video prima di farlo partire
-          videoRef.current.load();
-          videoRef.current.play().catch((err) => {
-            console.error('Errore nel play del video post-iscrizione:', err);
-            // Se il play fallisce, mostra comunque il bottone continua
-            setShowPostContinueButton(true);
-          });
-        }
-      }, 200);
+      // Il video partirà automaticamente grazie all'useEffect che monitora viewState
+      // e grazie all'attributo autoPlay sul video element
     } catch (error) {
       console.error('Login failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Errore durante il login. Registrati se non hai ancora un account.';
@@ -150,6 +154,7 @@ export const SplashPage: React.FC = () => {
       }
       setShowPostVideo(false);
       setAuthLoading(false);
+      setViewState('auth-choice'); // Torna alla scelta auth
     }
   };
 
@@ -192,26 +197,14 @@ export const SplashPage: React.FC = () => {
       // Chiama direttamente register() per creare un nuovo account con nuova passkey
       // Non provare a fare login prima - l'utente vuole registrarsi!
       await register(registrationData);
-      // After successful registration, show post-registration video
-      // Il video post-benvenuto viene mostrato nello stesso componente con gli stessi bottoni
+      // DOPO la registrazione riuscita, mostra immediatamente il video post-registrazione
       setAuthLoading(false);
       
-      // Cambia lo stato PRIMA di provare a far partire il video
+      // Cambia immediatamente lo stato per mostrare il video
       setViewState('video-post');
       
-      // Usa un timeout più lungo e assicurati che il video sia caricato
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.currentTime = 0;
-          // Forza il caricamento del video prima di farlo partire
-          videoRef.current.load();
-          videoRef.current.play().catch((err) => {
-            console.error('Errore nel play del video post-iscrizione:', err);
-            // Se il play fallisce, mostra comunque il bottone continua
-            setShowPostContinueButton(true);
-          });
-        }
-      }, 200);
+      // Il video partirà automaticamente grazie all'useEffect che monitora viewState
+      // e grazie all'attributo autoPlay sul video element
     } catch (error) {
       console.error('Registration failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Errore durante la registrazione';
@@ -350,10 +343,22 @@ export const SplashPage: React.FC = () => {
             src="/videos/BenvenutoPostiscrizione.mp4"
             autoPlay
             playsInline
+            muted={false}
             onEnded={handlePostVideoEnd}
             onLoadedData={() => {
-              if (videoRef.current) {
-                videoRef.current.play().catch(console.error);
+              // Assicurati che il video parta quando è caricato
+              if (videoRef.current && videoRef.current.paused) {
+                videoRef.current.play().catch((err) => {
+                  console.error('Errore play onLoadedData:', err);
+                });
+              }
+            }}
+            onCanPlay={() => {
+              // Forza il play quando il video è pronto
+              if (videoRef.current && videoRef.current.paused) {
+                videoRef.current.play().catch((err) => {
+                  console.error('Errore play onCanPlay:', err);
+                });
               }
             }}
             className="w-full h-full object-cover"
