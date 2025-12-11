@@ -598,21 +598,9 @@ export const SplashPage: React.FC = () => {
 
         {/* DC-30 with Overlay Image */}
         <div className="relative flex flex-col items-center">
-          {/* DC-30 - Main Neon Text - Under the image */}
-          <div className="neon-3d-glow mb-0 relative z-10">
-            <h1 
-              className="neon-red-orange text-6xl md:text-7xl font-bold text-center tracking-wider"
-              style={{
-                animation: `neon-flicker ${flickerTimings.dc30}s infinite`,
-              }}
-            >
-              DC-30
-            </h1>
-          </div>
-
-          {/* DC-10 Plane Image - Overlay on DC-30 (above) */}
+          {/* DC-10 Plane Image - Below DC-30 */}
           <motion.div
-            className="absolute -top-8 md:-top-10 z-20 flex justify-center"
+            className="absolute top-12 md:top-16 z-10 flex justify-center"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.5 }}
@@ -624,6 +612,18 @@ export const SplashPage: React.FC = () => {
               style={{ maxHeight: '100px', objectFit: 'contain', display: 'block' }}
             />
           </motion.div>
+
+          {/* DC-30 - Main Neon Text - Above the image */}
+          <div className="neon-3d-glow mb-0 relative z-20">
+            <h1 
+              className="neon-red-orange text-6xl md:text-7xl font-bold text-center tracking-wider"
+              style={{
+                animation: `neon-flicker ${flickerTimings.dc30}s infinite`,
+              }}
+            >
+              DC-30
+            </h1>
+          </div>
         </div>
 
         {/* CIRCOLOCO Fuerteventura - White Neon - Larger */}
