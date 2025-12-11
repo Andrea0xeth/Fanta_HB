@@ -593,7 +593,7 @@ export const SplashPage: React.FC = () => {
       >
         {/* Di Ciaccio - 30 - Small subtitle - White with D and C uppercase - Less visible - Above DC-30 */}
         <motion.p 
-          className="text-sm md:text-base font-medium text-center mb-1 tracking-wider"
+          className="text-sm md:text-base font-medium text-center mb-0 tracking-wider"
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.5 }}
           transition={{ delay: 0.2 }}
@@ -611,11 +611,11 @@ export const SplashPage: React.FC = () => {
         </motion.p>
 
         {/* DC-30 with Overlay Image */}
-        <div className="relative flex flex-col items-center">
+        <div className="relative flex flex-col items-center -mt-2">
           {/* DC-30 - Main Neon Text - Appena sotto Di Ciaccio - 30 */}
           <div className="neon-3d-glow mb-0 relative z-10">
             <h1 
-              className="neon-red-orange text-7xl md:text-8xl lg:text-9xl font-bold text-center tracking-wider"
+              className="neon-red-orange text-8xl md:text-9xl lg:text-[10rem] xl:text-[12rem] font-bold text-center tracking-wider"
               style={{
                 animation: `neon-flicker ${flickerTimings.dc30}s infinite`,
                 color: 'transparent', // Centro trasparente - solo contorni
