@@ -601,9 +601,10 @@ export const SplashPage: React.FC = () => {
           {/* DC-30 - Main Neon Text - Appena sotto Di Ciaccio - 30 */}
           <div className="neon-3d-glow mb-0 relative z-10">
             <h1 
-              className="neon-red-orange text-6xl md:text-7xl font-bold text-center tracking-wider"
+              className="neon-red-orange text-7xl md:text-8xl lg:text-9xl font-bold text-center tracking-wider"
               style={{
                 animation: `neon-flicker ${flickerTimings.dc30}s infinite`,
+                color: 'transparent', // Centro trasparente - solo contorni
               }}
             >
               DC-30
