@@ -12,7 +12,6 @@ interface ClassificaGaraModalProps {
 
 export const ClassificaGaraModal: React.FC<ClassificaGaraModalProps> = ({
   gara,
-  squadre,
   onClose,
   onSave,
 }) => {
@@ -72,8 +71,6 @@ export const ClassificaGaraModal: React.FC<ClassificaGaraModalProps> = ({
       setSaving(false);
     }
   };
-
-  const medaglie = ['🥇', '🥈', '🥉'];
 
   return (
     <AnimatePresence>

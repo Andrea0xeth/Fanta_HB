@@ -93,14 +93,11 @@ export const uploadAvatar = async (
       console.error('[Upload Avatar] Errore upload:', error);
       console.error('[Upload Avatar] Dettagli errore:', {
         message: error.message,
-        statusCode: error.statusCode,
-        error: error.error
       });
       
       // Se l'errore è relativo ai permessi, fornisci un messaggio più chiaro
       if (error.message?.includes('new row violates row-level security') || 
-          error.message?.includes('permission denied') ||
-          error.statusCode === '403') {
+          error.message?.includes('permission denied')) {
         throw new Error('Permessi insufficienti per caricare l\'immagine. Verifica le policy del bucket storage.');
       }
       

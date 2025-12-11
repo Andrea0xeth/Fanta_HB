@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Swords, Gift, Users, Search, Plus, Check, X, Trophy, Shuffle } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { GaraCard } from '../components/GaraCard';
-import { ClassificaGaraModal } from '../components/ClassificaGaraModal';
-import { CreaGaraModal } from '../components/CreaGaraModal';
+// import { ClassificaGaraModal } from '../components/ClassificaGaraModal';
+// import { CreaGaraModal } from '../components/CreaGaraModal';
 import type { Gara } from '../types';
 
 type TabType = 'gare' | 'bonus' | 'squadre';
@@ -17,7 +17,7 @@ export const AdminPage: React.FC = () => {
     leaderboardSingoli,
     assegnaVincitore,
     assegnaClassifica,
-    creaGara,
+    // creaGara,
     aggiungiBonus 
   } = useGame();
 
@@ -27,20 +27,20 @@ export const AdminPage: React.FC = () => {
   const [bonusPoints, setBonusPoints] = useState('');
   const [bonusMotivo, setBonusMotivo] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [selectedGaraForClassifica, setSelectedGaraForClassifica] = useState<Gara | null>(null);
-  const [showCreaGara, setShowCreaGara] = useState(false);
+  // const [selectedGaraForClassifica, setSelectedGaraForClassifica] = useState<Gara | null>(null);
+  // const [showCreaGara, setShowCreaGara] = useState(false);
 
   // Listener per aprire il modal classifica
-  useEffect(() => {
-    const handleOpenClassifica = (event: CustomEvent) => {
-      setSelectedGaraForClassifica(event.detail.gara);
-    };
+  // useEffect(() => {
+  //   const handleOpenClassifica = (event: CustomEvent) => {
+  //     setSelectedGaraForClassifica(event.detail.gara);
+  //   };
 
-    window.addEventListener('open-classifica-modal' as any, handleOpenClassifica as EventListener);
-    return () => {
-      window.removeEventListener('open-classifica-modal' as any, handleOpenClassifica as EventListener);
-    };
-  }, []);
+  //   window.addEventListener('open-classifica-modal' as any, handleOpenClassifica as EventListener);
+  //   return () => {
+  //     window.removeEventListener('open-classifica-modal' as any, handleOpenClassifica as EventListener);
+  //   };
+  // }, []);
 
   // Check admin access
   if (!user?.is_admin) {

@@ -158,7 +158,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         const { error: assignError } = await supabase.rpc('assign_daily_quests', {
           p_user_id: user.id,
           p_giorno: giornoCorrente,
-        });
+        } as any);
 
         if (assignError) {
           console.error('Errore assegnazione quest:', assignError);
@@ -168,7 +168,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         const { data: userQuestsData, error: userQuestsError } = await supabase.rpc('get_user_quests', {
           p_user_id: user.id,
           p_giorno: giornoCorrente,
-        });
+        } as any);
 
         if (userQuestsError) {
           console.error('Errore caricamento quest utente:', userQuestsError);
@@ -197,7 +197,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
           setQuests(questsList);
         } else {
           // Mappa le quest assegnate al formato Quest
-          const questsList = (userQuestsData || []).map((q: any) => ({
+          const questsList = ((userQuestsData as any[]) || []).map((q: any) => ({
             id: q.quest_id,
             giorno: giornoCorrente,
             titolo: q.titolo,
@@ -246,7 +246,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       if (gareError) throw gareError;
 
       // Carica classifiche per tutte le gare completate
-      const gareIds = (gareData || []).map(g => g.id);
+      const gareIds = ((gareData as any[]) || []).map((g: any) => g.id);
       const classificheMap = new Map<string, any[]>();
       
       if (gareIds.length > 0) {
@@ -793,7 +793,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       const giornoCorrente = (giornoRaw >= 1 && giornoRaw <= 3) ? giornoRaw : 1;
       await supabase
         .from('user_quest_assignments')
-        .update({ completed_at: new Date().toISOString() })
+        .update({ completed_at: new Date().toISOString() } as any)
         .eq('user_id', user.id)
         .eq('quest_id', questId)
         .eq('giorno', giornoCorrente);

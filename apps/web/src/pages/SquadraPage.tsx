@@ -16,7 +16,7 @@ export const SquadraPage: React.FC = () => {
         nickname: m.nickname,
         punti: m.punti_personali,
         isMVP: false,
-        avatar: m.avatar,
+        avatar: m.avatar || undefined,
       })).sort((a, b) => b.punti - a.punti)
     : [
         { id: '1', nickname: 'Pippo', punti: 85, isMVP: true },
@@ -134,7 +134,7 @@ export const SquadraPage: React.FC = () => {
                   {index + 1}
                 </div>
                 <Avatar 
-                  user={member.avatar ? { nickname: member.nickname, avatar: member.avatar } : { nickname: member.nickname }} 
+                  user={member.avatar ? { ...member, avatar: member.avatar } : { ...member, avatar: undefined }} 
                   size="md" 
                 />
                 <div className="flex-1 min-w-0">
