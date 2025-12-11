@@ -528,15 +528,15 @@ export const SplashPage: React.FC = () => {
 
   return (
     <div className="h-screen bg-dark flex flex-col items-center justify-center p-4 pt-safe overflow-hidden relative">
-      {/* Clown Background - Large and semi-transparent, below falling elements */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+      {/* Clown Background - Large and semi-transparent, below falling elements - Top left, slightly off screen */}
+      <div className="absolute pointer-events-none z-0" style={{ top: '-10%', left: '-10%' }}>
         <img 
           src="/clown.png" 
           alt="Clown Background" 
-          className="w-full h-full object-contain opacity-20"
+          className="object-contain opacity-20"
           style={{ 
-            maxWidth: '90vw',
-            maxHeight: '90vh',
+            width: '60vw',
+            height: '60vh',
             objectFit: 'contain'
           }}
         />
@@ -625,9 +625,9 @@ export const SplashPage: React.FC = () => {
             </h1>
           </div>
 
-          {/* DC-10 Plane Image - Overlay on DC-30 - Larger and higher z-index */}
+          {/* DC-10 Plane Image - Overlay on DC-30 - Larger and higher z-index - Lower position */}
           <motion.div
-            className="absolute top-12 md:top-16 z-30 flex justify-center"
+            className="absolute top-20 md:top-24 z-30 flex justify-center"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.5 }}
