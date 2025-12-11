@@ -2,12 +2,27 @@
 export interface User {
   id: string;
   nickname: string;
+  nome?: string;
+  cognome?: string;
+  email?: string;
+  telefono?: string;
+  data_nascita?: string;
   avatar?: string;
   passkey_id?: string;
   squadra_id: string | null;
   punti_personali: number;
   is_admin: boolean;
   created_at: string;
+}
+
+// Registration data
+export interface RegistrationData {
+  nickname: string;
+  nome: string;
+  cognome: string;
+  email: string;
+  telefono: string;
+  data_nascita: string;
 }
 
 // Team types

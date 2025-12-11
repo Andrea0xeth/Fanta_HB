@@ -14,6 +14,11 @@ export interface Database {
         Row: {
           id: string
           nickname: string
+          nome: string | null
+          cognome: string | null
+          email: string | null
+          telefono: string | null
+          data_nascita: string | null
           avatar: string | null
           passkey_id: string | null
           squadra_id: string | null
@@ -24,6 +29,11 @@ export interface Database {
         Insert: {
           id?: string
           nickname: string
+          nome?: string | null
+          cognome?: string | null
+          email?: string | null
+          telefono?: string | null
+          data_nascita?: string | null
           avatar?: string | null
           passkey_id?: string | null
           squadra_id?: string | null
@@ -34,6 +44,11 @@ export interface Database {
         Update: {
           id?: string
           nickname?: string
+          nome?: string | null
+          cognome?: string | null
+          email?: string | null
+          telefono?: string | null
+          data_nascita?: string | null
           avatar?: string | null
           passkey_id?: string | null
           squadra_id?: string | null

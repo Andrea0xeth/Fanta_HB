@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { User, Squadra, Quest, ProvaQuest, Gara, GameState, Notifica } from '../types';
+import type { User, Squadra, Quest, ProvaQuest, Gara, GameState, Notifica, RegistrationData } from '../types';
+import type { Database } from '../lib/database.types';
+import { registerPasskey, isWebAuthnSupported } from '../lib/webauthn';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 // Mock data per demo (quando Supabase non è configurato)
 const mockSquadre: Squadra[] = [
@@ -121,7 +124,7 @@ interface GameContextType {
   notifiche: Notifica[];
   
   // Actions
-  login: (nickname: string) => Promise<void>;
+  login: (registrationData: RegistrationData) => Promise<void>;
   logout: () => void;
   submitProva: (questId: string, tipo: 'foto' | 'video' | 'testo', contenuto: string) => Promise<void>;
   votaProva: (provaId: string, valore: boolean) => Promise<void>;
@@ -166,40 +169,181 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
   // Check for existing session on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem('30diciaccio_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
-  }, []);
-
-  // Login with passkey simulation
-  const login = async (nickname: string) => {
-    setIsLoading(true);
-    
-    // Simulate passkey auth delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Assign random team
-    const randomSquadra = squadre[Math.floor(Math.random() * squadre.length)];
-    
-    const newUser: User = {
-      id: crypto.randomUUID(),
-      nickname: nickname || `Giocatore${Math.floor(Math.random() * 1000)}`,
-      squadra_id: randomSquadra.id,
-      punti_personali: 0,
-      is_admin: nickname.toLowerCase() === 'admin', // Secret admin mode
-      created_at: new Date().toISOString(),
+    const loadUser = async () => {
+      const savedUser = localStorage.getItem('30diciaccio_user');
+      const savedPasskeyId = localStorage.getItem('30diciaccio_passkey_id');
+      
+      if (savedUser && savedPasskeyId) {
+        const user = JSON.parse(savedUser);
+        
+        // Se Supabase è configurato, verifica che l'utente esista ancora
+        if (isSupabaseConfigured()) {
+          try {
+            const { data, error } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', user.id)
+              .single();
+            
+            if (error || !data) {
+              // Utente non trovato, pulisci localStorage
+              localStorage.removeItem('30diciaccio_user');
+              localStorage.removeItem('30diciaccio_passkey_id');
+              setIsLoading(false);
+              return;
+            }
+            
+            // Aggiorna i dati utente con quelli del database
+            const userData = data as Database['public']['Tables']['users']['Row'];
+            setUser({
+              id: userData.id,
+              nickname: userData.nickname,
+              nome: userData.nome || undefined,
+              cognome: userData.cognome || undefined,
+              email: userData.email || undefined,
+              telefono: userData.telefono || undefined,
+              data_nascita: userData.data_nascita || undefined,
+              avatar: userData.avatar || undefined,
+              passkey_id: userData.passkey_id || undefined,
+              squadra_id: userData.squadra_id,
+              punti_personali: userData.punti_personali,
+              is_admin: userData.is_admin,
+              created_at: userData.created_at,
+            });
+          } catch (error) {
+            console.error('Errore caricamento utente:', error);
+            // In caso di errore, usa i dati salvati localmente
+            setUser(user);
+          }
+        } else {
+          setUser(user);
+        }
+      }
+      
+      setIsLoading(false);
     };
     
-    setUser(newUser);
-    localStorage.setItem('30diciaccio_user', JSON.stringify(newUser));
-    setIsLoading(false);
+    loadUser();
+  }, []);
+
+  // Login/Register with passkey
+  const login = async (registrationData: RegistrationData) => {
+    setIsLoading(true);
+    
+    try {
+      // Verifica supporto WebAuthn
+      if (!isWebAuthnSupported()) {
+        throw new Error('Il tuo dispositivo non supporta le passkey. Usa un dispositivo più recente con Face ID, Touch ID o impronta digitale.');
+      }
+
+      // Genera un ID utente univoco
+      const userId = crypto.randomUUID();
+      const displayName = `${registrationData.nome} ${registrationData.cognome}`.trim() || registrationData.nickname;
+
+      // Registra la passkey
+      const passkeyCredential = await registerPasskey(
+        userId,
+        registrationData.email || registrationData.nickname,
+        displayName
+      );
+
+      // Se Supabase è configurato, salva nel database
+      if (isSupabaseConfigured()) {
+        try {
+          // Assegna squadra casuale (bilanciata)
+          const { data: squadreData } = await supabase
+            .from('squadre')
+            .select('id')
+            .order('punti_squadra', { ascending: true });
+          
+          const squadreIds = squadreData?.map((s: Database['public']['Tables']['squadre']['Row']) => s.id) || [];
+          const randomSquadraId = squadreIds[Math.floor(Math.random() * squadreIds.length)] || null;
+
+          // Crea l'utente nel database
+          // Crea l'utente nel database con type assertion per evitare problemi di tipo
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .insert({
+              id: userId,
+              nickname: registrationData.nickname || `${registrationData.nome} ${registrationData.cognome}`.trim(),
+              nome: registrationData.nome,
+              cognome: registrationData.cognome,
+              email: registrationData.email,
+              telefono: registrationData.telefono || null,
+              data_nascita: registrationData.data_nascita || null,
+              passkey_id: passkeyCredential.id,
+              squadra_id: randomSquadraId,
+              punti_personali: 0,
+              is_admin: registrationData.email?.toLowerCase() === 'admin@30diciaccio.it',
+            } as any)
+            .select()
+            .single();
+
+          if (userError || !userData) {
+            console.error('Errore creazione utente:', userError);
+            throw new Error('Errore durante la registrazione nel database');
+          }
+
+          const dbUser = userData as Database['public']['Tables']['users']['Row'];
+          const newUser: User = {
+            id: dbUser.id,
+            nickname: dbUser.nickname,
+            nome: dbUser.nome || undefined,
+            cognome: dbUser.cognome || undefined,
+            email: dbUser.email || undefined,
+            telefono: dbUser.telefono || undefined,
+            data_nascita: dbUser.data_nascita || undefined,
+            avatar: dbUser.avatar || undefined,
+            passkey_id: dbUser.passkey_id || undefined,
+            squadra_id: dbUser.squadra_id,
+            punti_personali: dbUser.punti_personali,
+            is_admin: dbUser.is_admin,
+            created_at: dbUser.created_at,
+          };
+
+          setUser(newUser);
+          localStorage.setItem('30diciaccio_user', JSON.stringify(newUser));
+          localStorage.setItem('30diciaccio_passkey_id', passkeyCredential.id);
+        } catch (dbError: any) {
+          console.error('Errore database:', dbError);
+          // Fallback a modalità mock se il database fallisce
+          throw new Error('Errore di connessione. Riprova più tardi.');
+        }
+      } else {
+        // Modalità mock (senza database)
+        const randomSquadra = squadre[Math.floor(Math.random() * squadre.length)];
+        
+        const newUser: User = {
+          id: userId,
+          nickname: registrationData.nickname || `${registrationData.nome} ${registrationData.cognome}`.trim(),
+          nome: registrationData.nome,
+          cognome: registrationData.cognome,
+          email: registrationData.email,
+          telefono: registrationData.telefono,
+          data_nascita: registrationData.data_nascita,
+          passkey_id: passkeyCredential.id,
+          squadra_id: randomSquadra.id,
+          punti_personali: 0,
+          is_admin: registrationData.email?.toLowerCase() === 'admin@30diciaccio.it',
+          created_at: new Date().toISOString(),
+        };
+        
+        setUser(newUser);
+        localStorage.setItem('30diciaccio_user', JSON.stringify(newUser));
+        localStorage.setItem('30diciaccio_passkey_id', passkeyCredential.id);
+      }
+      
+      setIsLoading(false);
+    } catch (error: any) {
+      setIsLoading(false);
+      throw error; // Rilancia l'errore per gestirlo nel componente
+    }
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('30diciaccio_user');
+    localStorage.removeItem('30diciaccio_passkey_id');
   };
 
   const submitProva = async (questId: string, tipo: 'foto' | 'video' | 'testo', contenuto: string) => {

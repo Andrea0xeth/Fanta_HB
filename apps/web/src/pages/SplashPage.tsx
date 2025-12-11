@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { Countdown } from '../components/Countdown';
 import { PWAInstallPrompt } from '../components/PWAInstallPrompt';
+import type { RegistrationData } from '../types';
 
 type ViewState = 'splash' | 'video-pre' | 'auth' | 'video-post' | 'loading';
 
@@ -12,7 +13,14 @@ export const SplashPage: React.FC = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, isLoading } = useGame();
   const [viewState, setViewState] = useState<ViewState>('splash');
-  const [nickname, setNickname] = useState('');
+  const [registrationData, setRegistrationData] = useState<RegistrationData>({
+    nickname: '',
+    nome: '',
+    cognome: '',
+    email: '',
+    telefono: '',
+    data_nascita: '',
+  });
   const [authLoading, setAuthLoading] = useState(false);
   const [showPostVideo, setShowPostVideo] = useState(false); // Flag per video post
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -38,21 +46,33 @@ export const SplashPage: React.FC = () => {
     setViewState('auth');
   };
 
-  // Handle authentication
+  // Handle authentication with passkey
   const handleAuth = async () => {
+    // Validazione campi obbligatori
+    if (!registrationData.nome || !registrationData.cognome || !registrationData.email) {
+      alert('Per favore compila tutti i campi obbligatori (Nome, Cognome, Email)');
+      return;
+    }
+
     setAuthLoading(true);
     setShowPostVideo(true); // Imposta il flag PRIMA del login
     
     try {
-      await login(nickname);
+      await login(registrationData);
       // After successful login, show post-registration video
       setViewState('video-post');
       setAuthLoading(false);
     } catch (error) {
       console.error('Auth failed:', error);
+      alert(error instanceof Error ? error.message : 'Errore durante la registrazione');
       setShowPostVideo(false);
       setAuthLoading(false);
     }
+  };
+
+  // Update registration field
+  const updateField = (field: keyof RegistrationData, value: string) => {
+    setRegistrationData(prev => ({ ...prev, [field]: value }));
   };
 
   // When post-registration video ends, navigate to home
@@ -71,7 +91,7 @@ export const SplashPage: React.FC = () => {
 
   if (isLoading && viewState === 'splash') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-dark">
+      <div className="h-screen flex items-center justify-center bg-dark overflow-hidden">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
@@ -84,26 +104,37 @@ export const SplashPage: React.FC = () => {
   // Video Pre-Iscrizione
   if (viewState === 'video-pre') {
     return (
-      <div className="min-h-screen bg-dark flex flex-col items-center justify-center relative">
-        <video
-          ref={videoRef}
-          src="/videos/BenvenutoPreIscrizione.mp4"
-          autoPlay
-          playsInline
-          onEnded={handlePreVideoEnd}
-          className="w-full h-full object-contain max-h-screen"
-        />
+      <div className="h-screen bg-dark flex items-center justify-center relative overflow-hidden">
+        {/* Overlay scuro */}
+        <div className="absolute inset-0 bg-black/80 z-40" />
         
-        {/* Skip button */}
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-          onClick={handleSkipVideo}
-          className="absolute bottom-8 right-4 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm text-white/70 hover:bg-white/20 transition-colors"
+        {/* Modale con video verticale */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="relative z-50 w-[85%] max-w-md aspect-[9/16] bg-gray-900 rounded-2xl border-2 border-white/20 overflow-hidden shadow-2xl"
         >
-          Salta →
-        </motion.button>
+          <video
+            ref={videoRef}
+            src="/videos/BenvenutoPreIscrizione.mp4"
+            autoPlay
+            playsInline
+            onEnded={handlePreVideoEnd}
+            className="w-full h-full object-cover"
+          />
+          
+          {/* Skip button */}
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2 }}
+            onClick={handleSkipVideo}
+            className="absolute bottom-4 right-4 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm text-white/70 hover:bg-white/20 transition-colors"
+          >
+            Salta →
+          </motion.button>
+        </motion.div>
       </div>
     );
   }
@@ -111,32 +142,43 @@ export const SplashPage: React.FC = () => {
   // Video Post-Iscrizione
   if (viewState === 'video-post') {
     return (
-      <div className="min-h-screen bg-dark flex flex-col items-center justify-center relative">
-        <video
-          ref={videoRef}
-          src="/videos/BenvenutoPostiscrizione.mp4"
-          autoPlay
-          playsInline
-          onEnded={handlePostVideoEnd}
-          className="w-full h-full object-contain max-h-screen"
-        />
+      <div className="h-screen bg-dark flex items-center justify-center relative overflow-hidden">
+        {/* Overlay scuro */}
+        <div className="absolute inset-0 bg-black/80 z-40" />
         
-        {/* Skip button */}
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-          onClick={handleSkipVideo}
-          className="absolute bottom-8 right-4 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm text-white/70 hover:bg-white/20 transition-colors"
+        {/* Modale con video verticale */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="relative z-50 w-[85%] max-w-md aspect-[9/16] bg-gray-900 rounded-2xl border-2 border-white/20 overflow-hidden shadow-2xl"
         >
-          Salta →
-        </motion.button>
+          <video
+            ref={videoRef}
+            src="/videos/BenvenutoPostiscrizione.mp4"
+            autoPlay
+            playsInline
+            onEnded={handlePostVideoEnd}
+            className="w-full h-full object-cover"
+          />
+          
+          {/* Skip button */}
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2 }}
+            onClick={handleSkipVideo}
+            className="absolute bottom-4 right-4 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm text-white/70 hover:bg-white/20 transition-colors"
+          >
+            Salta →
+          </motion.button>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-dark flex flex-col items-center justify-between p-6 pt-safe overflow-hidden relative">
+    <div className="h-screen bg-dark flex flex-col items-center justify-between p-6 pt-safe overflow-hidden relative">
       {/* Background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(20)].map((_, i) => (
@@ -228,21 +270,71 @@ export const SplashPage: React.FC = () => {
               key="auth"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-4"
+              className="space-y-3 max-h-[70vh] overflow-y-auto scrollbar-hide"
             >
+              <p className="text-sm text-gray-400 text-center mb-2">
+                Compila i dati per partecipare al gioco
+              </p>
+              
               <input
                 type="text"
-                placeholder="Il tuo nickname (opzionale)"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
+                placeholder="Nickname *"
+                value={registrationData.nickname}
+                onChange={(e) => updateField('nickname', e.target.value)}
                 className="input text-center"
                 maxLength={20}
+                required
+              />
+              
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Nome *"
+                  value={registrationData.nome}
+                  onChange={(e) => updateField('nome', e.target.value)}
+                  className="input text-center"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Cognome *"
+                  value={registrationData.cognome}
+                  onChange={(e) => updateField('cognome', e.target.value)}
+                  className="input text-center"
+                  required
+                />
+              </div>
+              
+              <input
+                type="email"
+                placeholder="Email *"
+                value={registrationData.email}
+                onChange={(e) => updateField('email', e.target.value)}
+                className="input text-center"
+                required
+              />
+              
+              <input
+                type="tel"
+                placeholder="Telefono"
+                value={registrationData.telefono}
+                onChange={(e) => updateField('telefono', e.target.value)}
+                className="input text-center"
+              />
+              
+              <input
+                type="date"
+                placeholder="Data di nascita"
+                value={registrationData.data_nascita}
+                onChange={(e) => updateField('data_nascita', e.target.value)}
+                className="input text-center"
+                max={new Date().toISOString().split('T')[0]}
               />
               
               <button
                 onClick={handleAuth}
-                disabled={authLoading}
-                className="btn-primary w-full flex items-center justify-center gap-3 py-4 disabled:opacity-70"
+                disabled={authLoading || !registrationData.nome || !registrationData.cognome || !registrationData.email}
+                className="btn-primary w-full flex items-center justify-center gap-3 py-4 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
               >
                 {authLoading ? (
                   <motion.div
@@ -253,14 +345,14 @@ export const SplashPage: React.FC = () => {
                 ) : (
                   <>
                     <Fingerprint size={24} />
-                    Accedi con Face ID / Impronta
+                    Registrati con Face ID / Impronta
                   </>
                 )}
               </button>
               
               <button
                 onClick={() => setViewState('splash')}
-                className="w-full text-center text-gray-500 text-sm"
+                className="w-full text-center text-gray-500 text-sm py-2"
               >
                 Annulla
               </button>
