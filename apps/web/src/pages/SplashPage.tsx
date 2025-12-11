@@ -577,39 +577,12 @@ export const SplashPage: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        {/* DC-10 Plane Image - Above DC-30 */}
-        <motion.div
-          className="mb-2 flex justify-center"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-        >
-          <img 
-            src="/dc10plane.png" 
-            alt="DC-10 Plane" 
-            className="max-w-[120px] md:max-w-[150px]"
-            style={{ maxHeight: '100px', objectFit: 'contain', display: 'block' }}
-          />
-        </motion.div>
-
-        {/* DC-30 - Main Neon Text */}
-        <div className="neon-3d-glow mb-0">
-          <h1 
-            className="neon-red-orange text-6xl md:text-7xl font-bold text-center tracking-wider"
-            style={{
-              animation: `neon-flicker ${flickerTimings.dc30}s infinite`,
-            }}
-          >
-            DC-30
-          </h1>
-        </div>
-
-        {/* Di Ciaccio - 30 - Small subtitle - White with D and C uppercase - Less visible */}
+        {/* Di Ciaccio - 30 - Small subtitle - White with D and C uppercase - Less visible - Above DC-30 */}
         <motion.p 
-          className="text-sm md:text-base font-medium text-center mb-6 tracking-wider -mt-2"
+          className="text-sm md:text-base font-medium text-center mb-2 tracking-wider"
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.5 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.2 }}
           style={{
             WebkitTextStroke: '0.4px #ffffff',
             color: 'rgba(255, 255, 255, 0.4)',
@@ -622,6 +595,36 @@ export const SplashPage: React.FC = () => {
         >
           <span className="uppercase">D</span>i <span className="uppercase">C</span>iaccio - 30
         </motion.p>
+
+        {/* DC-30 with Overlay Image */}
+        <div className="relative flex flex-col items-center">
+          {/* DC-10 Plane Image - Overlay on DC-30 */}
+          <motion.div
+            className="absolute -top-8 md:-top-10 z-20 flex justify-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            <img 
+              src="/dc10plane.png" 
+              alt="DC-10 Plane" 
+              className="max-w-[120px] md:max-w-[150px]"
+              style={{ maxHeight: '100px', objectFit: 'contain', display: 'block' }}
+            />
+          </motion.div>
+
+          {/* DC-30 - Main Neon Text */}
+          <div className="neon-3d-glow mb-0 relative z-10">
+            <h1 
+              className="neon-red-orange text-6xl md:text-7xl font-bold text-center tracking-wider"
+              style={{
+                animation: `neon-flicker ${flickerTimings.dc30}s infinite`,
+              }}
+            >
+              DC-30
+            </h1>
+          </div>
+        </div>
 
         {/* CIRCOLOCO Fuerteventura - White Neon - Larger */}
         <motion.div 
