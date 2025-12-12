@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Loader2, CheckCircle2, AlertCircle, Users, User, Building2 } from 'lucide-react';
-import { sendPushNotification, sendPushNotificationToSquadra, sendPushNotificationToAll } from '../lib/pushNotifications';
+import { sendOneSignalNotificationToUser, sendOneSignalNotificationToAll } from '../lib/oneSignal';
 import { useGame } from '../context/GameContext';
 
 interface SendPushNotificationModalProps {
@@ -57,10 +57,10 @@ export const SendPushNotificationModal: React.FC<SendPushNotificationModalProps>
           }
           console.log('[PushModal] Invio a utente:', selectedUserId);
           try {
-            success = await sendPushNotification(selectedUserId, payload);
+            success = await sendOneSignalNotificationToUser(selectedUserId, payload);
             count = success ? 1 : 0;
             if (!success) {
-              errorMessage = 'Impossibile inviare la notifica. Verifica che:\n- L\'utente abbia abilitato le notifiche push\n- Le chiavi VAPID siano configurate nell\'Edge Function\n- L\'Edge Function sia deployata correttamente';
+              errorMessage = 'Impossibile inviare la notifica. Verifica che l\'utente abbia abilitato le notifiche push.';
             }
           } catch (err: any) {
             console.error('[PushModal] Errore specifico:', err);
@@ -76,19 +76,35 @@ export const SendPushNotificationModal: React.FC<SendPushNotificationModalProps>
             return;
           }
           console.log('[PushModal] Invio a squadra:', selectedSquadraId);
-          count = await sendPushNotificationToSquadra(selectedSquadraId, payload);
-          success = count > 0;
-          if (!success) {
-            errorMessage = `Nessuna notifica inviata. Verifica che gli utenti della squadra abbiano abilitato le notifiche push.`;
+          // OneSignal: invia a tutti gli utenti della squadra usando il tag squadra_id
+          try {
+            const { sendOneSignalNotification } = await import('../lib/oneSignal');
+            success = await sendOneSignalNotification(payload, [
+              { field: 'tag', key: 'squadra_id', relation: '=', value: selectedSquadraId },
+            ]);
+            count = success ? 1 : 0; // OneSignal non restituisce il count esatto, usiamo 1 se success
+            if (!success) {
+              errorMessage = `Nessuna notifica inviata. Verifica che gli utenti della squadra abbiano abilitato le notifiche push.`;
+            }
+          } catch (err: any) {
+            console.error('[PushModal] Errore invio a squadra:', err);
+            errorMessage = err.message || 'Errore durante l\'invio alla squadra.';
+            success = false;
           }
           break;
 
         case 'all':
           console.log('[PushModal] Invio a tutti gli utenti');
-          count = await sendPushNotificationToAll(payload);
-          success = count > 0;
-          if (!success) {
-            errorMessage = `Nessuna notifica inviata. Verifica che ci siano utenti con notifiche push abilitate.`;
+          try {
+            success = await sendOneSignalNotificationToAll(payload);
+            count = success ? 1 : 0; // OneSignal non restituisce il count esatto
+            if (!success) {
+              errorMessage = `Nessuna notifica inviata. Verifica che ci siano utenti con notifiche push abilitate.`;
+            }
+          } catch (err: any) {
+            console.error('[PushModal] Errore invio a tutti:', err);
+            errorMessage = err.message || 'Errore durante l\'invio a tutti gli utenti.';
+            success = false;
           }
           break;
       }
