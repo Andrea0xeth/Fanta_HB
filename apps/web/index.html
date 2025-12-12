@@ -35,29 +35,6 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.webmanifest" />
     
-    <!-- OneSignal SDK -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        try {
-          await OneSignal.init({
-            appId: "2ff6202e-418d-415f-8250-24b8c75b2b4f",
-            safari_web_id: "web.onesignal.auto.2f682342-7506-4d13-96c3-4fd5fa35ae95",
-            notifyButton: {
-              enable: false, // Disabilitiamo il pulsante predefinito, useremo il nostro
-            },
-          });
-        } catch (error) {
-          // Ignora errori di inizializzazione OneSignal (non critici)
-          // Gli errori "Worker Messenger" sono normali e non impediscono il funzionamento
-          // Questi errori si verificano quando OneSignal cerca di comunicare con il service worker
-          // prima che sia completamente pronto, ma non influenzano le notifiche push
-          console.debug('OneSignal initialization warning (non critico):', error);
-        }
-      });
-    </script>
-    
     <!-- Prevent iOS zoom on input focus -->
     <style>
       input, select, textarea {

@@ -38,10 +38,8 @@ export const usePWAInstall = () => {
     }
 
     // Listen for the beforeinstallprompt event (Chrome, Edge, etc.)
-    // NOTA: preventDefault() è necessario per gestire manualmente il prompt
-    // Il warning "Banner not shown" è normale e previsto quando gestiamo manualmente l'installazione
     const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault(); // Previene il banner automatico - lo mostriamo noi manualmente
+      e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setIsInstallable(true);
       setCanShowPrompt(true);

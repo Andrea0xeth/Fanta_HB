@@ -15,11 +15,8 @@ if (typeof window !== 'undefined' && window.screen?.orientation) {
     // Try to lock orientation to portrait
     orientation.lock('portrait').catch((err: unknown) => {
       // Orientation lock might not be supported or allowed
-      // This is normal in some browsers/devices (e.g., iOS Safari, some Android browsers)
-      // Silently fail - the CSS media queries will handle orientation restrictions
-      if (import.meta.env.DEV) {
-        console.debug('Orientation lock not available (this is normal):', err);
-      }
+      // This is normal in some browsers/devices
+      console.log('Orientation lock not available:', err);
     });
   }
 }

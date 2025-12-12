@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
 import { Bell, BellOff, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
-import { useOneSignal } from '../hooks/useOneSignal';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useGame } from '../context/GameContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const PushNotificationSettings: React.FC = () => {
-  const { user, mySquadra } = useGame();
+  const { user } = useGame();
   const {
     isSupported,
     isSubscribed,
+    isPermissionGranted,
     isLoading,
     error,
     subscribe,
     unsubscribe,
-  } = useOneSignal();
+    requestPermission,
+  } = usePushNotifications(user?.id);
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -29,8 +31,18 @@ export const PushNotificationSettings: React.FC = () => {
         setMessage({ type: 'error', text: error || 'Errore durante la disabilitazione' });
       }
     } else {
+      // Prima richiedi il permesso se necessario
+      if (!isPermissionGranted) {
+        console.log('[PushSettings] Richiesta permesso...');
+        const permission = await requestPermission();
+        if (permission !== 'granted') {
+          setMessage({ type: 'error', text: 'Permesso notifiche negato' });
+          return;
+        }
+      }
+
       console.log('[PushSettings] Avvio iscrizione...');
-      const success = await subscribe(user?.id, mySquadra?.id);
+      const success = await subscribe();
       console.log('[PushSettings] Risultato iscrizione:', { success, error });
       
       if (success) {
