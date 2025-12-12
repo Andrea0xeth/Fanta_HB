@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Crown, Swords, Gift, Users, Search, Plus, Check, X, Trophy, Shuffle, Bell } from 'lucide-react';
+import { Crown, Swords, Gift, Users, Search, Plus, Check, X, Trophy, Shuffle, Bell, RefreshCw } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { GaraCard } from '../components/GaraCard';
 import { Avatar } from '../components/Avatar';
 import { SendPushNotificationModal } from '../components/SendPushNotificationModal';
 import { ClassificaGaraModal } from '../components/ClassificaGaraModal';
 import { CreaGaraModal } from '../components/CreaGaraModal';
+import { processPushNotificationQueue } from '../lib/pushNotifications';
 import type { Gara } from '../types';
 
 type TabType = 'gare' | 'bonus' | 'squadre';
@@ -33,6 +34,8 @@ export const AdminPage: React.FC = () => {
   const [showCreaGara, setShowCreaGara] = useState(false);
   const [showPushNotificationModal, setShowPushNotificationModal] = useState(false);
   const [isSubmittingBonus, setIsSubmittingBonus] = useState(false);
+  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
+  const [queueProcessResult, setQueueProcessResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Listener per aprire il modal classifica
   useEffect(() => {
@@ -84,6 +87,40 @@ export const AdminPage: React.FC = () => {
     }
   };
 
+  const handleProcessQueue = async () => {
+    if (isProcessingQueue) return;
+    
+    setIsProcessingQueue(true);
+    setQueueProcessResult(null);
+    
+    try {
+      const result = await processPushNotificationQueue();
+      
+      if (result.success) {
+        setQueueProcessResult({
+          type: 'success',
+          message: result.message || 'Coda processata con successo!',
+        });
+      } else {
+        setQueueProcessResult({
+          type: 'error',
+          message: result.message || 'Errore durante il processamento della coda',
+        });
+      }
+      
+      // Rimuovi il messaggio dopo 5 secondi
+      setTimeout(() => setQueueProcessResult(null), 5000);
+    } catch (error: any) {
+      setQueueProcessResult({
+        type: 'error',
+        message: error.message || 'Errore durante il processamento della coda',
+      });
+      setTimeout(() => setQueueProcessResult(null), 5000);
+    } finally {
+      setIsProcessingQueue(false);
+    }
+  };
+
   const motivoOptions = [
     'MVP della gara',
     'Prova epica',
@@ -105,13 +142,36 @@ export const AdminPage: React.FC = () => {
           <Crown className="w-12 h-12 text-party-300 mx-auto mb-2" />
           <h1 className="text-2xl font-display font-bold">Admin Panel</h1>
           <p className="text-gray-500 text-sm">Gestisci il 30diCiaccioGame</p>
-          <button
-            onClick={() => setShowPushNotificationModal(true)}
-            className="mt-4 btn-primary flex items-center gap-2 mx-auto text-sm py-2 px-4"
-          >
-            <Bell size={16} />
-            Invia Notifica Push
-          </button>
+          <div className="mt-4 flex items-center gap-2 justify-center flex-wrap">
+            <button
+              onClick={() => setShowPushNotificationModal(true)}
+              className="btn-primary flex items-center gap-2 text-sm py-2 px-4"
+            >
+              <Bell size={16} />
+              Invia Notifica Push
+            </button>
+            <button
+              onClick={handleProcessQueue}
+              disabled={isProcessingQueue}
+              className="btn-secondary flex items-center gap-2 text-sm py-2 px-4 disabled:opacity-50"
+            >
+              {isProcessingQueue ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                  />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <RefreshCw size={16} />
+                  Processa Coda Notifiche
+                </>
+              )}
+            </button>
+          </div>
         </motion.div>
 
         {/* Tab Switcher */}
@@ -163,6 +223,27 @@ export const AdminPage: React.FC = () => {
           >
             <Check size={20} />
             <span className="font-semibold">Bonus assegnato con successo!</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Queue Process Result Toast */}
+      <AnimatePresence>
+        {queueProcessResult && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className={`fixed top-20 left-4 right-4 z-50 ${
+              queueProcessResult.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg`}
+          >
+            {queueProcessResult.type === 'success' ? (
+              <Check size={20} />
+            ) : (
+              <X size={20} />
+            )}
+            <span className="font-semibold">{queueProcessResult.message}</span>
           </motion.div>
         )}
       </AnimatePresence>

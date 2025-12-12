@@ -182,3 +182,44 @@ export const sendPushNotificationToAll = async (
   }
 };
 
+/**
+ * Processa manualmente la coda delle notifiche push
+ * Chiama l'endpoint API che esegue il worker
+ */
+export const processPushNotificationQueue = async (): Promise<{
+  success: boolean;
+  message?: string;
+  result?: any;
+}> => {
+  try {
+    const baseUrl = import.meta.env.VITE_VERCEL_URL 
+      ? `https://${import.meta.env.VITE_VERCEL_URL}`
+      : window.location.origin;
+    
+    const response = await fetch(`${baseUrl}/api/cron/push-notifications`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      message: data.message || 'Coda processata con successo',
+      result: data.result,
+    };
+  } catch (err: any) {
+    console.error('[Push] Errore processamento coda:', err);
+    return {
+      success: false,
+      message: err.message || 'Errore durante il processamento della coda',
+    };
+  }
+};
+

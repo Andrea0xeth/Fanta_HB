@@ -7,12 +7,6 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron/push-notifications",
-      "schedule": "*/5 * * * *"
-    }
   ]
 }
 
