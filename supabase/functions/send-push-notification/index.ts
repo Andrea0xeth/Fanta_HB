@@ -4,10 +4,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// Importa web-push per Deno
-// Usa la libreria web-push compatibile con Deno
-// Nota: Se questa libreria non funziona, usa l'implementazione alternativa in fondo al file
-import { sendNotification } from "https://deno.land/x/web_push@v1.0.0/mod.ts"
+// Importa web-push tramite esm.sh (compatibile con Deno/Supabase)
+// esm.sh converte moduli npm in moduli Deno-compatibili
+import webpush from "https://esm.sh/web-push@3.6.6"
 
 const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY') || ''
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') || ''
@@ -106,11 +105,11 @@ serve(async (req) => {
     })
 
     // Configura VAPID
-    const vapidDetails = {
-      subject: 'mailto:admin@30diciaccio.it',
-      publicKey: VAPID_PUBLIC_KEY,
-      privateKey: VAPID_PRIVATE_KEY,
-    }
+    webpush.setVapidDetails(
+      'mailto:admin@30diciaccio.it',
+      VAPID_PUBLIC_KEY,
+      VAPID_PRIVATE_KEY
+    )
 
     // Invia notifiche a tutte le subscription
     const results = await Promise.allSettled(
@@ -124,10 +123,9 @@ serve(async (req) => {
             },
           }
 
-          await sendNotification(
+          await webpush.sendNotification(
             subscription,
-            notificationPayload,
-            vapidDetails
+            notificationPayload
           )
 
           return { success: true, subscriptionId: sub.id }

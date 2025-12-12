@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Swords, Gift, Users, Search, Plus, Check, X, Trophy, Shuffle, Bell } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { GaraCard } from '../components/GaraCard';
 import { Avatar } from '../components/Avatar';
 import { SendPushNotificationModal } from '../components/SendPushNotificationModal';
-// import { ClassificaGaraModal } from '../components/ClassificaGaraModal';
-// import { CreaGaraModal } from '../components/CreaGaraModal';
-// import type { Gara } from '../types';
+import { ClassificaGaraModal } from '../components/ClassificaGaraModal';
+import { CreaGaraModal } from '../components/CreaGaraModal';
+import type { Gara } from '../types';
 
 type TabType = 'gare' | 'bonus' | 'squadre';
 
@@ -19,7 +19,7 @@ export const AdminPage: React.FC = () => {
     leaderboardSingoli,
     assegnaVincitore,
     assegnaClassifica,
-    // creaGara,
+    creaGara,
     aggiungiBonus 
   } = useGame();
 
@@ -29,20 +29,20 @@ export const AdminPage: React.FC = () => {
   const [bonusPoints, setBonusPoints] = useState('');
   const [bonusMotivo, setBonusMotivo] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [_selectedGaraForClassifica, setSelectedGaraForClassifica] = useState<any>(null);
-  const [_showCreaGara, setShowCreaGara] = useState(false);
+  const [selectedGaraForClassifica, setSelectedGaraForClassifica] = useState<Gara | null>(null);
+  const [showCreaGara, setShowCreaGara] = useState(false);
   const [showPushNotificationModal, setShowPushNotificationModal] = useState(false);
 
-  // Listener per aprire il modal classifica (placeholder per futuro)
-  // useEffect(() => {
-  //   const handleOpenClassifica = (event: CustomEvent) => {
-  //     setSelectedGaraForClassifica(event.detail.gara);
-  //   };
-  //   window.addEventListener('open-classifica-modal' as any, handleOpenClassifica as EventListener);
-  //   return () => {
-  //     window.removeEventListener('open-classifica-modal' as any, handleOpenClassifica as EventListener);
-  //   };
-  // }, []);
+  // Listener per aprire il modal classifica
+  useEffect(() => {
+    const handleOpenClassifica = (event: CustomEvent) => {
+      setSelectedGaraForClassifica(event.detail.gara);
+    };
+    window.addEventListener('open-classifica-modal' as any, handleOpenClassifica as EventListener);
+    return () => {
+      window.removeEventListener('open-classifica-modal' as any, handleOpenClassifica as EventListener);
+    };
+  }, []);
 
   // Check admin access
   if (!user?.is_admin) {
@@ -259,17 +259,21 @@ export const AdminPage: React.FC = () => {
               </div>
 
               {/* User List */}
-              {searchQuery && (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {filteredUsers.map((utente) => (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {filteredUsers.length === 0 ? (
+                  <div className="card text-center py-8 text-gray-500">
+                    <p className="text-sm">Nessun utente trovato</p>
+                  </div>
+                ) : (
+                  filteredUsers.map((utente) => (
                     <button
                       key={utente.id}
                       onClick={() => {
                         setSelectedUser(utente.id);
                         setSearchQuery(utente.nickname);
                       }}
-                      className={`w-full card flex items-center gap-3 text-left ${
-                        selectedUser === utente.id ? 'border-coral-500' : ''
+                      className={`w-full card flex items-center gap-3 text-left transition-all ${
+                        selectedUser === utente.id ? 'border-coral-500 border-2' : ''
                       }`}
                     >
                       <Avatar user={utente} size="md" />
@@ -281,9 +285,9 @@ export const AdminPage: React.FC = () => {
                         <Check className="text-coral-500" size={20} />
                       )}
                     </button>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
 
               {/* Selected User Form */}
               {selectedUser && (
@@ -409,6 +413,31 @@ export const AdminPage: React.FC = () => {
         isOpen={showPushNotificationModal}
         onClose={() => setShowPushNotificationModal(false)}
       />
+
+      {/* Classifica Gara Modal */}
+      {selectedGaraForClassifica && (
+        <ClassificaGaraModal
+          gara={selectedGaraForClassifica}
+          squadre={squadre}
+          onClose={() => setSelectedGaraForClassifica(null)}
+          onSave={async (classifiche) => {
+            await assegnaClassifica(selectedGaraForClassifica.id, classifiche);
+            setSelectedGaraForClassifica(null);
+          }}
+        />
+      )}
+
+      {/* Crea Gara Modal */}
+      {showCreaGara && (
+        <CreaGaraModal
+          squadre={squadre}
+          onClose={() => setShowCreaGara(false)}
+          onCreate={async (gara) => {
+            await creaGara(gara);
+            setShowCreaGara(false);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 {
   "imports": {
-    "web-push": "https://deno.land/x/web_push@v1.0.0/mod.ts"
+    "web-push": "https://esm.sh/web-push@3.6.6"
   }
 }
 
