@@ -23,6 +23,29 @@ export const useOneSignal = (): UseOneSignalReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper per verificare se l'utente è iscritto (compatibile con diverse versioni API)
+  const checkSubscriptionStatus = async (): Promise<boolean> => {
+    if (!window.OneSignal) return false;
+
+    try {
+      // Prova diversi metodi API a seconda della versione
+      if (typeof window.OneSignal.isPushNotificationsEnabled === 'function') {
+        return await window.OneSignal.isPushNotificationsEnabled();
+      } else if (window.OneSignal.User && typeof window.OneSignal.User.PushSubscription?.optedIn === 'function') {
+        return await window.OneSignal.User.PushSubscription.optedIn();
+      } else if (typeof window.OneSignal.getSubscription === 'function') {
+        const subscription = await window.OneSignal.getSubscription();
+        return subscription === true || (subscription && subscription.optedIn === true);
+      } else if (window.OneSignal.User?.PushSubscription?.optedIn !== undefined) {
+        return window.OneSignal.User.PushSubscription.optedIn;
+      }
+      return false;
+    } catch (err) {
+      console.warn('[OneSignal] Errore verifica stato iscrizione:', err);
+      return false;
+    }
+  };
+
   // Verifica supporto e stato iniziale
   useEffect(() => {
     const checkOneSignal = async () => {
@@ -44,7 +67,7 @@ export const useOneSignal = (): UseOneSignalReturn => {
         setIsSupported(true);
         
         // Verifica se l'utente è già iscritto
-        const isOptedIn = await window.OneSignal.isPushNotificationsEnabled();
+        const isOptedIn = await checkSubscriptionStatus();
         setIsSubscribed(isOptedIn);
       } else {
         setIsSupported(false);
@@ -79,14 +102,28 @@ export const useOneSignal = (): UseOneSignalReturn => {
 
     try {
       // Verifica se è già iscritto prima di procedere
-      const isOptedIn = await window.OneSignal.isPushNotificationsEnabled();
+      const isOptedIn = await checkSubscriptionStatus();
       
       // Se non è iscritto, richiedi permesso e iscriviti
       if (!isOptedIn) {
-        await window.OneSignal.registerForPushNotifications();
+        // Usa registerForPushNotifications se disponibile
+        if (typeof window.OneSignal.registerForPushNotifications === 'function') {
+          await window.OneSignal.registerForPushNotifications();
+        } else if (typeof window.OneSignal.showSlidedownPrompt === 'function') {
+          // Fallback per versioni più vecchie
+          await window.OneSignal.showSlidedownPrompt();
+        } else {
+          // Ultimo fallback: richiedi permesso manualmente
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
+            setError('Permesso notifiche negato');
+            setIsLoading(false);
+            return false;
+          }
+        }
         
         // Attendi un momento per assicurarsi che l'iscrizione sia completata
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
       // Imposta i tag dell'utente se forniti (per segmentazione)
@@ -100,21 +137,35 @@ export const useOneSignal = (): UseOneSignalReturn => {
           tags.squadra_id = squadraId;
         }
 
-        // Prova prima con sendTags (API più recente)
-        if (typeof window.OneSignal.sendTags === 'function') {
-          await window.OneSignal.sendTags(tags);
-        } else if (typeof window.OneSignal.sendTag === 'function') {
-          // Fallback alla versione singolare
-          for (const [key, value] of Object.entries(tags)) {
-            await window.OneSignal.sendTag(key, value);
-          }
+        // Usa OneSignal.push() per assicurarsi che OneSignal sia pronto
+        if (typeof window.OneSignal.push === 'function') {
+          window.OneSignal.push(() => {
+            // Prova prima con sendTags (API più recente)
+            if (typeof window.OneSignal!.sendTags === 'function') {
+              window.OneSignal!.sendTags(tags);
+            } else if (typeof window.OneSignal!.sendTag === 'function') {
+              // Fallback alla versione singolare
+              for (const [key, value] of Object.entries(tags)) {
+                window.OneSignal!.sendTag(key, value);
+              }
+            }
+          });
         } else {
-          console.warn('[OneSignal] sendTags/sendTag non disponibile, i tag non verranno impostati');
+          // Fallback diretto se push non è disponibile
+          if (typeof window.OneSignal.sendTags === 'function') {
+            await window.OneSignal.sendTags(tags);
+          } else if (typeof window.OneSignal.sendTag === 'function') {
+            for (const [key, value] of Object.entries(tags)) {
+              await window.OneSignal.sendTag(key, value);
+            }
+          } else {
+            console.warn('[OneSignal] sendTags/sendTag non disponibile, i tag non verranno impostati');
+          }
         }
       }
       
       // Verifica di nuovo lo stato
-      const newState = await window.OneSignal.isPushNotificationsEnabled();
+      const newState = await checkSubscriptionStatus();
       setIsSubscribed(newState);
       setIsLoading(false);
       
