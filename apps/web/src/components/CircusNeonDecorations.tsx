@@ -279,3 +279,4 @@ export const FloatingCircusDecorations: React.FC = () => {
     </div>
   );
 };
+

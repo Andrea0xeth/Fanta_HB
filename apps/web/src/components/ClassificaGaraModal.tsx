@@ -178,3 +178,4 @@ export const ClassificaGaraModal: React.FC<ClassificaGaraModalProps> = ({
     </AnimatePresence>
   );
 };
+

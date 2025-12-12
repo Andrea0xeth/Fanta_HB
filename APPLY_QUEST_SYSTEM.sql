@@ -168,3 +168,4 @@ GRANT EXECUTE ON FUNCTION get_user_quests TO anon, authenticated;
 
 -- ✅ Sistema di quest completato!
 -- Ogni utente riceverà automaticamente 3 quest casuali ogni giorno
+

@@ -64,3 +64,4 @@ GRANT EXECUTE ON FUNCTION insert_user_with_passkey TO anon, authenticated;
 
 -- ✅ Aggiornamento completato!
 -- La funzione ora accetta il parametro p_avatar e salva l'URL della foto profilo.
+

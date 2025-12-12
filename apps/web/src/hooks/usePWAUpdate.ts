@@ -215,3 +215,4 @@ export const usePWAUpdate = (options: UsePWAUpdateOptions = {}) => {
     dismissUpdate,
   };
 };
+

@@ -118,3 +118,4 @@ GRANT EXECUTE ON FUNCTION get_classifica_gara TO anon, authenticated;
 
 -- ✅ Sistema gare completato!
 -- Ora gli admin possono definire classifiche per le gare multi-squadra
+

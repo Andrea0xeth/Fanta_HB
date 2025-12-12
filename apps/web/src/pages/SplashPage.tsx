@@ -723,7 +723,9 @@ export const SplashPage: React.FC = () => {
               0 0 0.5px rgba(255, 255, 255, 0.3),
               0 0 1px rgba(255, 255, 255, 0.3),
               0 0 1.5px rgba(255, 255, 255, 0.2)
-            `
+            `,
+            fontSize: '10px',
+            fontWeight: 400,
           }}
         >
           <span className="uppercase">D</span>i <span className="uppercase">C</span>iaccio - 30
@@ -771,6 +773,14 @@ export const SplashPage: React.FC = () => {
             className="neon-white text-4xl md:text-5xl font-bold text-center tracking-wider uppercase"
             style={{
               animation: `neon-flicker-white ${flickerTimings.circociaccio}s infinite`,
+              width: '290px',
+              paddingTop: '0px',
+              paddingBottom: '0px',
+              opacity: 1,
+              borderRadius: '172px',
+              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+              marginLeft: '0px',
+              marginRight: '0px',
             }}
           >
             CIRCOCIACCIO

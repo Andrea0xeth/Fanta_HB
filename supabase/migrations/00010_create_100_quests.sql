@@ -120,3 +120,4 @@ INSERT INTO quest (giorno, titolo, descrizione, punti, difficolta, tipo_prova, e
 
 -- Nota: Le quest sono state create con giorno=1, ma possono essere usate per qualsiasi giorno
 -- Il sistema di assegnazione casuale le distribuirà agli utenti
+

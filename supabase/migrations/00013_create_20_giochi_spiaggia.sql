@@ -43,3 +43,4 @@ INSERT INTO giochi_template (nome, descrizione, emoji, min_squadre, max_squadre,
 
 -- Nota: Le gare effettive vengono create dall'admin tramite l'interfaccia
 -- Questa tabella serve solo come riferimento per i giochi disponibili
+

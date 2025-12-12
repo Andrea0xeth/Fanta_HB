@@ -176,3 +176,4 @@ export const isProofValidated = (votiPositivi: number, votiTotali: number): bool
 };
 
 
+

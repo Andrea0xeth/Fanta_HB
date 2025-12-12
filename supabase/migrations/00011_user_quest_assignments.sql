@@ -160,3 +160,4 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 GRANT EXECUTE ON FUNCTION get_user_quests TO anon, authenticated;
+

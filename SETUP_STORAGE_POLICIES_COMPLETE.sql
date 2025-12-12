@@ -102,3 +102,4 @@ USING (
 -- 2. ✅ Caricare prove quest (foto/video) quando autenticati
 -- 3. ✅ Visualizzare tutti i file pubblici
 -- 4. ✅ Aggiornare/eliminare solo i propri file
+

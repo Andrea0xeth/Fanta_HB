@@ -325,3 +325,4 @@ ON CONFLICT (nome) DO NOTHING;
 -- - Creare nuove gare usando i 20 giochi disponibili
 -- - Definire classifiche per le gare completate
 -- - I punti vengono distribuiti automaticamente in base alla posizione
+

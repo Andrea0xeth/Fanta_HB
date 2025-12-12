@@ -572,7 +572,7 @@
   }
 
   .neon-white {
-    font-family: 'Kalam', 'Caveat', cursive;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
     color: #ffffff;
     -webkit-text-stroke: 0.4px #ffffff;
     text-shadow:

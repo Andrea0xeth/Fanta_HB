@@ -76,3 +76,4 @@ USING (
 --    - Allowed operation: SELECT
 --    - Target roles: anon, authenticated
 --    - Policy definition: bucket_id = 'prove-quest'
+
