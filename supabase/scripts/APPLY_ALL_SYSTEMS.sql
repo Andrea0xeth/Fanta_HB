@@ -92,6 +92,8 @@ BEGIN
   DELETE FROM user_quest_assignments
   WHERE user_id = p_user_id AND giorno = p_giorno;
 
+  -- Assegna 3 quest usando un hash deterministico basato sull'ID utente e sul giorno
+  -- Questo garantisce che ogni utente riceva quest diverse ma deterministiche
   INSERT INTO user_quest_assignments (user_id, quest_id, giorno)
   SELECT 
     p_user_id,
@@ -99,7 +101,7 @@ BEGIN
     p_giorno
   FROM quest q
   WHERE q.attiva = true
-  ORDER BY RANDOM()
+  ORDER BY md5(q.id::text || p_user_id::text || p_giorno::text)
   LIMIT 3;
 
   RETURN QUERY
@@ -325,5 +327,6 @@ ON CONFLICT (nome) DO NOTHING;
 -- - Creare nuove gare usando i 20 giochi disponibili
 -- - Definire classifiche per le gare completate
 -- - I punti vengono distribuiti automaticamente in base alla posizione
+
 
 

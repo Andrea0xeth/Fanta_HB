@@ -126,6 +126,62 @@
       height: -webkit-fill-available;
     }
   }
+  
+  /* Hide app on desktop - show only on mobile */
+  @media (min-width: 768px) {
+    #root {
+      display: none !important;
+    }
+    
+    body::before {
+      content: '📱 Questa app è disponibile solo su dispositivi mobili';
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #1A1A1A;
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: 600;
+      text-align: center;
+      padding: 2rem;
+      z-index: 9999;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+  }
+  
+  /* Force portrait orientation on mobile */
+  @media (max-width: 767px) {
+    @media (orientation: landscape) {
+      body::before {
+        content: '📱 Ruota il dispositivo in verticale per utilizzare l\'app';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #1A1A1A;
+        color: #ffffff;
+        font-size: 20px;
+        font-weight: 600;
+        text-align: center;
+        padding: 2rem;
+        z-index: 9999;
+        font-family: 'Inter', system-ui, sans-serif;
+      }
+      
+      #root {
+        display: none !important;
+      }
+    }
+  }
 }
 
 /* Component Styles */

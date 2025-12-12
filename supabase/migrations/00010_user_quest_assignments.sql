@@ -48,9 +48,9 @@ BEGIN
   DELETE FROM user_quest_assignments 
   WHERE user_id = p_user_id AND giorno = p_giorno;
   
-  -- Seleziona 3 quest casuali dal pool (non assegnate già oggi a questo utente)
-  -- Le quest devono essere attive e non avere un giorno specifico (o essere per tutti i giorni)
-  SELECT ARRAY_AGG(id ORDER BY RANDOM())
+  -- Seleziona 3 quest usando un hash deterministico basato sull'ID utente e sul giorno
+  -- Questo garantisce che ogni utente riceva quest diverse ma deterministiche
+  SELECT ARRAY_AGG(id ORDER BY md5(id::text || p_user_id::text || p_giorno::text))
   INTO v_quest_ids
   FROM quest
   WHERE attiva = true
@@ -63,7 +63,7 @@ BEGIN
   
   -- Se non ci sono abbastanza quest, prendi comunque quelle disponibili
   IF array_length(v_quest_ids, 1) < 3 THEN
-    SELECT ARRAY_AGG(id ORDER BY RANDOM())
+    SELECT ARRAY_AGG(id ORDER BY md5(id::text || p_user_id::text || p_giorno::text))
     INTO v_quest_ids
     FROM quest
     WHERE attiva = true
@@ -112,5 +112,6 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 GRANT EXECUTE ON FUNCTION assign_daily_quests_to_all_users TO anon, authenticated;
+
 
 

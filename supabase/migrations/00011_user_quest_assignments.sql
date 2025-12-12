@@ -84,9 +84,10 @@ BEGIN
   DELETE FROM user_quest_assignments
   WHERE user_id = p_user_id AND giorno = p_giorno;
 
-  -- Assegna 3 quest casuali tra quelle attive
-  -- Usa tutte le quest disponibili (non solo quelle del giorno specifico)
-  -- per avere più varietà
+  -- Assegna 3 quest usando un hash deterministico basato sull'ID utente e sul giorno
+  -- Questo garantisce che ogni utente riceva quest diverse ma deterministiche
+  -- L'hash combina l'ID della quest con l'ID utente e il giorno per creare
+  -- un ordine diverso per ogni utente
   INSERT INTO user_quest_assignments (user_id, quest_id, giorno)
   SELECT 
     p_user_id,
@@ -94,7 +95,7 @@ BEGIN
     p_giorno
   FROM quest q
   WHERE q.attiva = true
-  ORDER BY RANDOM()
+  ORDER BY md5(q.id::text || p_user_id::text || p_giorno::text)
   LIMIT 3;
 
   -- Restituisci le quest assegnate
@@ -160,5 +161,6 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 GRANT EXECUTE ON FUNCTION get_user_quests TO anon, authenticated;
+
 
 
