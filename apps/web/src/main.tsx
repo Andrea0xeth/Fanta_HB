@@ -9,13 +9,16 @@ import App from './App.tsx'
 // Non registriamo qui per evitare conflitti - lasciamo che usePWAUpdate gestisca tutto
 
 // Lock screen orientation to portrait (mobile only)
-if (typeof window !== 'undefined' && window.screen?.orientation?.lock) {
-  // Try to lock orientation to portrait
-  window.screen.orientation.lock('portrait').catch((err) => {
-    // Orientation lock might not be supported or allowed
-    // This is normal in some browsers/devices
-    console.log('Orientation lock not available:', err);
-  });
+if (typeof window !== 'undefined' && window.screen?.orientation) {
+  const orientation = window.screen.orientation as any;
+  if (orientation?.lock) {
+    // Try to lock orientation to portrait
+    orientation.lock('portrait').catch((err: unknown) => {
+      // Orientation lock might not be supported or allowed
+      // This is normal in some browsers/devices
+      console.log('Orientation lock not available:', err);
+    });
+  }
 }
 
 // Prevent rotation on mobile devices
