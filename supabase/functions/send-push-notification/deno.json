@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "web-push": "https://deno.land/x/web_push@v1.0.0/mod.ts"
+  }
+}
+

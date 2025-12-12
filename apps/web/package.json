@@ -13,7 +13,8 @@
     "show:sql": "node scripts/open-sql-schema.js",
     "setup:supabase": "node scripts/auto-setup-supabase.js",
     "apply:schema": "node scripts/apply-schema.js",
-    "apply:functions": "node scripts/apply-functions.js"
+    "apply:functions": "node scripts/apply-functions.js",
+    "apply:push-notifications": "node scripts/apply-push-notifications.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

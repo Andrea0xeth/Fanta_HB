@@ -760,7 +760,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       if (contenuto instanceof File) {
         const uploadedUrl = await uploadProofFile(contenuto, user.id, questId);
         if (!uploadedUrl) {
-          throw new Error('Errore durante l\'upload del file');
+          throw new Error('Errore durante l\'upload del file. Nessun URL restituito.');
         }
         contenutoUrl = uploadedUrl;
       } else {

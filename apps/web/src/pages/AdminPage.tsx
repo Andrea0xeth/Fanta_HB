@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Crown, Swords, Gift, Users, Search, Plus, Check, X, Trophy, Shuffle } from 'lucide-react';
+import { Crown, Swords, Gift, Users, Search, Plus, Check, X, Trophy, Shuffle, Bell } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { GaraCard } from '../components/GaraCard';
 import { Avatar } from '../components/Avatar';
+import { SendPushNotificationModal } from '../components/SendPushNotificationModal';
 // import { ClassificaGaraModal } from '../components/ClassificaGaraModal';
 // import { CreaGaraModal } from '../components/CreaGaraModal';
 // import type { Gara } from '../types';
@@ -30,6 +31,7 @@ export const AdminPage: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [_selectedGaraForClassifica, setSelectedGaraForClassifica] = useState<any>(null);
   const [_showCreaGara, setShowCreaGara] = useState(false);
+  const [showPushNotificationModal, setShowPushNotificationModal] = useState(false);
 
   // Listener per aprire il modal classifica (placeholder per futuro)
   // useEffect(() => {
@@ -93,6 +95,13 @@ export const AdminPage: React.FC = () => {
           <Crown className="w-12 h-12 text-party-300 mx-auto mb-2" />
           <h1 className="text-2xl font-display font-bold">Admin Panel</h1>
           <p className="text-gray-500 text-sm">Gestisci il 30diCiaccioGame</p>
+          <button
+            onClick={() => setShowPushNotificationModal(true)}
+            className="mt-4 btn-primary flex items-center gap-2 mx-auto text-sm py-2 px-4"
+          >
+            <Bell size={16} />
+            Invia Notifica Push
+          </button>
         </motion.div>
 
         {/* Tab Switcher */}
@@ -394,6 +403,12 @@ export const AdminPage: React.FC = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Push Notification Modal */}
+      <SendPushNotificationModal
+        isOpen={showPushNotificationModal}
+        onClose={() => setShowPushNotificationModal(false)}
+      />
     </div>
   );
 };

@@ -2,6 +2,37 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import basicSsl from '@vitejs/plugin-basic-ssl'
+import { readFileSync, writeFileSync } from 'fs'
+import { join } from 'path'
+
+// Plugin per iniettare il codice push handler nel service worker generato
+const injectPushHandler = () => {
+  return {
+    name: 'inject-push-handler',
+    closeBundle() {
+      // Questo viene eseguito dopo che tutti i bundle sono stati generati, incluso il service worker
+      const distDir = join(__dirname, 'dist')
+      const swPath = join(distDir, 'sw.js')
+      const pushHandlerPath = join(__dirname, 'public/sw-push-handler.js')
+      
+      try {
+        const swContent = readFileSync(swPath, 'utf-8')
+        const pushHandler = readFileSync(pushHandlerPath, 'utf-8')
+        
+        // Inietta il codice push handler alla fine del file (prima della chiusura se c'è)
+        // Il service worker è minificato, quindi aggiungiamo semplicemente alla fine
+        const newContent = swContent + '\n\n' + pushHandler
+        writeFileSync(swPath, newContent, 'utf-8')
+        console.log('✅ Push handler iniettato nel service worker')
+      } catch (err: any) {
+        // Se il file non esiste, non fare nulla
+        if (err.code !== 'ENOENT') {
+          console.warn('⚠️  Could not inject push handler:', err.message)
+        }
+      }
+    }
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -71,13 +102,14 @@ export default defineConfig({
               }
             }
           }
-        ]
+        ],
       },
       // Configurazione per sviluppo
       devOptions: {
         enabled: true,
         type: 'module',
       },
-    })
+    }),
+    injectPushHandler(),
   ],
 })

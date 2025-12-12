@@ -7,6 +7,7 @@ import { VerificaCard } from '../components/VerificaCard';
 import { GaraCard } from '../components/GaraCard';
 import { CircusNeonDecorations } from '../components/CircusNeonDecorations';
 import { Avatar } from '../components/Avatar';
+import { PushNotificationSettings } from '../components/PushNotificationSettings';
 
 export const HomePage: React.FC = () => {
   const { 
@@ -166,7 +167,7 @@ export const HomePage: React.FC = () => {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25 }}
-              className="w-full max-h-[90vh] glass-strong rounded-t-3xl overflow-hidden flex flex-col"
+              className="w-full max-h-[85vh] glass-strong rounded-t-3xl overflow-hidden flex flex-col mb-20"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header - Fixed */}
@@ -184,7 +185,7 @@ export const HomePage: React.FC = () => {
               </div>
               
               {/* Content - Scrollable */}
-              <div className="flex-1 overflow-y-auto scrollbar-hide px-4 py-4 pb-6">
+              <div className="flex-1 overflow-y-auto scrollbar-hide px-4 py-4 pb-24">
                 {pendingVerifications.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
                     <CheckCircle2 size={36} className="mx-auto mb-3 opacity-50" />
@@ -244,6 +245,11 @@ export const HomePage: React.FC = () => {
                   <div className="text-xl font-bold text-turquoise-400">{mySquadra?.punti_squadra || 0}</div>
                   <div className="text-[10px] text-gray-500">Punti Squadra</div>
                 </div>
+              </div>
+
+              {/* Push Notification Settings */}
+              <div className="mb-4">
+                <PushNotificationSettings />
               </div>
               
               <button

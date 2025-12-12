@@ -33,27 +33,63 @@ export const uploadProofFile = async (
   userId: string, 
   questId: string
 ): Promise<string | null> => {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${userId}/${questId}/${Date.now()}.${fileExt}`;
-  
-  const { data, error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(fileName, file, {
-      cacheControl: '3600',
-      upsert: false,
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/${questId}/${Date.now()}.${fileExt}`;
+    
+    console.log('[Upload Proof] Inizio upload:', {
+      fileName,
+      fileSize: file.size,
+      fileType: file.type,
+      userId,
+      questId
     });
+    
+    const { data, error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || (fileExt === 'mov' || fileExt === 'mp4' ? 'video/quicktime' : 'application/octet-stream'),
+      });
 
-  if (error) {
-    console.error('Upload error:', error);
-    return null;
+    if (error) {
+      console.error('[Upload Proof] Errore upload:', error);
+      console.error('[Upload Proof] Dettagli errore:', {
+        message: error.message,
+      });
+      
+      // Se l'errore è relativo ai permessi, fornisci un messaggio più chiaro
+      if (error.message?.includes('new row violates row-level security') || 
+          error.message?.includes('permission denied') ||
+          error.message?.includes('row-level security policy')) {
+        throw new Error('Permessi insufficienti per caricare il file. Verifica che le policy di storage siano configurate correttamente.');
+      }
+      
+      throw new Error(`Errore durante l'upload: ${error.message || 'Errore sconosciuto'}`);
+    }
+
+    if (!data) {
+      throw new Error('Nessun dato restituito dall\'upload');
+    }
+
+    console.log('[Upload Proof] Upload completato:', data.path);
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(data.path);
+
+    if (!urlData?.publicUrl) {
+      throw new Error('Impossibile ottenere l\'URL pubblico del file');
+    }
+
+    console.log('[Upload Proof] URL pubblico:', urlData.publicUrl);
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('[Upload Proof] Errore completo:', error);
+    throw error; // Rilancia l'errore per gestirlo nel contesto
   }
-
-  // Get public URL
-  const { data: urlData } = supabase.storage
-    .from(STORAGE_BUCKET)
-    .getPublicUrl(data.path);
-
-  return urlData.publicUrl;
 };
 
 // Helper per eliminare file
