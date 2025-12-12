@@ -5,7 +5,7 @@ import { useGame } from '../context/GameContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const PushNotificationSettings: React.FC = () => {
-  const { user } = useGame();
+  const { user, mySquadra } = useGame();
   const {
     isSupported,
     isSubscribed,
@@ -13,7 +13,6 @@ export const PushNotificationSettings: React.FC = () => {
     error,
     subscribe,
     unsubscribe,
-    requestPermission,
   } = useOneSignal();
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -31,7 +30,7 @@ export const PushNotificationSettings: React.FC = () => {
       }
     } else {
       console.log('[PushSettings] Avvio iscrizione...');
-      const success = await subscribe();
+      const success = await subscribe(user?.id, mySquadra?.id);
       console.log('[PushSettings] Risultato iscrizione:', { success, error });
       
       if (success) {

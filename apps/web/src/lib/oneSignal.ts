@@ -2,8 +2,6 @@
  * Funzioni per inviare notifiche tramite OneSignal API
  */
 
-const ONESIGNAL_APP_ID = '2ff6202e-418d-415f-8250-24b8c75b2b4f';
-
 export interface OneSignalNotificationPayload {
   title: string;
   body: string;

@@ -12,7 +12,7 @@ export interface UseOneSignalReturn {
   isSubscribed: boolean;
   isLoading: boolean;
   error: string | null;
-  subscribe: () => Promise<boolean>;
+  subscribe: (userId?: string, squadraId?: string) => Promise<boolean>;
   unsubscribe: () => Promise<boolean>;
   requestPermission: () => Promise<NotificationPermission>;
 }
@@ -68,7 +68,7 @@ export const useOneSignal = (): UseOneSignalReturn => {
     }
   }, []);
 
-  const subscribe = useCallback(async (): Promise<boolean> => {
+  const subscribe = useCallback(async (userId?: string, squadraId?: string): Promise<boolean> => {
     if (!window.OneSignal) {
       setError('OneSignal non è ancora caricato');
       return false;
@@ -78,6 +78,14 @@ export const useOneSignal = (): UseOneSignalReturn => {
     setError(null);
 
     try {
+      // Imposta i tag dell'utente se forniti (per segmentazione)
+      if (userId) {
+        await window.OneSignal.sendTag('user_id', userId);
+      }
+      if (squadraId) {
+        await window.OneSignal.sendTag('squadra_id', squadraId);
+      }
+
       // Verifica se è già iscritto
       const isOptedIn = await window.OneSignal.isPushNotificationsEnabled();
       

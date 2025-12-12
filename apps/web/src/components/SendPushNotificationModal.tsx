@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Loader2, CheckCircle2, AlertCircle, Users, User, Building2 } from 'lucide-react';
-import { sendOneSignalNotificationToUser, sendOneSignalNotificationToAll } from '../lib/oneSignal';
+import { sendOneSignalNotificationToUser, sendOneSignalNotificationToAll, sendOneSignalNotification } from '../lib/oneSignal';
 import { useGame } from '../context/GameContext';
 
 interface SendPushNotificationModalProps {
@@ -78,7 +78,6 @@ export const SendPushNotificationModal: React.FC<SendPushNotificationModalProps>
           console.log('[PushModal] Invio a squadra:', selectedSquadraId);
           // OneSignal: invia a tutti gli utenti della squadra usando il tag squadra_id
           try {
-            const { sendOneSignalNotification } = await import('../lib/oneSignal');
             success = await sendOneSignalNotification(payload, [
               { field: 'tag', key: 'squadra_id', relation: '=', value: selectedSquadraId },
             ]);
