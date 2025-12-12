@@ -2,6 +2,7 @@
   "name": "push-notification-worker",
   "version": "1.0.0",
   "description": "Worker Node.js per inviare notifiche push",
+  "type": "module",
   "main": "push-notification-worker.js",
   "scripts": {
     "start": "node push-notification-worker.js",

@@ -10,9 +10,9 @@
  * Deploy su: Vercel (cron job), Railway, o servizio simile
  */
 
-// CommonJS per compatibilità con Vercel
-const { createClient } = require('@supabase/supabase-js');
-const webpush = require('web-push');
+// ES modules per compatibilità con il progetto
+import { createClient } from '@supabase/supabase-js';
+import webpush from 'web-push';
 
 // Configurazione
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -261,8 +261,8 @@ async function processQueue() {
   }
 }
 
-// Esegui se chiamato direttamente
-if (require.main === module) {
+// Esegui se chiamato direttamente (solo per test locale)
+if (import.meta.url === `file://${process.argv[1]}`) {
   processQueue()
     .then(() => {
       console.log('✅ Worker completed successfully');
@@ -274,5 +274,5 @@ if (require.main === module) {
     });
 }
 
-module.exports = { processQueue, processNotification };
+export { processQueue, processNotification };
 

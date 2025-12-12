@@ -10,10 +10,10 @@
  * }
  */
 
-// CommonJS per compatibilità con Vercel
-const { processQueue } = require('../../workers/push-notification-worker');
+// ES modules per compatibilità con il progetto
+import { processQueue } from '../../workers/push-notification-worker.js';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   // Solo GET per cron jobs
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
