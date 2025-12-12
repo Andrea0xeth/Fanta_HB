@@ -1,6 +1,6 @@
 {
-  "buildCommand": "pnpm --filter @30diciaccio/web build",
-  "outputDirectory": "apps/web/dist",
+  "buildCommand": "pnpm --filter @30diciaccio/web build && cp -r apps/web/dist ./dist",
+  "outputDirectory": "dist",
   "framework": "vite",
   "installCommand": "pnpm install",
   "rewrites": [
