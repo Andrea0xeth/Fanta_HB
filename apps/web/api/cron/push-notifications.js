@@ -10,18 +10,10 @@
  * }
  */
 
-// Import dinamico per compatibilità con Vercel
-let processQueue;
+// CommonJS per compatibilità con Vercel
+const { processQueue } = require('../../workers/push-notification-worker');
 
-async function loadWorker() {
-  if (!processQueue) {
-    const worker = await import('../../workers/push-notification-worker.js');
-    processQueue = worker.processQueue;
-  }
-  return processQueue;
-}
-
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Solo GET per cron jobs
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -35,8 +27,7 @@ export default async function handler(req, res) {
 
   try {
     console.log('🔄 Starting push notification worker via cron...');
-    const processQueueFn = await loadWorker();
-    await processQueueFn();
+    await processQueue();
     
     return res.status(200).json({ 
       success: true,
