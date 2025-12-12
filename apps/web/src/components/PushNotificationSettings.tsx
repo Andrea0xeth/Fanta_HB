@@ -21,6 +21,7 @@ export const PushNotificationSettings: React.FC = () => {
 
   const handleToggle = async () => {
     setMessage(null);
+    console.log('[PushSettings] Toggle notifiche, stato attuale:', { isSubscribed, isLoading, error });
 
     if (isSubscribed) {
       const success = await unsubscribe();
@@ -32,6 +33,7 @@ export const PushNotificationSettings: React.FC = () => {
     } else {
       // Prima richiedi il permesso se necessario
       if (!isPermissionGranted) {
+        console.log('[PushSettings] Richiesta permesso...');
         const permission = await requestPermission();
         if (permission !== 'granted') {
           setMessage({ type: 'error', text: 'Permesso notifiche negato' });
@@ -39,11 +41,16 @@ export const PushNotificationSettings: React.FC = () => {
         }
       }
 
+      console.log('[PushSettings] Avvio iscrizione...');
       const success = await subscribe();
+      console.log('[PushSettings] Risultato iscrizione:', { success, error });
+      
       if (success) {
         setMessage({ type: 'success', text: 'Notifiche push abilitate!' });
       } else {
-        setMessage({ type: 'error', text: error || 'Errore durante l\'abilitazione' });
+        const errorMessage = error || 'Errore durante l\'abilitazione';
+        console.error('[PushSettings] Errore:', errorMessage);
+        setMessage({ type: 'error', text: errorMessage });
       }
     }
   };

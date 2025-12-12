@@ -933,10 +933,21 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     orario: string;
     giorno: number;
   }) => {
-    if (!user || !user.is_admin || !isSupabaseConfigured()) return;
+    if (!user || !user.is_admin || !isSupabaseConfigured()) {
+      throw new Error('Solo gli admin possono creare gare');
+    }
     
     try {
-      const { error } = await supabase
+      console.log('[Crea Gara] Dati gara:', {
+        nome: gara.nome,
+        squadra_a_id: gara.squadra_a_id,
+        squadra_b_id: gara.squadra_b_id,
+        punti_in_palio: gara.punti_in_palio,
+        orario: gara.orario,
+        giorno: gara.giorno,
+      });
+
+      const { data, error } = await supabase
         .from('gare')
         .insert({
           nome: gara.nome,
@@ -947,13 +958,19 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
           orario: gara.orario,
           giorno: gara.giorno,
           stato: 'programmata',
-        } as any);
+        } as any)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Crea Gara] Errore database:', error);
+        throw new Error(`Errore durante la creazione della gara: ${error.message}`);
+      }
+
+      console.log('[Crea Gara] ✅ Gara creata con successo:', data);
 
       await loadData();
     } catch (error) {
-      console.error('Errore creazione gara:', error);
+      console.error('[Crea Gara] Errore completo:', error);
       throw error;
     }
   };

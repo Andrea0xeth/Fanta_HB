@@ -87,6 +87,12 @@ export default defineConfig({
         skipWaiting: false,
         // Prendi controllo dei client solo quando esplicitamente attivato
         clientsClaim: false,
+        // Genera il service worker anche in dev mode
+        devOptions: {
+          enabled: true,
+          type: 'module',
+          navigateFallback: 'index.html',
+        },
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
