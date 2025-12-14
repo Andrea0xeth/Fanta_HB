@@ -1,6 +1,17 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import type { User, Squadra, Quest, ProvaQuest, Gara, GameState, Notifica, RegistrationData } from '../types';
+import type {
+  User,
+  Squadra,
+  Quest,
+  ProvaQuest,
+  Gara,
+  GameState,
+  Notifica,
+  RegistrationData,
+  EmailPasswordCredentials,
+  EmailPasswordRegistrationData,
+} from '../types';
 import type { Database } from '../lib/database.types';
 import { registerPasskey, authenticateWithPasskey } from '../lib/webauthn';
 import { supabase, isSupabaseConfigured, uploadProofFile, uploadAvatar } from '../lib/supabase';
@@ -22,7 +33,9 @@ interface GameContextType {
   // Actions
   login: (registrationData: RegistrationData) => Promise<void>;
   loginWithPasskey: () => Promise<void>;
+  loginWithEmailPassword: (credentials: EmailPasswordCredentials) => Promise<void>;
   register: (registrationData: RegistrationData) => Promise<void>;
+  registerWithEmailPassword: (registrationData: EmailPasswordRegistrationData) => Promise<void>;
   logout: () => void;
   submitProva: (questId: string, tipo: 'foto' | 'video' | 'testo', contenuto: string | File) => Promise<void>;
   votaProva: (provaId: string, valore: boolean) => Promise<void>;
@@ -91,6 +104,27 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     is_admin: row.is_admin,
     created_at: row.created_at,
   });
+
+  const setLoggedInUser = (u: User, passkeyId?: string | null) => {
+    setUser(u);
+    localStorage.setItem('30diciaccio_user', JSON.stringify(u));
+    if (passkeyId) {
+      localStorage.setItem('30diciaccio_passkey_id', passkeyId);
+    } else {
+      localStorage.removeItem('30diciaccio_passkey_id');
+    }
+  };
+
+  const fetchUserById = async (userId: string): Promise<User | null> => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error || !data) return null;
+    return dbRowToUser(data as Database['public']['Tables']['users']['Row']);
+  };
 
   // Helper per convertire DB row a Squadra
   const dbRowToSquadra = (row: Database['public']['Tables']['squadre']['Row'], membri: User[] = []): Squadra => ({
@@ -358,48 +392,64 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   // Check for existing session on mount
   useEffect(() => {
     const loadUser = async () => {
-      const savedUser = localStorage.getItem('30diciaccio_user');
-      const savedPasskeyId = localStorage.getItem('30diciaccio_passkey_id');
-      
-      if (savedUser && savedPasskeyId && isSupabaseConfigured()) {
-        try {
-          // Verifica che l'utente esista ancora nel database
-        const user = JSON.parse(savedUser);
-            const { data, error } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', user.id)
-              .single();
-            
-            if (error || !data) {
-              // Utente non trovato, pulisci localStorage
-              localStorage.removeItem('30diciaccio_user');
-              localStorage.removeItem('30diciaccio_passkey_id');
-              setIsLoading(false);
-              return;
-            }
-            
-          // Verifica che la passkey corrisponda ancora
-          const userRow = data as Database['public']['Tables']['users']['Row'];
-          if (userRow.passkey_id !== savedPasskeyId) {
-            // Passkey cambiata, richiedi nuovo login
+      if (!isSupabaseConfigured()) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // 1) Se esiste una sessione Supabase Auth (email+password), usala come fonte di verità
+        const { data: sessionData } = await supabase.auth.getSession();
+        const authUserId = sessionData.session?.user?.id;
+        if (authUserId) {
+          const dbUser = await fetchUserById(authUserId);
+          if (dbUser) {
+            setLoggedInUser(dbUser, null);
+            setIsLoading(false);
+            return;
+          }
+          // Se c'è sessione ma manca la riga profilo, lasciamo l'utente disconnesso
+          // (verrà creata in fase di login/registrazione email+password)
+          console.warn('[Auth] Sessione trovata ma profilo users mancante');
+        }
+
+        // 2) Fallback: passkey (localStorage) — flusso legacy
+        const savedUser = localStorage.getItem('30diciaccio_user');
+        const savedPasskeyId = localStorage.getItem('30diciaccio_passkey_id');
+
+        if (savedUser && savedPasskeyId) {
+          const saved = JSON.parse(savedUser);
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', saved.id)
+            .single();
+
+          if (error || !data) {
             localStorage.removeItem('30diciaccio_user');
             localStorage.removeItem('30diciaccio_passkey_id');
             setIsLoading(false);
             return;
           }
-          
-            const userData = dbRowToUser(data as Database['public']['Tables']['users']['Row']);
-          setUser(userData);
-        } catch (error) {
-          console.error('Errore caricamento utente:', error);
-          // In caso di errore, pulisci e richiedi nuovo login
-          localStorage.removeItem('30diciaccio_user');
-          localStorage.removeItem('30diciaccio_passkey_id');
+
+          const userRow = data as Database['public']['Tables']['users']['Row'];
+          if (userRow.passkey_id !== savedPasskeyId) {
+            localStorage.removeItem('30diciaccio_user');
+            localStorage.removeItem('30diciaccio_passkey_id');
+            setIsLoading(false);
+            return;
+          }
+
+          const userData = dbRowToUser(userRow);
+          setLoggedInUser(userData, savedPasskeyId);
         }
+      } catch (error) {
+        console.error('Errore caricamento utente:', error);
+        localStorage.removeItem('30diciaccio_user');
+        localStorage.removeItem('30diciaccio_passkey_id');
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
     
     loadUser();
@@ -558,9 +608,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       // Le policy di storage permettono anon ma validano che l'userId esista in users
       // Quindi l'upload funzionerà anche senza sessione Supabase Auth
       
-      setUser(loggedInUser);
-      localStorage.setItem('30diciaccio_user', JSON.stringify(loggedInUser));
-      localStorage.setItem('30diciaccio_passkey_id', credentialId);
+      setLoggedInUser(loggedInUser, credentialId);
       
       // Ricarica i dati
       await loadData();
@@ -568,6 +616,56 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     } catch (error: any) {
       setIsLoading(false);
       throw error;
+    }
+  };
+
+  const loginWithEmailPassword = async (
+    credentials: EmailPasswordCredentials
+  ): Promise<void> => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase non configurato');
+    }
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Errore durante il login con email e password');
+      }
+
+      const authUserId = data.user?.id;
+      if (!authUserId) {
+        throw new Error('Login riuscito ma userId mancante');
+      }
+
+      let dbUser = await fetchUserById(authUserId);
+      if (!dbUser) {
+        // Se l'utente Auth esiste ma non ha profilo, crealo minimal
+        const nicknameFallback = credentials.email.split('@')[0] || 'utente';
+        const { data: userDataArrayRaw, error: userError } = await supabase.rpc('insert_user_with_passkey', {
+          p_id: authUserId,
+          p_nickname: nicknameFallback,
+          p_passkey_id: null,
+          p_email: credentials.email,
+          p_is_admin: credentials.email.toLowerCase() === 'admin@30diciaccio.it',
+        } as any);
+
+        const userDataArray = userDataArrayRaw as any[] | null;
+        if (userError || !userDataArray || userDataArray.length === 0) {
+          throw new Error('Login riuscito ma impossibile creare/recuperare il profilo utente');
+        }
+
+        dbUser = dbRowToUser(userDataArray[0] as any);
+      }
+
+      setLoggedInUser(dbUser, null);
+      await loadData();
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -699,9 +797,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
           });
 
       const newUser = dbRowToUser(newUserData);
-        setUser(newUser);
-        localStorage.setItem('30diciaccio_user', JSON.stringify(newUser));
-        localStorage.setItem('30diciaccio_passkey_id', passkeyCredential.id);
+      setLoggedInUser(newUser, passkeyCredential.id);
       
       // Ricarica i dati per aggiornare le squadre con il nuovo membro
       await loadData();
@@ -709,6 +805,89 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     } catch (error: any) {
       setIsLoading(false);
       throw error;
+    }
+  };
+
+  const registerWithEmailPassword = async (
+    registrationData: EmailPasswordRegistrationData
+  ): Promise<void> => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase non configurato');
+    }
+
+    setIsLoading(true);
+    try {
+      // Verifica email già presente nel tuo profilo users (evita doppioni "di gioco")
+      if (registrationData.email) {
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', registrationData.email)
+          .single();
+        if (existingUser) {
+          throw new Error('Un account con questa email esiste già. Prova il login.');
+        }
+      }
+
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: registrationData.email,
+        password: registrationData.password,
+      });
+
+      if (signUpError) {
+        throw new Error(signUpError.message || 'Errore durante la registrazione con email e password');
+      }
+
+      const authUserId = signUpData.user?.id;
+      if (!authUserId) {
+        throw new Error('Registrazione riuscita ma userId mancante');
+      }
+
+      // Assegna squadra casuale (bilanciata)
+      const { data: squadreData } = await supabase
+        .from('squadre')
+        .select('id, punti_squadra')
+        .order('punti_squadra', { ascending: true });
+
+      const squadreIds = squadreData?.map((s: any) => s.id) || [];
+      const randomSquadraId = squadreIds[Math.floor(Math.random() * squadreIds.length)] || null;
+
+      // Avatar opzionale (ma supportato)
+      let avatarUrl: string | null = null;
+      if (registrationData.foto_profilo) {
+        avatarUrl = await uploadAvatar(registrationData.foto_profilo, authUserId);
+      }
+
+      const nickname =
+        registrationData.nickname ||
+        `${registrationData.nome} ${registrationData.cognome}`.trim() ||
+        registrationData.email.split('@')[0] ||
+        'utente';
+
+      const { data: userDataArray, error: userError } = await supabase.rpc('insert_user_with_passkey', {
+        p_id: authUserId,
+        p_nickname: nickname,
+        p_passkey_id: null,
+        p_nome: registrationData.nome || null,
+        p_cognome: registrationData.cognome || null,
+        p_email: registrationData.email || null,
+        p_telefono: registrationData.telefono || null,
+        p_data_nascita: registrationData.data_nascita || null,
+        p_squadra_id: randomSquadraId,
+        p_is_admin: registrationData.email?.toLowerCase() === 'admin@30diciaccio.it',
+        p_avatar: avatarUrl,
+      } as any);
+
+      const userDataArrayTyped = userDataArray as any[] | null;
+      if (userError || !userDataArrayTyped || userDataArrayTyped.length === 0) {
+        throw new Error('Errore durante la creazione del profilo utente');
+      }
+
+      const newUser = dbRowToUser(userDataArrayTyped[0] as any);
+      setLoggedInUser(newUser, null);
+      await loadData();
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -754,6 +933,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     setUser(null);
     localStorage.removeItem('30diciaccio_user');
     localStorage.removeItem('30diciaccio_passkey_id');
+    // Best-effort: se l'utente è loggato via Supabase Auth (email+password), esegui signOut
+    if (isSupabaseConfigured()) {
+      supabase.auth.signOut().catch(() => {});
+    }
   };
 
   const submitProva = async (questId: string, tipo: 'foto' | 'video' | 'testo', contenuto: string | File) => {
@@ -1097,7 +1280,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     notifiche,
     login,
     loginWithPasskey,
+    loginWithEmailPassword,
     register,
+    registerWithEmailPassword,
     logout,
     submitProva,
     votaProva,

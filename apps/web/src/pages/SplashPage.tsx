@@ -1,19 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Fingerprint, Sparkles } from 'lucide-react';
+import { Fingerprint, Sparkles, Mail, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { Countdown } from '../components/Countdown';
 import { PWAInstallPrompt } from '../components/PWAInstallPrompt';
 import { WebAuthnDebug } from '../components/WebAuthnDebug';
 import { CircusNeonDecorations } from '../components/CircusNeonDecorations';
-import type { RegistrationData } from '../types';
+import type { RegistrationData, EmailPasswordRegistrationData } from '../types';
 
-type ViewState = 'splash' | 'video-pre' | 'auth' | 'auth-choice' | 'video-post' | 'loading';
+type ViewState =
+  | 'splash'
+  | 'video-pre'
+  | 'auth'
+  | 'auth-choice'
+  | 'auth-email-login'
+  | 'auth-email-register'
+  | 'video-post'
+  | 'loading';
 
 export const SplashPage: React.FC = () => {
   const navigate = useNavigate();
-  const { loginWithPasskey, register, isAuthenticated, isLoading } = useGame();
+  const {
+    loginWithPasskey,
+    loginWithEmailPassword,
+    register,
+    registerWithEmailPassword,
+    isAuthenticated,
+    isLoading,
+  } = useGame();
   const [viewState, setViewState] = useState<ViewState>('splash');
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
     nickname: '',
@@ -29,6 +44,8 @@ export const SplashPage: React.FC = () => {
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [showPostContinueButton, setShowPostContinueButton] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [emailPassword, setEmailPassword] = useState('');
+  const [emailLoginData, setEmailLoginData] = useState({ email: '', password: '' });
   const videoRef = useRef<HTMLVideoElement>(null);
   
   // Genera tempi casuali per il flicker di ogni elemento neon
@@ -195,6 +212,62 @@ export const SplashPage: React.FC = () => {
       setShowPostVideo(false);
       setAuthLoading(false);
       setViewState('auth-choice'); // Torna alla scelta auth
+    }
+  };
+
+  const handleEmailLogin = async () => {
+    if (!emailLoginData.email || !emailLoginData.password) {
+      alert('Inserisci email e password');
+      return;
+    }
+
+    setAuthLoading(true);
+    setShowPostVideo(true);
+    setShowPostContinueButton(false);
+    try {
+      await loginWithEmailPassword({
+        email: emailLoginData.email,
+        password: emailLoginData.password,
+      });
+      setAuthLoading(false);
+      setViewState('video-post');
+    } catch (error) {
+      console.error('Email login failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Errore durante il login';
+      alert(errorMessage);
+      setShowPostVideo(false);
+      setAuthLoading(false);
+    }
+  };
+
+  const handleEmailRegister = async () => {
+    // Validazioni minime
+    if (!registrationData.nome || !registrationData.cognome || !registrationData.email) {
+      alert('Per favore compila tutti i campi obbligatori (Nome, Cognome, Email)');
+      return;
+    }
+    if (!emailPassword || emailPassword.length < 8) {
+      alert('La password deve essere lunga almeno 8 caratteri');
+      return;
+    }
+
+    setAuthLoading(true);
+    setShowPostVideo(true);
+    setShowPostContinueButton(false);
+    try {
+      const payload: EmailPasswordRegistrationData = {
+        ...registrationData,
+        password: emailPassword,
+      };
+      await registerWithEmailPassword(payload);
+      setAuthLoading(false);
+      setViewState('video-post');
+    } catch (error) {
+      console.error('Email registration failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Errore durante la registrazione';
+      alert(errorMessage);
+      setShowPostVideo(false);
+      setAuthLoading(false);
     }
   };
 
@@ -645,6 +718,211 @@ export const SplashPage: React.FC = () => {
     );
   }
 
+  // Login Email + Password
+  if (viewState === 'auth-email-login') {
+    return (
+      <div className="h-screen bg-dark flex flex-col items-center justify-center p-4 pt-safe overflow-y-auto scrollbar-hide">
+        <motion.div
+          className="w-full max-w-sm space-y-3 relative z-10"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <p className="text-xs text-gray-400 text-center mb-2">
+            Accedi con email e password
+          </p>
+
+          <input
+            type="email"
+            placeholder="Email"
+            value={emailLoginData.email}
+            onChange={(e) => setEmailLoginData(prev => ({ ...prev, email: e.target.value }))}
+            className="input text-center text-sm"
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={emailLoginData.password}
+            onChange={(e) => setEmailLoginData(prev => ({ ...prev, password: e.target.value }))}
+            className="input text-center text-sm"
+            required
+          />
+
+          <button
+            onClick={handleEmailLogin}
+            disabled={authLoading || !emailLoginData.email || !emailLoginData.password}
+            className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-2 active:scale-95 transition-transform duration-75"
+          >
+            {authLoading ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+              />
+            ) : (
+              <>
+                <Mail size={18} />
+                Accedi
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => setViewState('auth-choice')}
+            className="w-full text-center text-gray-500 text-xs py-1.5"
+          >
+            Indietro
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Registrazione Email + Password
+  if (viewState === 'auth-email-register') {
+    return (
+      <div className="h-screen bg-dark flex flex-col items-center justify-center p-4 pt-safe overflow-y-auto scrollbar-hide">
+        <motion.div
+          className="w-full max-w-sm space-y-3 relative z-10"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <p className="text-xs text-gray-400 text-center mb-2">
+            Registrati con email e password
+          </p>
+
+          <input
+            type="text"
+            placeholder="Nickname"
+            value={registrationData.nickname}
+            onChange={(e) => updateField('nickname', e.target.value)}
+            className="input text-center text-sm"
+            maxLength={20}
+          />
+
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="text"
+              placeholder="Nome *"
+              value={registrationData.nome}
+              onChange={(e) => updateField('nome', e.target.value)}
+              className="input text-center text-sm"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Cognome *"
+              value={registrationData.cognome}
+              onChange={(e) => updateField('cognome', e.target.value)}
+              className="input text-center text-sm"
+              required
+            />
+          </div>
+
+          <input
+            type="email"
+            placeholder="Email *"
+            value={registrationData.email}
+            onChange={(e) => updateField('email', e.target.value)}
+            className="input text-center text-sm"
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Password (min 8) *"
+            value={emailPassword}
+            onChange={(e) => setEmailPassword(e.target.value)}
+            className="input text-center text-sm"
+            required
+          />
+
+          <input
+            type="tel"
+            placeholder="Telefono"
+            value={registrationData.telefono}
+            onChange={(e) => updateField('telefono', e.target.value)}
+            className="input text-center text-sm"
+          />
+
+          {/* Foto Profilo Upload (opzionale) */}
+          <div className="space-y-2">
+            <label className="block text-xs text-gray-400 text-center">
+              Foto Profilo (opzionale)
+            </label>
+            <div className="relative">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+                id="avatar-upload-email"
+              />
+              <label
+                htmlFor="avatar-upload-email"
+                className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-600 rounded-2xl cursor-pointer hover:border-coral-500 transition-colors"
+              >
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt="Preview"
+                    className="w-full h-full object-cover rounded-2xl"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-gray-500">
+                    <svg
+                      className="w-8 h-8 mb-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="text-xs">Clicca per caricare</span>
+                  </div>
+                )}
+              </label>
+            </div>
+          </div>
+
+          <button
+            onClick={handleEmailRegister}
+            disabled={authLoading || !registrationData.nome || !registrationData.cognome || !registrationData.email || !emailPassword}
+            className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-2 active:scale-95 transition-transform duration-75"
+          >
+            {authLoading ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+              />
+            ) : (
+              <>
+                <Lock size={18} />
+                Registrati
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => setViewState('auth-choice')}
+            className="w-full text-center text-gray-500 text-xs py-1.5"
+          >
+            Indietro
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen bg-dark flex flex-col items-center justify-center p-4 pt-safe overflow-hidden relative">
       {/* Clown Background - Large and semi-transparent, below falling elements - Top left, much higher */}
@@ -855,6 +1133,24 @@ export const SplashPage: React.FC = () => {
                 Hai già un account o vuoi registrarti?
               </p>
               
+              <button
+                onClick={() => setViewState('auth-email-register')}
+                disabled={authLoading}
+                className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform duration-75"
+              >
+                <Lock size={18} />
+                Registrati con Email + Password
+              </button>
+
+              <button
+                onClick={() => setViewState('auth-email-login')}
+                disabled={authLoading}
+                className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all duration-75 border border-gray-600/30 rounded-xl hover:border-gray-500/50"
+              >
+                <Mail size={16} />
+                Accedi con Email + Password
+              </button>
+
               <button
                 onClick={handleRegister}
                 disabled={authLoading}
