@@ -39,7 +39,6 @@ export const SplashPage: React.FC = () => {
     data_nascita: '',
   });
   const [authLoading, setAuthLoading] = useState(false);
-  const [showPostVideo, setShowPostVideo] = useState(false); // Flag per video post
   const [showDebug, setShowDebug] = useState(false); // Flag per mostrare debug
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [showPostContinueButton, setShowPostContinueButton] = useState(false);
@@ -79,21 +78,9 @@ export const SplashPage: React.FC = () => {
 
   // Redirect solo se già autenticato ALL'AVVIO (non dopo login/registrazione)
   // Non fare redirect se stiamo mostrando il video post-benvenuto
-  useEffect(() => {
-    // Non fare redirect se:
-    // 1. Stiamo mostrando il video post (flag impostato)
-    // 2. Siamo già nella schermata video-post
-    // 3. Stiamo caricando l'autenticazione
-    // 4. Siamo nella schermata auth-choice (stiamo per fare login/registrazione)
-    if (isAuthenticated && 
-        viewState === 'splash' && 
-        !showPostVideo && 
-        !authLoading) {
-      // Se già autenticato all'avvio, vai direttamente alla home
-      // Ma NON fare redirect se stiamo per mostrare il video post-benvenuto
-      navigate('/home', { replace: true });
-    }
-  }, [isAuthenticated, navigate, viewState, showPostVideo, authLoading]);
+  // NOTA: con email+password Supabase mantiene la sessione, quindi l'app risulterà
+  // spesso "già autenticata" all'avvio. Per non nascondere la pagina di benvenuto,
+  // non facciamo redirect automatico: l'utente potrà premere "Continua".
 
   // Gestisci il video quando cambia viewState
   useEffect(() => {
@@ -186,7 +173,6 @@ export const SplashPage: React.FC = () => {
   // Handle login choice - try to login with existing passkey
   const handleLogin = async () => {
     setAuthLoading(true);
-    setShowPostVideo(true); // Imposta il flag PRIMA del login per prevenire redirect automatico
     setShowPostContinueButton(false); // Reset continue button state
     
     try {
@@ -209,7 +195,6 @@ export const SplashPage: React.FC = () => {
       } else {
         alert(errorMessage);
       }
-      setShowPostVideo(false);
       setAuthLoading(false);
       setViewState('auth-choice'); // Torna alla scelta auth
     }
@@ -222,7 +207,6 @@ export const SplashPage: React.FC = () => {
     }
 
     setAuthLoading(true);
-    setShowPostVideo(true);
     setShowPostContinueButton(false);
     try {
       await loginWithEmailPassword({
@@ -235,7 +219,6 @@ export const SplashPage: React.FC = () => {
       console.error('Email login failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Errore durante il login';
       alert(errorMessage);
-      setShowPostVideo(false);
       setAuthLoading(false);
     }
   };
@@ -252,7 +235,6 @@ export const SplashPage: React.FC = () => {
     }
 
     setAuthLoading(true);
-    setShowPostVideo(true);
     setShowPostContinueButton(false);
     try {
       const payload: EmailPasswordRegistrationData = {
@@ -266,7 +248,6 @@ export const SplashPage: React.FC = () => {
       console.error('Email registration failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Errore durante la registrazione';
       alert(errorMessage);
-      setShowPostVideo(false);
       setAuthLoading(false);
     }
   };
@@ -303,7 +284,6 @@ export const SplashPage: React.FC = () => {
     }
 
     setAuthLoading(true);
-    setShowPostVideo(true); // Imposta il flag PRIMA della registrazione per prevenire redirect automatico
     setShowPostContinueButton(false); // Reset continue button state
     
     try {
@@ -328,7 +308,6 @@ export const SplashPage: React.FC = () => {
       } else {
         alert(errorMessage);
       }
-      setShowPostVideo(false);
       setAuthLoading(false);
     }
   };
@@ -1101,17 +1080,44 @@ export const SplashPage: React.FC = () => {
       >
         <AnimatePresence mode="wait">
           {viewState === 'splash' ? (
-            <motion.button
-              key="enter"
-              onClick={handleEnterGame}
-              className="btn-primary w-full flex items-center justify-center gap-2 text-base py-3 active:scale-95 transition-transform duration-75"
-              whileTap={{ scale: 0.95 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.1 }}
-            >
-              <Fingerprint size={20} />
-              Entra nel Game
-            </motion.button>
+            isAuthenticated ? (
+              <motion.div
+                key="enter-auth"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.1 }}
+                className="space-y-3 w-full"
+              >
+                <motion.button
+                  onClick={() => navigate('/home', { replace: true })}
+                  className="btn-primary w-full flex items-center justify-center gap-2 text-base py-3 active:scale-95 transition-transform duration-75"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Fingerprint size={20} />
+                  Continua
+                </motion.button>
+
+                <button
+                  onClick={() => setViewState('auth-choice')}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-gray-400 hover:text-gray-300 active:scale-95 transition-all duration-75 border border-gray-600/30 rounded-xl hover:border-gray-500/50"
+                >
+                  Cambia account / Accedi
+                </button>
+              </motion.div>
+            ) : (
+              <motion.button
+                key="enter"
+                onClick={handleEnterGame}
+                className="btn-primary w-full flex items-center justify-center gap-2 text-base py-3 active:scale-95 transition-transform duration-75"
+                whileTap={{ scale: 0.95 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.1 }}
+              >
+                <Fingerprint size={20} />
+                Entra nel Game
+              </motion.button>
+            )
           ) : viewState === 'auth-choice' ? (
             <motion.div
               key="auth-choice"

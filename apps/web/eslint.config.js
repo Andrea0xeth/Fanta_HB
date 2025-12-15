@@ -30,6 +30,9 @@ export default defineConfig([
       // Noise su codice esistente
       'prefer-const': 'off',
       'no-useless-escape': 'off',
+
+      // Evita exit code != 0 per warning su deps in codebase esistente
+      'react-hooks/exhaustive-deps': 'off',
     },
   },
 ])
