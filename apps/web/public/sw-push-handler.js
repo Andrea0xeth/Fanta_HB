@@ -1,6 +1,18 @@
 // Push notification handler per il service worker
 // Questo codice viene iniettato nel service worker generato da VitePWA
 
+// Permette al client di forzare l'attivazione immediata del nuovo SW
+self.addEventListener('message', (event) => {
+  if (event?.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Prendi controllo dei client subito dopo l'attivazione
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 // Gestisci messaggi push
 self.addEventListener('push', (event) => {
   console.log('[Service Worker] Push notification ricevuta:', event);
