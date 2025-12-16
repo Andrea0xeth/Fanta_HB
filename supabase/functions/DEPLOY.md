@@ -18,9 +18,17 @@ cd /Users/andrearitondale/PROJECTS/30diCiaccioGame
 supabase link --project-ref smqoyszeqikjrhwgclrr
 ```
 
-## Deploy Edge Function
+## Deploy Edge Functions
 
-### 1. Deploy send-push-notification
+### 1. Deploy create-user-admin (per bypassare validazione email)
+
+```bash
+supabase functions deploy create-user-admin
+```
+
+**Nota**: Questa funzione è necessaria se Supabase Auth continua a rifiutare email valide. Usa l'Admin API per creare utenti bypassando la validazione email.
+
+### 2. Deploy send-push-notification
 
 ```bash
 supabase functions deploy send-push-notification

@@ -83,11 +83,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // Evita stati "app non si carica" dopo deploy: attiva subito il nuovo SW
-        // e prendi controllo dei client (riduce mismatch di asset cache/URL)
-        skipWaiting: true,
-        clientsClaim: true,
-        cleanupOutdatedCaches: true,
+        // Non saltare automaticamente l'attesa, permette controllo manuale
+        skipWaiting: false,
+        // Prendi controllo dei client solo quando esplicitamente attivato
+        clientsClaim: false,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -106,8 +105,10 @@ export default defineConfig({
         ],
       },
       // Configurazione per sviluppo
+      // Disabilitato temporaneamente per evitare errori 500 su dev-sw.js
+      // Il service worker funzionerà correttamente in produzione
       devOptions: {
-        enabled: true,
+        enabled: false, // Disabilitato per evitare problemi in dev
         type: 'module',
         navigateFallback: 'index.html',
       },

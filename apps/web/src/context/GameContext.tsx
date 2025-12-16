@@ -817,30 +817,150 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
     setIsLoading(true);
     try {
-      // Verifica email già presente nel tuo profilo users (evita doppioni "di gioco")
-      if (registrationData.email) {
-        const { data: existingUser } = await supabase
-          .from('users')
-          .select('id')
-          .eq('email', registrationData.email)
-          .single();
-        if (existingUser) {
-          throw new Error('Un account con questa email esiste già. Prova il login.');
+      // Normalizza email (rimuovi spazi, caratteri non validi e converti in lowercase)
+      // Rimuove apostrofi, virgolette e altri caratteri non validi che potrebbero essere aggiunti per errore
+      let normalizedEmail = registrationData.email?.trim().toLowerCase() || '';
+      
+      // Rimuovi caratteri non validi che potrebbero essere stati aggiunti per errore
+      // (apostrofi, virgolette, spazi extra, ecc.)
+      normalizedEmail = normalizedEmail
+        .replace(/['"]/g, '') // Rimuovi apostrofi e virgolette
+        .replace(/\s+/g, '') // Rimuovi tutti gli spazi
+        .trim();
+      
+      if (!normalizedEmail) {
+        throw new Error('Email non valida');
+      }
+      
+      console.log('[Register] Email normalizzata:', {
+        originale: registrationData.email,
+        normalizzata: normalizedEmail,
+        lunghezza: normalizedEmail.length,
+      });
+
+      // Verifica email già presente usando funzione RPC (bypassa problemi RLS)
+      // Nota: Se la funzione non esiste, saltiamo questo controllo (non critico)
+      if (normalizedEmail) {
+        try {
+          const { data: emailCheck, error: checkError } = await supabase.rpc('check_email_exists', {
+            p_email: normalizedEmail
+          } as any);
+          
+          // Se la funzione esiste e trova un'email, errore
+          if (emailCheck) {
+            const checkArray = Array.isArray(emailCheck) ? emailCheck : [emailCheck];
+            if (checkArray.length > 0) {
+              const result = checkArray[0] as { email_exists: boolean; user_id: string | null };
+              if (result && result.email_exists) {
+                throw new Error('Un account con questa email esiste già. Prova il login.');
+              }
+            }
+          }
+          
+          // Se la funzione non esiste, loggiamo ma non blocchiamo (non critico)
+          if (checkError) {
+            if (checkError.code === '42883' || checkError.message?.includes('function')) {
+              console.warn('[Register] Funzione check_email_exists non trovata - esegui CREATE_CHECK_EMAIL_FUNCTION.sql');
+            } else {
+              console.warn('[Register] Errore verifica email (ignorato):', checkError);
+            }
+            // Non blocchiamo la registrazione - Supabase Auth controllerà comunque i duplicati
+          }
+        } catch (checkErr: any) {
+          // Se è un errore "utente già esistente", rilanciamolo
+          if (checkErr.message?.includes('esiste già')) {
+            throw checkErr;
+          }
+          // Altrimenti ignora e continua - Supabase Auth gestirà i duplicati
+          console.warn('[Register] Errore verifica email (ignorato):', checkErr);
         }
       }
 
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: registrationData.email,
-        password: registrationData.password,
-      });
-
-      if (signUpError) {
-        throw new Error(signUpError.message || 'Errore durante la registrazione con email e password');
+      // Validazione email base (formato)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(normalizedEmail)) {
+        throw new Error('Formato email non valido');
       }
 
-      const authUserId = signUpData.user?.id;
-      if (!authUserId) {
-        throw new Error('Registrazione riuscita ma userId mancante');
+      console.log('[Register] Tentativo registrazione con:', {
+        email: normalizedEmail,
+        emailLength: normalizedEmail.length,
+        passwordLength: registrationData.password.length,
+      });
+
+      // Usa Edge Function per creare utente con Admin API (bypassa validazione email)
+      // La funzione usa la service role key per creare l'utente direttamente
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/create-user-admin`;
+      
+      console.log('[Register] Chiamata Edge Function:', edgeFunctionUrl);
+      
+      const createUserResponse = await fetch(edgeFunctionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`,
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          password: registrationData.password,
+          user_metadata: {
+            nome: registrationData.nome || null,
+            cognome: registrationData.cognome || null,
+            data_nascita: registrationData.data_nascita || null,
+            telefono: registrationData.telefono || null,
+          },
+        }),
+      });
+
+      if (!createUserResponse.ok) {
+        let errorData;
+        try {
+          errorData = await createUserResponse.json();
+        } catch (e) {
+          const text = await createUserResponse.text();
+          console.error('[Register] Errore Edge Function (non JSON):', {
+            status: createUserResponse.status,
+            text: text.substring(0, 500),
+          });
+          throw new Error(`Errore durante la creazione dell'utente (${createUserResponse.status})`);
+        }
+        
+        console.error('[Register] Errore Edge Function completo:', {
+          status: createUserResponse.status,
+          statusText: createUserResponse.statusText,
+          error: errorData,
+        });
+        
+        const errorMessage = errorData.error || errorData.details || `Errore durante la creazione dell'utente (${createUserResponse.status})`;
+        if (errorData.hint) {
+          console.error('[Register] Hint:', errorData.hint);
+        }
+        throw new Error(errorMessage);
+      }
+
+      const createUserData = await createUserResponse.json();
+      
+      if (!createUserData.success || !createUserData.user) {
+        console.error('[Register] Risposta Edge Function non valida:', createUserData);
+        throw new Error('Registrazione fallita: risposta non valida dalla funzione');
+      }
+
+      const authUserId = createUserData.user.id;
+      console.log('[Register] Utente creato con successo:', authUserId);
+
+      // Dopo la creazione con Admin API, facciamo login per ottenere la sessione
+      console.log('[Register] Eseguo login automatico per ottenere la sessione...');
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password: registrationData.password,
+      });
+      
+      if (loginError) {
+        console.warn('[Register] Login automatico fallito:', loginError);
+        // Continuiamo comunque - l'utente può fare login manualmente
+      } else if (loginData.session) {
+        console.log('[Register] Login automatico riuscito, sessione ottenuta');
       }
 
       // Assegna squadra casuale (bilanciata)
@@ -864,24 +984,61 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         registrationData.email.split('@')[0] ||
         'utente';
 
-      const { data: userDataArray, error: userError } = await supabase.rpc('insert_user_with_passkey', {
+      // Converti data_nascita da stringa a DATE se presente
+      let dataNascitaDate: Date | null = null;
+      if (registrationData.data_nascita) {
+        try {
+          dataNascitaDate = new Date(registrationData.data_nascita);
+          // Verifica che la data sia valida
+          if (isNaN(dataNascitaDate.getTime())) {
+            dataNascitaDate = null;
+          }
+        } catch {
+          dataNascitaDate = null;
+        }
+      }
+
+      const rpcParams = {
         p_id: authUserId,
         p_nickname: nickname,
         p_passkey_id: null,
         p_nome: registrationData.nome || null,
         p_cognome: registrationData.cognome || null,
-        p_email: registrationData.email || null,
+        p_email: normalizedEmail || null,
         p_telefono: registrationData.telefono || null,
-        p_data_nascita: registrationData.data_nascita || null,
+        p_data_nascita: dataNascitaDate ? dataNascitaDate.toISOString().split('T')[0] : null,
         p_squadra_id: randomSquadraId,
-        p_is_admin: registrationData.email?.toLowerCase() === 'admin@30diciaccio.it',
+        p_is_admin: normalizedEmail?.toLowerCase() === 'admin@30diciaccio.it',
         p_avatar: avatarUrl,
-      } as any);
+      };
+      
+      console.log('[Register] Chiamata RPC insert_user_with_passkey con parametri:', {
+        ...rpcParams,
+        p_id: authUserId,
+        p_squadra_id: randomSquadraId,
+      });
+
+      const { data: userDataArray, error: userError } = await supabase.rpc('insert_user_with_passkey', rpcParams as any);
+
+      if (userError) {
+        console.error('[Register] Errore dettagliato creazione profilo:', {
+          error: userError,
+          code: userError.code,
+          message: userError.message,
+          details: userError.details,
+          hint: userError.hint,
+        });
+        const errorMessage = userError.message || userError.details || 'Errore durante la creazione del profilo utente';
+        throw new Error(errorMessage);
+      }
 
       const userDataArrayTyped = userDataArray as any[] | null;
-      if (userError || !userDataArrayTyped || userDataArrayTyped.length === 0) {
-        throw new Error('Errore durante la creazione del profilo utente');
+      if (!userDataArrayTyped || userDataArrayTyped.length === 0) {
+        console.error('[Register] Nessun dato restituito dalla funzione:', { userDataArray });
+        throw new Error('Errore durante la creazione del profilo utente: nessun dato restituito');
       }
+      
+      console.log('[Register] Profilo utente creato con successo:', userDataArrayTyped[0]);
 
       const newUser = dbRowToUser(userDataArrayTyped[0] as any);
       setLoggedInUser(newUser, null);

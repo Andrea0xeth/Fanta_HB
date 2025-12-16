@@ -14,6 +14,8 @@ type ViewState =
   | 'video-pre'
   | 'auth'
   | 'auth-choice'
+  | 'auth-register-method'
+  | 'auth-login-method'
   | 'auth-email-login'
   | 'auth-email-register'
   | 'video-post'
@@ -231,6 +233,11 @@ export const SplashPage: React.FC = () => {
     }
     if (!emailPassword || emailPassword.length < 8) {
       alert('La password deve essere lunga almeno 8 caratteri');
+      return;
+    }
+    // Validazione foto profilo obbligatoria
+    if (!registrationData.foto_profilo) {
+      alert('Per favore carica una foto profilo');
       return;
     }
 
@@ -749,7 +756,7 @@ export const SplashPage: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setViewState('auth-choice')}
+            onClick={() => setViewState('auth-login-method')}
             className="w-full text-center text-gray-500 text-xs py-1.5"
           >
             Indietro
@@ -827,10 +834,10 @@ export const SplashPage: React.FC = () => {
             className="input text-center text-sm"
           />
 
-          {/* Foto Profilo Upload (opzionale) */}
+          {/* Foto Profilo Upload */}
           <div className="space-y-2">
             <label className="block text-xs text-gray-400 text-center">
-              Foto Profilo (opzionale)
+              Foto Profilo *
             </label>
             <div className="relative">
               <input
@@ -839,6 +846,7 @@ export const SplashPage: React.FC = () => {
                 onChange={handleAvatarChange}
                 className="hidden"
                 id="avatar-upload-email"
+                required
               />
               <label
                 htmlFor="avatar-upload-email"
@@ -874,7 +882,7 @@ export const SplashPage: React.FC = () => {
 
           <button
             onClick={handleEmailRegister}
-            disabled={authLoading || !registrationData.nome || !registrationData.cognome || !registrationData.email || !emailPassword}
+            disabled={authLoading || !registrationData.nome || !registrationData.cognome || !registrationData.email || !emailPassword || !registrationData.foto_profilo}
             className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-2 active:scale-95 transition-transform duration-75"
           >
             {authLoading ? (
@@ -892,7 +900,7 @@ export const SplashPage: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setViewState('auth-choice')}
+            onClick={() => setViewState('auth-register-method')}
             className="w-full text-center text-gray-500 text-xs py-1.5"
           >
             Indietro
@@ -1125,6 +1133,43 @@ export const SplashPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-3 w-full"
             >
+              <p className="text-sm text-gray-400 text-center mb-4">
+                Hai già un account o vuoi registrarti?
+              </p>
+              
+              <button
+                onClick={() => setViewState('auth-register-method')}
+                disabled={authLoading}
+                className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform duration-75"
+              >
+                <Sparkles size={18} />
+                Registrati
+              </button>
+              
+              <button
+                onClick={() => setViewState('auth-login-method')}
+                disabled={authLoading}
+                className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all duration-75 border border-gray-600/30 rounded-xl hover:border-gray-500/50"
+              >
+                <Fingerprint size={16} />
+                Accedi
+              </button>
+              
+              <button
+                onClick={() => setViewState('splash')}
+                className="w-full text-center text-gray-500 text-xs py-1.5"
+              >
+                Indietro
+              </button>
+            </motion.div>
+          ) : viewState === 'auth-register-method' ? (
+            <motion.div
+              key="auth-register-method"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-3 w-full"
+            >
               {(!window.isSecureContext && 
                 window.location.hostname !== 'localhost' && 
                 window.location.hostname !== '127.0.0.1') && (
@@ -1136,16 +1181,73 @@ export const SplashPage: React.FC = () => {
               )}
               
               <p className="text-sm text-gray-400 text-center mb-4">
-                Hai già un account o vuoi registrarti?
+                Scegli come registrarti
               </p>
               
               <button
-                onClick={() => setViewState('auth-email-register')}
+                onClick={handleRegister}
                 disabled={authLoading}
                 className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform duration-75"
               >
-                <Lock size={18} />
+                <Fingerprint size={18} />
+                Registrati con Passkey
+              </button>
+
+              <button
+                onClick={() => setViewState('auth-email-register')}
+                disabled={authLoading}
+                className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all duration-75 border border-gray-600/30 rounded-xl hover:border-gray-500/50"
+              >
+                <Lock size={16} />
                 Registrati con Email + Password
+              </button>
+              
+              <button
+                onClick={() => setViewState('auth-choice')}
+                className="w-full text-center text-gray-500 text-xs py-1.5"
+              >
+                Indietro
+              </button>
+            </motion.div>
+          ) : viewState === 'auth-login-method' ? (
+            <motion.div
+              key="auth-login-method"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-3 w-full"
+            >
+              {(!window.isSecureContext && 
+                window.location.hostname !== 'localhost' && 
+                window.location.hostname !== '127.0.0.1') && (
+                <div className="glass border border-yellow-500/50 rounded-2xl p-3 mb-3">
+                  <p className="text-xs text-yellow-400 text-center">
+                    ⚠️ Per usare Face ID/Touch ID, accedi tramite HTTPS o localhost
+                  </p>
+                </div>
+              )}
+              
+              <p className="text-sm text-gray-400 text-center mb-4">
+                Scegli come accedere
+              </p>
+              
+              <button
+                onClick={handleLogin}
+                disabled={authLoading}
+                className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform duration-75"
+              >
+                {authLoading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                  />
+                ) : (
+                  <>
+                    <Fingerprint size={18} />
+                    Accedi con Passkey
+                  </>
+                )}
               </button>
 
               <button
@@ -1156,37 +1258,9 @@ export const SplashPage: React.FC = () => {
                 <Mail size={16} />
                 Accedi con Email + Password
               </button>
-
-              <button
-                onClick={handleRegister}
-                disabled={authLoading}
-                className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform duration-75"
-              >
-                <Sparkles size={18} />
-                Registrati (Nuovo Account)
-              </button>
               
               <button
-                onClick={handleLogin}
-                disabled={authLoading}
-                className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-gray-400 hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all duration-75 border border-gray-600/30 rounded-xl hover:border-gray-500/50"
-              >
-                {authLoading ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full"
-                  />
-                ) : (
-                  <>
-                    <Fingerprint size={16} />
-                    Accedi con Passkey
-                  </>
-                )}
-              </button>
-              
-              <button
-                onClick={() => setViewState('splash')}
+                onClick={() => setViewState('auth-choice')}
                 className="w-full text-center text-gray-500 text-xs py-1.5"
               >
                 Indietro
