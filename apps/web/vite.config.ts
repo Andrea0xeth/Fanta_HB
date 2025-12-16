@@ -105,8 +105,10 @@ export default defineConfig({
         ],
       },
       // Configurazione per sviluppo
+      // Disabilitato temporaneamente per evitare errori 500 su dev-sw.js
+      // Il service worker funzionerà correttamente in produzione
       devOptions: {
-        enabled: true,
+        enabled: false, // Disabilitato per evitare problemi in dev
         type: 'module',
         navigateFallback: 'index.html',
       },

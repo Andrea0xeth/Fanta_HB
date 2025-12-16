@@ -8,5 +8,8 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "supabase": "^2.67.1"
+  }
 }

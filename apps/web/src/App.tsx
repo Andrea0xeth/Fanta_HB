@@ -29,14 +29,13 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 function AppRoutes() {
-  const { isAuthenticated } = useGame();
-
   return (
     <Routes>
       {/* Splash / Login */}
       <Route 
         path="/" 
-        element={isAuthenticated ? <Navigate to="/home" replace /> : <SplashPage />} 
+        // Sempre mostra la splash: gestisce lei "Continua" / "Accedi"
+        element={<SplashPage />} 
       />
       
       {/* Protected Routes with Layout */}

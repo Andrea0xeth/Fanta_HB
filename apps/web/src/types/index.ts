@@ -26,6 +26,16 @@ export interface RegistrationData {
   foto_profilo?: File;
 }
 
+// Email + Password auth
+export interface EmailPasswordCredentials {
+  email: string;
+  password: string;
+}
+
+export interface EmailPasswordRegistrationData extends RegistrationData {
+  password: string;
+}
+
 // Team types
 export interface Squadra {
   id: string;
