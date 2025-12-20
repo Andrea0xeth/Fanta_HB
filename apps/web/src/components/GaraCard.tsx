@@ -41,7 +41,7 @@ export const GaraCard: React.FC<GaraCardProps> = ({ gara, isAdmin, onAssegnaVinc
               Completata
             </span>
           ) : (
-            <span className="badge bg-gray-700 text-gray-400">
+            <span className="badge bg-white/10 text-white/80">
               <Clock size={10} className="inline mr-0.5" />
               {formatTime(gara.orario)}
             </span>
@@ -50,7 +50,7 @@ export const GaraCard: React.FC<GaraCardProps> = ({ gara, isAdmin, onAssegnaVinc
             {gara.punti_in_palio}pts
           </span>
         </div>
-        <Swords className="text-gray-600" size={16} />
+        <Swords className="text-white/35" size={16} />
       </div>
 
       {/* Team VS - Compact */}
@@ -64,7 +64,7 @@ export const GaraCard: React.FC<GaraCardProps> = ({ gara, isAdmin, onAssegnaVinc
           <div className="font-semibold text-xs truncate">{gara.squadra_a?.nome}</div>
         </div>
         
-        <div className="px-2 text-gray-600 font-bold text-xs">VS</div>
+        <div className="px-2 text-white/35 font-bold text-xs">VS</div>
         
         <div className={`flex-1 text-center p-2 rounded-xl ${
           gara.vincitore_id === gara.squadra_b_id 
@@ -80,12 +80,12 @@ export const GaraCard: React.FC<GaraCardProps> = ({ gara, isAdmin, onAssegnaVinc
       <h3 className="text-center font-semibold text-gray-300 text-sm mb-1">
         🎯 {gara.nome}
       </h3>
-      <p className="text-center text-xs text-gray-500 mb-2 line-clamp-2">{gara.descrizione}</p>
+      <p className="text-center text-xs text-muted mb-2 line-clamp-2">{gara.descrizione}</p>
 
       {/* Classifica o Vincitore - Compact */}
       {isCompleted && gara.classifica && gara.classifica.length > 0 ? (
         <div className="space-y-1 mb-2">
-          <div className="text-center text-xs text-gray-400 mb-1">Classifica Finale</div>
+          <div className="text-center text-xs text-muted mb-1">Classifica Finale</div>
           {gara.classifica.slice(0, 3).map((item, index) => (
             <div
               key={item.squadra_id}

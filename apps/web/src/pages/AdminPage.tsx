@@ -54,9 +54,9 @@ export const AdminPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-dark flex items-center justify-center p-4">
         <div className="text-center">
-          <Crown className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-400 mb-2">Accesso Negato</h2>
-          <p className="text-gray-500">Solo gli admin possono accedere a questa pagina.</p>
+          <Crown className="w-16 h-16 text-white/35 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white/80 mb-2">Accesso Negato</h2>
+          <p className="text-muted">Solo gli admin possono accedere a questa pagina.</p>
         </div>
       </div>
     );
@@ -143,7 +143,7 @@ export const AdminPage: React.FC = () => {
         >
           <Crown className="w-12 h-12 text-party-300 mx-auto mb-2" />
           <h1 className="text-2xl font-display font-bold">Admin Panel</h1>
-          <p className="text-gray-500 text-sm">Gestisci il 30diCiaccioGame</p>
+          <p className="text-muted text-sm">Gestisci il 30diCiaccioGame</p>
           <div className="mt-4 flex items-center gap-2 justify-center flex-wrap">
             <button
               onClick={() => setShowPushNotificationModal(true)}
@@ -177,13 +177,13 @@ export const AdminPage: React.FC = () => {
         </motion.div>
 
         {/* Tab Switcher */}
-        <div className="bg-gray-800/50 rounded-xl p-1 flex gap-1">
+        <div className="glass rounded-2xl p-1 flex gap-1">
           <button
             onClick={() => setActiveTab('gare')}
             className={`flex-1 py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
               activeTab === 'gare' 
                 ? 'bg-coral-500 text-white' 
-                : 'text-gray-400 hover:text-white'
+                : 'text-white/75 hover:text-white'
             }`}
           >
             <Swords size={16} />
@@ -194,7 +194,7 @@ export const AdminPage: React.FC = () => {
             className={`flex-1 py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
               activeTab === 'bonus' 
                 ? 'bg-coral-500 text-white' 
-                : 'text-gray-400 hover:text-white'
+                : 'text-white/75 hover:text-white'
             }`}
           >
             <Gift size={16} />
@@ -205,7 +205,7 @@ export const AdminPage: React.FC = () => {
             className={`flex-1 py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
               activeTab === 'squadre' 
                 ? 'bg-coral-500 text-white' 
-                : 'text-gray-400 hover:text-white'
+                : 'text-white/75 hover:text-white'
             }`}
           >
             <Users size={16} />
@@ -277,7 +277,7 @@ export const AdminPage: React.FC = () => {
               </div>
               
               {gare.filter(g => g.stato !== 'completata').length === 0 ? (
-                <div className="card text-center py-12 text-gray-500">
+                <div className="card text-center py-12 text-muted">
                   <Swords size={48} className="mx-auto mb-4 opacity-50" />
                   <p>Nessuna gara attiva</p>
                 </div>
@@ -304,7 +304,7 @@ export const AdminPage: React.FC = () => {
               </h2>
               
               {gare.filter(g => g.stato === 'completata').length === 0 ? (
-                <div className="card text-center py-8 text-gray-500">
+                <div className="card text-center py-8 text-muted">
                   <p>Nessuna gara completata</p>
                 </div>
               ) : (
@@ -341,7 +341,7 @@ export const AdminPage: React.FC = () => {
 
               {/* Search User */}
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60" size={20} />
                 <input
                   type="text"
                   placeholder="Cerca giocatore..."
@@ -354,7 +354,7 @@ export const AdminPage: React.FC = () => {
               {/* User List */}
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {filteredUsers.length === 0 ? (
-                  <div className="card text-center py-8 text-gray-500">
+                  <div className="card text-center py-8 text-muted">
                     <p className="text-sm">Nessun utente trovato</p>
                   </div>
                 ) : (
@@ -372,7 +372,7 @@ export const AdminPage: React.FC = () => {
                       <Avatar user={utente} size="md" />
                       <div className="flex-1">
                         <span className="font-semibold">{utente.nickname}</span>
-                        <p className="text-xs text-gray-500">{utente.punti_personali} pts</p>
+                        <p className="text-xs text-muted">{utente.punti_personali} pts</p>
                       </div>
                       {selectedUser === utente.id && (
                         <Check className="text-coral-500" size={20} />
@@ -391,7 +391,7 @@ export const AdminPage: React.FC = () => {
                 >
                   {/* Points Input */}
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Punti da assegnare</label>
+                    <label className="block text-sm text-muted mb-2">Punti da assegnare</label>
                     <input
                       type="number"
                       placeholder="Es: 25"
@@ -405,7 +405,7 @@ export const AdminPage: React.FC = () => {
 
                   {/* Motivo Selection */}
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Motivo</label>
+                    <label className="block text-sm text-muted mb-2">Motivo</label>
                     <div className="flex flex-wrap gap-2">
                       {motivoOptions.map((motivo) => (
                         <button
@@ -414,7 +414,7 @@ export const AdminPage: React.FC = () => {
                           className={`px-3 py-2 rounded-xl text-sm transition-all ${
                             bonusMotivo === motivo
                               ? 'bg-coral-500 text-white'
-                              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                              : 'glass text-white/75 hover:bg-white/10'
                           }`}
                         >
                           {motivo}
@@ -497,7 +497,7 @@ export const AdminPage: React.FC = () => {
                       <span className="text-3xl">{squadra.emoji}</span>
                       <div className="flex-1">
                         <h3 className="font-semibold">{squadra.nome}</h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted">
                           {squadra.membri.length || '5'} membri • {squadra.punti_squadra} pts
                         </p>
                       </div>

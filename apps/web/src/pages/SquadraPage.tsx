@@ -36,7 +36,7 @@ export const SquadraPage: React.FC = () => {
   if (!mySquadra) {
     return (
       <div className="h-full bg-dark flex items-center justify-center">
-        <p className="text-gray-500">Nessuna squadra assegnata</p>
+        <p className="text-muted">Nessuna squadra assegnata</p>
       </div>
     );
   }
@@ -68,7 +68,7 @@ export const SquadraPage: React.FC = () => {
           </div>
           <h1 className="text-xl font-display font-bold mb-1">{mySquadra.nome}</h1>
           <div className="flex items-center justify-center gap-3">
-            <div className="flex items-center gap-0.5 text-gray-400">
+            <div className="flex items-center gap-0.5 text-muted">
               <Trophy size={12} />
               <span className="font-semibold text-xs">#{myPosition}</span>
             </div>
@@ -95,19 +95,19 @@ export const SquadraPage: React.FC = () => {
           <div className="grid grid-cols-3 gap-2 text-center">
             <div>
               <div className="text-lg font-bold text-coral-500">{teamMembers.length}</div>
-              <div className="text-[10px] text-gray-500">Membri</div>
+              <div className="text-[11px] text-muted">Membri</div>
             </div>
             <div>
               <div className="text-lg font-bold text-turquoise-400">
                 {teamGare.filter(g => g.vincitore_id === mySquadra.id).length}
               </div>
-              <div className="text-[10px] text-gray-500">Gare Vinte</div>
+              <div className="text-[11px] text-muted">Gare Vinte</div>
             </div>
             <div>
               <div className="text-lg font-bold text-party-300">
                 {Math.round(teamMembers.reduce((acc, m) => acc + m.punti, 0) / teamMembers.length)}
               </div>
-              <div className="text-[10px] text-gray-500">Media Pts</div>
+              <div className="text-[11px] text-muted">Media Pts</div>
             </div>
           </div>
         </motion.div>
@@ -130,7 +130,7 @@ export const SquadraPage: React.FC = () => {
                   member.id === user?.id ? 'border-coral-500/50' : ''
                 }`}
               >
-                <div className="w-5 text-center font-bold text-gray-500 text-xs flex-shrink-0">
+                <div className="w-5 text-center font-bold text-faint text-xs flex-shrink-0">
                   {index + 1}
                 </div>
                 <Avatar 
@@ -158,7 +158,7 @@ export const SquadraPage: React.FC = () => {
                 </div>
                 <div className="text-right flex-shrink-0">
                   <span className="font-bold text-turquoise-400 text-sm">{member.punti}</span>
-                  <span className="text-gray-500 text-[10px]"> pts</span>
+                  <span className="text-subtle text-[11px]"> pts</span>
                 </div>
               </motion.div>
             ))}
@@ -173,7 +173,7 @@ export const SquadraPage: React.FC = () => {
           </h2>
           
           {teamGare.length === 0 ? (
-            <div className="card text-center text-gray-500 py-6">
+            <div className="card text-center text-muted py-6">
               <Swords size={32} className="mx-auto mb-2 opacity-50" />
               <p className="text-xs">Nessuna gara programmata</p>
             </div>
@@ -206,9 +206,9 @@ export const SquadraPage: React.FC = () => {
               >
                 <div className={`w-7 h-7 rounded-2xl flex items-center justify-center font-bold text-xs flex-shrink-0 ${
                   index === 0 ? 'bg-party-300/20 text-party-300' :
-                  index === 1 ? 'bg-gray-400/20 text-gray-400' :
+                  index === 1 ? 'bg-white/10 text-white/80' :
                   index === 2 ? 'bg-orange-500/20 text-orange-400' :
-                  'glass text-gray-500'
+                  'glass text-white/70'
                 }`}>
                   {index + 1}
                 </div>
@@ -218,7 +218,7 @@ export const SquadraPage: React.FC = () => {
                 </div>
                 <div className="text-right flex-shrink-0">
                   <span className="font-bold text-turquoise-400 text-sm">{squadra.punti_squadra}</span>
-                  <span className="text-gray-500 text-[10px]"> pts</span>
+                  <span className="text-subtle text-[11px]"> pts</span>
                 </div>
               </motion.div>
             ))}

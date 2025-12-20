@@ -917,7 +917,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         let errorData;
         try {
           errorData = await createUserResponse.json();
-        } catch (e) {
+        } catch {
           const text = await createUserResponse.text();
           console.error('[Register] Errore Edge Function (non JSON):', {
             status: createUserResponse.status,
