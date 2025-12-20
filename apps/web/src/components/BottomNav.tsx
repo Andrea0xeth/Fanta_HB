@@ -17,7 +17,7 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, badge }) => (
       `flex flex-col items-center justify-center py-2 px-3 rounded-2xl transition-all duration-250 relative ${
         isActive 
           ? 'text-coral-500' 
-          : 'text-gray-500'
+          : 'text-white/70'
       }`
     }
   >

@@ -259,7 +259,8 @@ export const FloatingCircusDecorations: React.FC = () => {
           }}
           initial={{ opacity: 0, y: 20 }}
           animate={{
-            opacity: [0.3, 0.5, 0.3],
+            // Keep decorative, but avoid lowering UI contrast too much
+            opacity: [0.12, 0.2, 0.12],
             y: [0, -10, 0],
           }}
           transition={{

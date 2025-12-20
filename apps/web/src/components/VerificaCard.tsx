@@ -54,7 +54,7 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
         <Avatar user={prova.user} size="md" />
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-sm truncate">{prova.user.nickname}</h4>
-          <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+          <div className="flex items-center gap-1.5 text-[10px] text-subtle">
             {React.cloneElement(tipoIcon[prova.tipo] as React.ReactElement, { size: 12 })}
             <span className="capitalize">{prova.tipo}</span>
             <Clock size={10} />
@@ -65,7 +65,7 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
           <div className="text-xs font-semibold text-turquoise-400">
             {percentuale}%
           </div>
-          <div className="text-[10px] text-gray-500">
+          <div className="text-[10px] text-subtle">
             {prova.voti_totali} voti
           </div>
         </div>
@@ -83,7 +83,7 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
                 onError={() => setImageError(true)}
               />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-gray-500">
+              <div className="w-full h-full flex flex-col items-center justify-center text-subtle">
                 <Image size={32} />
                 <span className="text-xs mt-2">Errore caricamento immagine</span>
               </div>
@@ -121,7 +121,7 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
                 )}
               </>
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-gray-500">
+              <div className="w-full h-full flex flex-col items-center justify-center text-subtle">
                 <Video size={32} />
                 <span className="text-xs mt-2">Errore caricamento video</span>
               </div>
@@ -135,9 +135,9 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
           <div className="aspect-video glass rounded-xl flex items-center justify-center">
             {React.cloneElement(tipoIcon[prova.tipo] as React.ReactElement, { 
               size: 32, 
-              className: "text-gray-600" 
+              className: "text-white/35" 
             })}
-            <span className="text-gray-600 ml-2 text-xs">Contenuto non disponibile</span>
+            <span className="text-white/35 ml-2 text-xs">Contenuto non disponibile</span>
           </div>
         )}
       </div>
@@ -153,7 +153,7 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
             }`}
           />
         </div>
-        <p className="text-[10px] text-gray-500 mt-0.5 text-center">
+        <p className="text-[10px] text-subtle mt-0.5 text-center">
           {percentuale >= 66 ? '✅ Soglia raggiunta!' : `Serve 66% (ancora ${66 - percentuale}%)`}
         </p>
       </div>

@@ -108,7 +108,7 @@ export const PremiPage: React.FC = () => {
             <CircusNeonDecorations variant="confetti" size="small" color="red" />
           </div>
           <h1 className="text-lg font-display font-bold">Premi</h1>
-          <p className="text-gray-500 text-[10px]">Cosa puoi vincere al 30diCiaccioGame!</p>
+          <p className="text-muted text-xs">Cosa puoi vincere al 30diCiaccioGame!</p>
         </motion.div>
 
         {/* Points Overview - Compact */}
@@ -186,7 +186,7 @@ export const PremiPage: React.FC = () => {
                         {/* Info - Compact */}
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold mb-0.5 text-sm truncate">{premio.titolo}</h3>
-                          <p className="text-xs text-gray-500 mb-1.5 line-clamp-2 leading-relaxed">
+                          <p className="text-xs text-muted mb-1.5 line-clamp-2 leading-relaxed">
                             {premio.descrizione}
                           </p>
                           
@@ -196,7 +196,7 @@ export const PremiPage: React.FC = () => {
                               <span className={`${bg} ${text} px-1.5 py-0.5 rounded-full`}>
                                 {tipoLabels[tipo]}
                               </span>
-                              <span className="text-gray-500">
+                              <span className="text-subtle">
                                 {Math.min(totalPoints, premio.punti_richiesti || 0)}/{premio.punti_richiesti} pts
                               </span>
                             </div>
@@ -228,7 +228,7 @@ export const PremiPage: React.FC = () => {
         >
           <Zap className="w-8 h-8 text-party-300 mx-auto mb-2" />
           <h3 className="font-bold text-sm mb-1">Continua a giocare!</h3>
-          <p className="text-gray-500 text-xs">
+          <p className="text-muted text-xs">
             Completa quest, vinci gare e scala la classifica per sbloccare tutti i premi! 🚀
           </p>
         </motion.div>

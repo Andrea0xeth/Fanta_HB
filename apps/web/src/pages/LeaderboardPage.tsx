@@ -34,7 +34,7 @@ export const LeaderboardPage: React.FC = () => {
       );
     }
     return (
-      <span className="flex items-center text-gray-500 text-xs">
+      <span className="flex items-center text-white/60 text-xs">
         <Minus size={12} />
       </span>
     );
@@ -49,7 +49,7 @@ export const LeaderboardPage: React.FC = () => {
 
     return (
       <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${
-        styles[position as keyof typeof styles] || 'glass text-gray-400'
+        styles[position as keyof typeof styles] || 'glass text-white/80'
       }`}>
         {position}
       </div>
@@ -71,7 +71,7 @@ export const LeaderboardPage: React.FC = () => {
             <CircusNeonDecorations variant="star" size="small" color="white" />
           </div>
           <h1 className="text-lg font-display font-bold">Classifica</h1>
-          <p className="text-gray-500 text-[10px]">Chi vincerà il 30diCiaccioGame?</p>
+          <p className="text-muted text-xs">Chi vincerà il 30diCiaccioGame?</p>
         </motion.div>
 
         {/* Tab Switcher - Compact */}
@@ -81,7 +81,7 @@ export const LeaderboardPage: React.FC = () => {
             className={`flex-1 py-2 rounded-xl font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
               activeTab === 'squadre' 
                 ? 'bg-coral-500 text-white' 
-                : 'text-gray-400'
+                : 'text-white/75'
             }`}
           >
             <Users size={14} />
@@ -92,7 +92,7 @@ export const LeaderboardPage: React.FC = () => {
             className={`flex-1 py-2 rounded-xl font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
               activeTab === 'singoli' 
                 ? 'bg-coral-500 text-white' 
-                : 'text-gray-400'
+                : 'text-white/75'
             }`}
           >
             <User size={14} />
@@ -195,7 +195,7 @@ export const LeaderboardPage: React.FC = () => {
                     <DeltaIndicator delta={getDelta(index + 3)} />
                     <div className="text-right min-w-[50px]">
                       <span className="font-bold text-turquoise-400 text-sm">{squadra.punti_squadra}</span>
-                      <span className="text-gray-500 text-[10px]"> pts</span>
+                      <span className="text-subtle text-[11px]"> pts</span>
                     </div>
                   </motion.div>
                 ))}
@@ -211,7 +211,7 @@ export const LeaderboardPage: React.FC = () => {
             >
               {/* Formula explanation - Compact */}
               <div className="card text-center mb-2 py-1.5">
-                <p className="text-[10px] text-gray-400">
+                <p className="text-[11px] text-muted">
                   Formula: <span className="text-turquoise-400">Pers. × 0.7</span> + 
                   <span className="text-coral-400"> Squad. × 0.3</span>
                 </p>
@@ -243,7 +243,7 @@ export const LeaderboardPage: React.FC = () => {
                           <span className="badge-coral flex-shrink-0">Tu</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                      <div className="flex items-center gap-1 text-[11px] text-muted">
                         <span>{squadra?.emoji}</span>
                         <span className="truncate">{squadra?.nome}</span>
                       </div>
@@ -251,7 +251,7 @@ export const LeaderboardPage: React.FC = () => {
                     <DeltaIndicator delta={getDelta(index)} />
                     <div className="text-right min-w-[50px]">
                       <div className="font-bold text-turquoise-400 text-sm">{puntiTotali}</div>
-                      <div className="text-[10px] text-gray-500">
+                      <div className="text-[11px] text-subtle">
                         {giocatore.punti_personali}
                         <Flame size={8} className="inline mx-0.5" />
                       </div>

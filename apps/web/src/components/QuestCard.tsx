@@ -188,7 +188,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
             <h3 className="font-semibold text-turquoise-400 text-sm truncate">
               {quest.emoji} {quest.titolo}
             </h3>
-            <p className="text-[10px] text-gray-500">Prova inviata! In attesa di verifica</p>
+            <p className="text-[10px] text-muted">Prova inviata! In attesa di verifica</p>
           </div>
         </div>
       </motion.div>
@@ -215,7 +215,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
               {difficultyLabels[quest.difficolta]}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-[10px] text-gray-400">
+          <div className="flex items-center gap-2 text-[10px] text-muted">
             <span className="text-party-300 font-semibold">{quest.punti}pts</span>
             <span className="flex items-center gap-0.5">
               <Clock size={10} />
@@ -224,7 +224,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
           </div>
         </div>
         <ChevronRight 
-          className={`text-gray-500 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} 
+          className={`text-white/60 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} 
           size={16} 
         />
       </div>
@@ -241,7 +241,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
             onClick={(e) => e.stopPropagation()}
           >
             <div className="pt-3 mt-3 border-t border-gray-700/50">
-              <p className="text-xs text-gray-400 mb-3 leading-relaxed">{quest.descrizione}</p>
+              <p className="text-xs text-muted mb-3 leading-relaxed">{quest.descrizione}</p>
               
               {/* Success message */}
               <AnimatePresence>
@@ -295,7 +295,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                     className={`flex-1 py-2.5 rounded-2xl flex flex-col items-center gap-0.5 transition-all ${
                       selectedType === 'foto' 
                         ? 'bg-coral-500 text-white' 
-                        : 'glass text-gray-400'
+                        : 'glass text-white/80'
                     }`}
                   >
                     <Camera size={16} />
@@ -308,7 +308,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                     className={`flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all ${
                       selectedType === 'video' 
                         ? 'bg-coral-500 text-white' 
-                        : 'glass text-gray-400'
+                        : 'glass text-white/80'
                     }`}
                   >
                     <Video size={16} />
@@ -321,7 +321,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                     className={`flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all ${
                       selectedType === 'testo' 
                         ? 'bg-coral-500 text-white' 
-                        : 'glass text-gray-400'
+                        : 'glass text-white/80'
                     }`}
                   >
                     <FileText size={16} />
@@ -361,7 +361,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                   >
                     <X size={14} />
                   </button>
-                  <div className="mt-1 text-[10px] text-gray-400">
+                  <div className="mt-1 text-[10px] text-subtle">
                     {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
                   </div>
                 </div>
@@ -380,11 +380,11 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
               {/* File selection prompt */}
               {(selectedType === 'foto' || selectedType === 'video') && !selectedFile && (
                 <div className="mb-3 p-4 rounded-xl glass border-2 border-dashed border-gray-600 text-center">
-                  <Upload className="mx-auto mb-2 text-gray-400" size={24} />
-                  <p className="text-xs text-gray-400">
+                  <Upload className="mx-auto mb-2 text-white/70" size={24} />
+                  <p className="text-xs text-muted">
                     {selectedType === 'foto' ? 'Clicca per selezionare una foto' : 'Clicca per selezionare un video'}
                   </p>
-                  <p className="text-[10px] text-gray-500 mt-1">Dimensione massima: 50MB</p>
+                  <p className="text-[10px] text-subtle mt-1">Dimensione massima: 50MB</p>
                 </div>
               )}
 

@@ -52,7 +52,7 @@ export const HomePage: React.FC = () => {
             </motion.button>
             <div>
               <h1 className="font-display font-bold text-base text-gradient leading-tight">30diCiaccioGame</h1>
-              <p className="text-[10px] text-gray-500 leading-tight">Ciao, {user?.nickname || 'Giocatore'}!</p>
+              <p className="text-xs text-muted leading-tight">Ciao, {user?.nickname || 'Giocatore'}!</p>
             </div>
           </div>
           
@@ -63,7 +63,7 @@ export const HomePage: React.FC = () => {
               onClick={() => setShowNotifiche(true)}
               className="relative p-1.5"
             >
-              <Bell size={20} className="text-gray-400" />
+              <Bell size={20} className="text-white/80" />
               {unreadNotifiche > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-coral-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white">
                   {unreadNotifiche > 9 ? '9+' : unreadNotifiche}
@@ -78,7 +78,7 @@ export const HomePage: React.FC = () => {
                 onClick={() => setShowVerifica(true)}
                 className="relative p-1.5"
               >
-                <CheckCircle2 size={20} className="text-gray-400" />
+                <CheckCircle2 size={20} className="text-white/80" />
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-turquoise-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white">
                   {pendingVerificationsCount}
                 </span>
@@ -120,7 +120,7 @@ export const HomePage: React.FC = () => {
               <span className="text-2xl">{mySquadra.emoji}</span>
               <div>
                 <h3 className="font-semibold text-sm leading-tight">{mySquadra.nome}</h3>
-                <p className="text-[10px] text-gray-500 leading-tight">La tua squadra</p>
+                <p className="text-[11px] text-muted leading-tight">La tua squadra</p>
               </div>
             </div>
             <div className="text-right">
@@ -128,7 +128,7 @@ export const HomePage: React.FC = () => {
                 <Flame size={14} />
                 {mySquadra.punti_squadra}
               </div>
-              <p className="text-[10px] text-gray-500 leading-tight">punti squadra</p>
+              <p className="text-[11px] text-muted leading-tight">punti squadra</p>
             </div>
           </motion.div>
         )}
@@ -154,7 +154,7 @@ export const HomePage: React.FC = () => {
               <CircusNeonDecorations variant="star" size="small" color="red" />
               Quest del Giorno
             </h2>
-            <span className="text-[10px] text-gray-500">{quests.length} disponibili</span>
+            <span className="text-[11px] text-muted">{quests.length} disponibili</span>
           </div>
           
           <div className="space-y-3">
@@ -211,7 +211,7 @@ export const HomePage: React.FC = () => {
               {/* Content - Scrollable */}
               <div className="flex-1 overflow-y-auto scrollbar-hide px-4 py-4 pb-24">
                 {pendingVerifications.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
+                  <div className="text-center py-12 text-muted">
                     <CheckCircle2 size={36} className="mx-auto mb-3 opacity-50" />
                     <p className="text-sm">Nessuna prova da verificare!</p>
                     <p className="text-xs">Torna più tardi 😊</p>
@@ -257,17 +257,17 @@ export const HomePage: React.FC = () => {
                   <Avatar user={user} size="lg" />
                 </div>
                 <h2 className="font-bold text-lg">{user?.nickname || 'Giocatore'}</h2>
-                <p className="text-gray-500 text-sm">Membro di {mySquadra?.nome}</p>
+                <p className="text-muted text-sm">Membro di {mySquadra?.nome}</p>
               </div>
               
               <div className="grid grid-cols-2 gap-2 mb-4">
                 <div className="card text-center py-2">
                   <div className="text-xl font-bold text-coral-500">{user?.punti_personali || 0}</div>
-                  <div className="text-[10px] text-gray-500">Punti Personali</div>
+                  <div className="text-[11px] text-muted">Punti Personali</div>
                 </div>
                 <div className="card text-center py-2">
                   <div className="text-xl font-bold text-turquoise-400">{mySquadra?.punti_squadra || 0}</div>
-                  <div className="text-[10px] text-gray-500">Punti Squadra</div>
+                  <div className="text-[11px] text-muted">Punti Squadra</div>
                 </div>
               </div>
 
