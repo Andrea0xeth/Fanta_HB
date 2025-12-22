@@ -47,25 +47,25 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -100 }}
-      className="card py-2"
+      className="border-l-2 border-gray-700/30 pl-2 py-2"
     >
-      {/* Header - Compact */}
+      {/* Header - Snello */}
       <div className="flex items-center gap-2 mb-2">
-        <Avatar user={prova.user} size="md" />
+        <Avatar user={prova.user} size="sm" />
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-sm truncate">{prova.user.nickname}</h4>
-          <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
-            {React.cloneElement(tipoIcon[prova.tipo] as React.ReactElement, { size: 12 })}
+          <h4 className="font-semibold text-sm truncate mb-0.5">{prova.user.nickname}</h4>
+          <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+            {React.cloneElement(tipoIcon[prova.tipo] as React.ReactElement, { size: 10 })}
             <span className="capitalize">{prova.tipo}</span>
             <Clock size={10} />
             <span>{timeAgo()}</span>
           </div>
         </div>
         <div className="text-right flex-shrink-0">
-          <div className="text-xs font-semibold text-turquoise-400">
+          <div className="text-sm font-semibold text-turquoise-400">
             {percentuale}%
           </div>
-          <div className="text-[10px] text-gray-500">
+          <div className="text-[10px] text-gray-400">
             {prova.voti_totali} voti
           </div>
         </div>
@@ -142,9 +142,9 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
         )}
       </div>
 
-      {/* Progress Bar - Compact */}
+      {/* Progress Bar - Snello */}
       <div className="mb-2">
-        <div className="h-1.5 glass rounded-full overflow-hidden">
+        <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${percentuale}%` }}
@@ -153,27 +153,27 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
             }`}
           />
         </div>
-        <p className="text-[10px] text-gray-500 mt-0.5 text-center">
+        <p className="text-[10px] text-gray-400 mt-1 text-center">
           {percentuale >= 66 ? '✅ Soglia raggiunta!' : `Serve 66% (ancora ${66 - percentuale}%)`}
         </p>
       </div>
 
-      {/* Vote Buttons - Compact */}
+      {/* Vote Buttons - Snello */}
       <div className="flex gap-2">
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => onVote(prova.id, false)}
-          className="flex-1 py-2.5 rounded-2xl glass border border-red-500/30 text-red-400 font-semibold text-xs flex items-center justify-center gap-1 hover:bg-red-500/10 transition-colors"
+          className="flex-1 py-2 rounded-xl bg-gray-800/30 border border-red-500/30 text-red-400 font-semibold text-xs flex items-center justify-center gap-1 hover:bg-red-500/10 transition-colors"
         >
-          <X size={14} />
+          <X size={12} />
           Rifiuta
         </motion.button>
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => onVote(prova.id, true)}
-          className="flex-1 py-2.5 rounded-2xl glass border border-green-500/30 text-green-400 font-semibold text-xs flex items-center justify-center gap-1 hover:bg-green-500/10 transition-colors"
+          className="flex-1 py-2 rounded-xl bg-gray-800/30 border border-green-500/30 text-green-400 font-semibold text-xs flex items-center justify-center gap-1 hover:bg-green-500/10 transition-colors"
         >
-          <Check size={14} />
+          <Check size={12} />
           Valida
         </motion.button>
       </div>

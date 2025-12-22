@@ -177,18 +177,15 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
     return (
       <motion.div 
         layout
-        className="card border-turquoise-500/30"
-        style={{ background: 'rgba(78, 205, 196, 0.08)', borderColor: 'rgba(78, 205, 196, 0.3)' }}
+        className="border-l-2 border-turquoise-500/50 pl-3 py-2"
       >
         <div className="flex items-center gap-2">
-          <div className="w-12 h-12 rounded-2xl bg-turquoise-500/20 flex items-center justify-center text-xl flex-shrink-0">
-            <Check className="text-turquoise-400" size={20} />
-          </div>
+          <Check className="text-turquoise-400" size={16} />
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-turquoise-400 text-sm truncate">
               {quest.emoji} {quest.titolo}
             </h3>
-            <p className="text-[10px] text-gray-500">Prova inviata! In attesa di verifica</p>
+            <p className="text-[10px] text-gray-400">Prova inviata! In attesa di verifica</p>
           </div>
         </div>
       </motion.div>
@@ -198,20 +195,18 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
   return (
     <motion.div 
       layout
-      className="card-interactive"
+      className="border-l-2 border-gray-700/50 pl-3 py-2 hover:border-coral-500/50 transition-colors"
     >
-      {/* Header - Compact */}
+      {/* Header - Snello */}
       <div 
         className="flex items-center gap-2 cursor-pointer"
         onClick={handleToggleExpand}
       >
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-coral-500/20 to-party-300/20 flex items-center justify-center text-xl flex-shrink-0">
-          {quest.emoji}
-        </div>
+        <span className="text-xl">{quest.emoji}</span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
             <h3 className="font-semibold truncate text-sm">{quest.titolo}</h3>
-            <span className={`badge ${difficultyColors[quest.difficolta]} flex-shrink-0`}>
+            <span className={`badge ${difficultyColors[quest.difficolta]} flex-shrink-0 text-[10px] px-1.5 py-0.5`}>
               {difficultyLabels[quest.difficolta]}
             </span>
           </div>
@@ -225,7 +220,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
         </div>
         <ChevronRight 
           className={`text-gray-500 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} 
-          size={16} 
+          size={14} 
         />
       </div>
 
@@ -240,23 +235,23 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
             className="overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="pt-3 mt-3 border-t border-gray-700/50">
-              <p className="text-xs text-gray-400 mb-3 leading-relaxed">{quest.descrizione}</p>
+            <div className="pt-2 mt-2 border-t border-gray-700/30">
+              <p className="text-xs text-gray-300 mb-3 leading-relaxed">{quest.descrizione}</p>
               
-              {/* Success message */}
+              {/* Success message - Improved */}
               <AnimatePresence>
                 {success && (
                   <motion.div
                     initial={{ opacity: 0, y: -10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    className="mb-3 p-3 rounded-xl bg-green-500/10 border border-green-500/30"
+                    className="mb-4 p-4 rounded-xl bg-green-500/10 border border-green-500/30"
                   >
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="text-green-400 flex-shrink-0" size={18} />
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 className="text-green-400 flex-shrink-0" size={20} />
                       <div className="flex-1">
-                        <p className="text-green-400 font-semibold text-sm">Caricamento completato!</p>
-                        <p className="text-green-400/80 text-xs mt-0.5">
+                        <p className="text-green-400 font-semibold text-base">Caricamento completato!</p>
+                        <p className="text-green-400/80 text-sm mt-1">
                           {selectedType === 'foto' && 'La tua foto è stata caricata con successo'}
                           {selectedType === 'video' && 'Il tuo video è stato caricato con successo'}
                           {selectedType === 'testo' && 'Il tuo testo è stato inviato con successo'}
@@ -267,65 +262,65 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                 )}
               </AnimatePresence>
 
-              {/* Error message */}
+              {/* Error message - Improved */}
               <AnimatePresence>
                 {error && (
                   <motion.div
                     initial={{ opacity: 0, y: -10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    className="mb-3 p-3 rounded-xl bg-red-500/10 border border-red-500/30"
+                    className="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/30"
                   >
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="text-red-400 flex-shrink-0" size={18} />
+                    <div className="flex items-center gap-3">
+                      <AlertCircle className="text-red-400 flex-shrink-0" size={20} />
                       <div className="flex-1">
-                        <p className="text-red-400 font-semibold text-sm">Errore nel caricamento</p>
-                        <p className="text-red-400/80 text-xs mt-0.5">{error}</p>
+                        <p className="text-red-400 font-semibold text-base">Errore nel caricamento</p>
+                        <p className="text-red-400/80 text-sm mt-1">{error}</p>
                       </div>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* Proof Type Selection - Compact */}
-              <div className="flex gap-1.5 mb-3">
+              {/* Proof Type Selection - Improved spacing */}
+              <div className="flex gap-2 mb-4">
                 {quest.tipo_prova.includes('foto') && (
                   <button
                     onClick={() => handleTypeSelect('foto')}
-                    className={`flex-1 py-2.5 rounded-2xl flex flex-col items-center gap-0.5 transition-all ${
+                    className={`flex-1 py-3 rounded-2xl flex flex-col items-center gap-1 transition-all ${
                       selectedType === 'foto' 
-                        ? 'bg-coral-500 text-white' 
-                        : 'glass text-gray-400'
+                        ? 'bg-coral-500 text-white shadow-lg' 
+                        : 'glass text-gray-400 hover:text-gray-300'
                     }`}
                   >
-                    <Camera size={16} />
-                    <span className="text-[10px]">Foto</span>
+                    <Camera size={18} />
+                    <span className="text-xs font-medium">Foto</span>
                   </button>
                 )}
                 {quest.tipo_prova.includes('video') && (
                   <button
                     onClick={() => handleTypeSelect('video')}
-                    className={`flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all ${
+                    className={`flex-1 py-3 rounded-2xl flex flex-col items-center gap-1 transition-all ${
                       selectedType === 'video' 
-                        ? 'bg-coral-500 text-white' 
-                        : 'glass text-gray-400'
+                        ? 'bg-coral-500 text-white shadow-lg' 
+                        : 'glass text-gray-400 hover:text-gray-300'
                     }`}
                   >
-                    <Video size={16} />
-                    <span className="text-[10px]">Video</span>
+                    <Video size={18} />
+                    <span className="text-xs font-medium">Video</span>
                   </button>
                 )}
                 {quest.tipo_prova.includes('testo') && (
                   <button
                     onClick={() => handleTypeSelect('testo')}
-                    className={`flex-1 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all ${
+                    className={`flex-1 py-3 rounded-2xl flex flex-col items-center gap-1 transition-all ${
                       selectedType === 'testo' 
-                        ? 'bg-coral-500 text-white' 
-                        : 'glass text-gray-400'
+                        ? 'bg-coral-500 text-white shadow-lg' 
+                        : 'glass text-gray-400 hover:text-gray-300'
                     }`}
                   >
-                    <FileText size={16} />
-                    <span className="text-[10px]">Testo</span>
+                    <FileText size={18} />
+                    <span className="text-xs font-medium">Testo</span>
                   </button>
                 )}
               </div>
@@ -388,12 +383,12 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                 </div>
               )}
 
-              {/* Submit button - Compact */}
-              <div className="flex gap-1.5">
+              {/* Submit button - Improved spacing */}
+              <div className="flex gap-2">
                 <button
                   onClick={handleToggleExpand}
                   disabled={isUploading}
-                  className="btn-ghost flex-1 text-sm py-2 disabled:opacity-50"
+                  className="btn-ghost flex-1 text-sm py-3 disabled:opacity-50"
                 >
                   Annulla
                 </button>
@@ -406,11 +401,11 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                     (selectedType === 'testo' && !proofText.trim()) ||
                     ((selectedType === 'foto' || selectedType === 'video') && !selectedFile)
                   }
-                  className="btn-primary flex-1 text-sm py-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="btn-primary flex-1 text-sm py-3 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isUploading ? (
                     <>
-                      <Loader2 className="animate-spin" size={14} />
+                      <Loader2 className="animate-spin" size={16} />
                       <span>
                         {selectedType === 'foto' && 'Caricamento foto...'}
                         {selectedType === 'video' && 'Caricamento video...'}
@@ -420,7 +415,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                     </>
                   ) : success ? (
                     <>
-                      <CheckCircle2 size={14} />
+                      <CheckCircle2 size={16} />
                       <span>Completato!</span>
                     </>
                   ) : (

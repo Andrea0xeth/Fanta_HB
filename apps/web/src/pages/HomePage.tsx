@@ -39,20 +39,20 @@ export const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-full bg-dark flex flex-col">
-      {/* Header - Fixed, compact */}
-      <div className="flex-shrink-0 glass-strong px-4 pt-safe pb-3">
+      {/* Header - Snello e compatto */}
+      <div className="flex-shrink-0 border-b border-white/5 px-4 pt-safe pb-3">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <motion.button 
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowProfile(true)}
-              className="rounded-2xl overflow-hidden"
+              className="rounded-full overflow-hidden"
             >
-              <Avatar user={user} size="md" />
+              <Avatar user={user} size="sm" />
             </motion.button>
             <div>
-              <h1 className="font-display font-bold text-base text-gradient leading-tight">30diCiaccioGame</h1>
-              <p className="text-[10px] text-gray-500 leading-tight">Ciao, {user?.nickname || 'Giocatore'}!</p>
+              <h1 className="font-display font-bold text-sm text-gradient leading-tight">30diCiaccioGame</h1>
+              <p className="text-[10px] text-gray-400 leading-tight">Ciao, {user?.nickname || 'Giocatore'}!</p>
             </div>
           </div>
           
@@ -63,7 +63,7 @@ export const HomePage: React.FC = () => {
               onClick={() => setShowNotifiche(true)}
               className="relative p-1.5"
             >
-              <Bell size={20} className="text-gray-400" />
+              <Bell size={18} className="text-gray-400" />
               {unreadNotifiche > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-coral-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white">
                   {unreadNotifiche > 9 ? '9+' : unreadNotifiche}
@@ -78,7 +78,7 @@ export const HomePage: React.FC = () => {
                 onClick={() => setShowVerifica(true)}
                 className="relative p-1.5"
               >
-                <CheckCircle2 size={20} className="text-gray-400" />
+                <CheckCircle2 size={18} className="text-gray-400" />
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-turquoise-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white">
                   {pendingVerificationsCount}
                 </span>
@@ -87,17 +87,17 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Day Banner - Compact */}
+        {/* Day Banner - Snello */}
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="gradient-party rounded-3xl p-3 mb-3"
+          className="gradient-party rounded-2xl p-3 mb-2"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Calendar className="text-white" size={18} />
+              <Calendar className="text-white" size={16} />
               <div>
-                <h2 className="font-bold text-white text-sm leading-tight">GIORNO {gameState.giorno_corrente} DI 3</h2>
+                <h2 className="font-bold text-white text-xs leading-tight">GIORNO {gameState.giorno_corrente} DI 3</h2>
                 <p className="text-white/80 text-[10px] leading-tight">Tema: Caos Totale! 🎉</p>
               </div>
             </div>
@@ -108,56 +108,56 @@ export const HomePage: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Team Status - Compact */}
+        {/* Team Status - Snello senza card */}
         {mySquadra && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="card flex items-center justify-between py-3"
+            className="flex items-center justify-between py-2"
           >
             <div className="flex items-center gap-2">
               <span className="text-2xl">{mySquadra.emoji}</span>
               <div>
                 <h3 className="font-semibold text-sm leading-tight">{mySquadra.nome}</h3>
-                <p className="text-[10px] text-gray-500 leading-tight">La tua squadra</p>
+                <p className="text-[10px] text-gray-400 leading-tight">La tua squadra</p>
               </div>
             </div>
             <div className="text-right">
               <div className="flex items-center gap-1 text-party-300 font-bold text-sm leading-tight">
-                <Flame size={14} />
+                <Flame size={12} />
                 {mySquadra.punti_squadra}
               </div>
-              <p className="text-[10px] text-gray-500 leading-tight">punti squadra</p>
+              <p className="text-[10px] text-gray-400 leading-tight">punti squadra</p>
             </div>
           </motion.div>
         )}
       </div>
 
-      {/* Content - Scrollable, passes under navbar - 8pt grid spacing */}
-      <div className="flex-1 px-4 py-3 pb-28 space-y-4">
-        {/* Next Gara Section - Prima delle Quest */}
+      {/* Content - Scrollable, snello */}
+      <div className="flex-1 px-4 py-3 pb-28 space-y-3">
+        {/* Next Gara Section */}
         {nextGara && (
           <section>
-            <h2 className="font-display font-bold text-sm flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-1.5 mb-2">
               <CircusNeonDecorations variant="clown-face" size="small" color="orange" />
-              Prossima Gara
-            </h2>
+              <h2 className="font-display font-bold text-sm">Prossima Gara</h2>
+            </div>
             <GaraCard gara={nextGara} />
           </section>
         )}
 
-        {/* Quest Section - Dopo la Gara */}
+        {/* Quest Section */}
         <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display font-bold text-sm flex items-center gap-2">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
               <CircusNeonDecorations variant="star" size="small" color="red" />
-              Quest del Giorno
-            </h2>
-            <span className="text-[10px] text-gray-500">{quests.length} disponibili</span>
+              <h2 className="font-display font-bold text-sm">Quest del Giorno</h2>
+            </div>
+            <span className="text-[10px] text-gray-400">{quests.length} disponibili</span>
           </div>
           
-          <div className="space-y-3">
+          <div className="space-y-2">
             {quests.map((quest, index) => (
               <motion.div
                 key={quest.id}

@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Gift, Star, Zap, Users, User, Calendar, Sparkles } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import type { Premio } from '../types';
-import { CircusNeonDecorations } from '../components/CircusNeonDecorations';
 
 const mockPremi: Premio[] = [
   {
@@ -95,43 +94,39 @@ export const PremiPage: React.FC = () => {
 
   return (
     <div className="min-h-full bg-dark flex flex-col">
-      {/* Header - Fixed, compact */}
-      <div className="flex-shrink-0 glass-strong px-4 pt-safe pb-3">
+      {/* Header - Snello */}
+      <div className="flex-shrink-0 border-b border-white/5 px-4 pt-safe pb-3">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-2"
+          className="text-center mb-3"
         >
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <CircusNeonDecorations variant="confetti" size="small" color="orange" />
-            <Gift className="w-8 h-8 text-party-300" />
-            <CircusNeonDecorations variant="confetti" size="small" color="red" />
-          </div>
-          <h1 className="text-lg font-display font-bold">Premi</h1>
-          <p className="text-gray-500 text-[10px]">Cosa puoi vincere al 30diCiaccioGame!</p>
+          <Gift className="w-6 h-6 text-party-300 mx-auto mb-1" />
+          <h1 className="text-lg font-display font-bold mb-0.5">Premi</h1>
+          <p className="text-gray-400 text-[10px]">Cosa puoi vincere al 30diCiaccioGame!</p>
         </motion.div>
 
-        {/* Points Overview - Compact */}
+        {/* Points Overview - Snello */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="gradient-party rounded-2xl p-2.5"
+          className="gradient-party rounded-2xl p-3"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-xs">I tuoi punti totali</p>
-              <p className="text-2xl font-bold text-white">{totalPoints}</p>
+              <p className="text-white/90 text-[10px] mb-0.5">I tuoi punti totali</p>
+              <p className="text-xl font-bold text-white">{totalPoints}</p>
             </div>
-            <div className="text-right text-white/80 text-xs">
-              <p>Personali: {userPoints}</p>
-              <p>Squadra: {teamPoints}</p>
+            <div className="text-right text-white/90 text-[10px]">
+              <p className="mb-0.5">Personali: <span className="font-semibold">{userPoints}</span></p>
+              <p>Squadra: <span className="font-semibold">{teamPoints}</span></p>
             </div>
           </div>
         </motion.div>
       </div>
 
-      {/* Content - Scrollable, passes under navbar - 8pt grid spacing */}
-      <div className="flex-1 px-4 py-3 pb-28 space-y-4">
+      {/* Content - Scrollable, snello */}
+      <div className="flex-1 px-4 py-3 pb-28 space-y-3">
         {/* Categories */}
         {(['squadra', 'singolo', 'giornaliero', 'speciale'] as const).map((tipo) => {
           const premi = mockPremi.filter(p => p.tipo === tipo);
@@ -141,14 +136,12 @@ export const PremiPage: React.FC = () => {
           
           return (
             <section key={tipo}>
-              <h2 className="font-display font-bold text-sm mb-3 flex items-center gap-2">
-                <div className={`p-2 rounded-2xl ${bg}`}>
-                  <Icon size={14} className={text} />
-                </div>
-                Premi {tipoLabels[tipo]}
-              </h2>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Icon size={14} className={text} />
+                <h2 className="font-display font-bold text-sm">Premi {tipoLabels[tipo]}</h2>
+              </div>
               
-              <div className="grid gap-3">
+              <div className="space-y-2">
                 {premi.map((premio, index) => {
                   const progress = (totalPoints / (premio.punti_richiesti || 1)) * 100;
                   const isUnlocked = progress >= 100;
@@ -159,14 +152,14 @@ export const PremiPage: React.FC = () => {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className={`card relative overflow-hidden py-2 ${
-                        isUnlocked ? 'border-party-300/50' : ''
+                      className={`border-l-2 pl-2 py-1.5 ${
+                        isUnlocked ? 'border-party-300/50' : 'border-gray-700/30'
                       }`}
                     >
                       {/* Unlocked badge */}
                       {isUnlocked && (
-                        <div className="absolute top-1.5 right-1.5">
-                          <span className="badge-party flex items-center gap-0.5">
+                        <div className="flex justify-end mb-0.5">
+                          <span className="badge-party flex items-center gap-0.5 px-1.5 py-0.5 text-[10px]">
                             <Star size={8} />
                             Sbloccato!
                           </span>
@@ -174,29 +167,29 @@ export const PremiPage: React.FC = () => {
                       )}
 
                       <div className="flex gap-2">
-                        {/* Emoji/Image - Compact */}
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 ${
+                        {/* Emoji/Image - Snello */}
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 ${
                           isUnlocked 
-                            ? 'bg-gradient-to-br from-party-300/30 to-party-300/10' 
-                            : 'glass'
+                            ? 'bg-gradient-to-br from-party-300/20 to-party-300/10' 
+                            : 'bg-gray-800/30'
                         }`}>
                           {premio.immagine}
                         </div>
 
-                        {/* Info - Compact */}
+                        {/* Info - Snello */}
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold mb-0.5 text-sm truncate">{premio.titolo}</h3>
-                          <p className="text-xs text-gray-500 mb-1.5 line-clamp-2 leading-relaxed">
+                          <p className="text-xs text-gray-400 mb-1.5 line-clamp-1 leading-relaxed">
                             {premio.descrizione}
                           </p>
                           
-                          {/* Progress - Compact */}
-                          <div className="space-y-0.5">
-                            <div className="flex items-center justify-between text-[10px]">
-                              <span className={`${bg} ${text} px-1.5 py-0.5 rounded-full`}>
+                          {/* Progress - Snello */}
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className={`${bg} ${text} px-1.5 py-0.5 rounded text-[10px] font-semibold`}>
                                 {tipoLabels[tipo]}
                               </span>
-                              <span className="text-gray-500">
+                              <span className="text-gray-300 text-[10px] font-semibold">
                                 {Math.min(totalPoints, premio.punti_richiesti || 0)}/{premio.punti_richiesti} pts
                               </span>
                             </div>
@@ -219,16 +212,16 @@ export const PremiPage: React.FC = () => {
           );
         })}
 
-        {/* Motivation Card - Compact */}
+        {/* Motivation - Snello */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="card text-center py-3"
+          className="text-center py-3 border-t border-white/5"
         >
-          <Zap className="w-8 h-8 text-party-300 mx-auto mb-2" />
+          <Zap className="w-5 h-5 text-party-300 mx-auto mb-1.5" />
           <h3 className="font-bold text-sm mb-1">Continua a giocare!</h3>
-          <p className="text-gray-500 text-xs">
+          <p className="text-gray-400 text-xs">
             Completa quest, vinci gare e scala la classifica per sbloccare tutti i premi! 🚀
           </p>
         </motion.div>

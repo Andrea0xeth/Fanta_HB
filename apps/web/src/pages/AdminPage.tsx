@@ -134,81 +134,81 @@ export const AdminPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-dark">
-      {/* Header */}
-      <div className="bg-gradient-to-b from-gray-900 to-dark px-4 pt-safe pb-4">
+      {/* Header - Snello */}
+      <div className="border-b border-white/5 px-4 pt-safe pb-3">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-6"
+          className="text-center mb-3"
         >
-          <Crown className="w-12 h-12 text-party-300 mx-auto mb-2" />
-          <h1 className="text-2xl font-display font-bold">Admin Panel</h1>
-          <p className="text-gray-500 text-sm">Gestisci il 30diCiaccioGame</p>
-          <div className="mt-4 flex items-center gap-2 justify-center flex-wrap">
+          <Crown className="w-6 h-6 text-party-300 mx-auto mb-1.5" />
+          <h1 className="text-lg font-display font-bold mb-0.5">Admin Panel</h1>
+          <p className="text-gray-400 text-[10px]">Gestisci il 30diCiaccioGame</p>
+          <div className="mt-3 flex items-center gap-2 justify-center flex-wrap">
             <button
               onClick={() => setShowPushNotificationModal(true)}
-              className="btn-primary flex items-center gap-2 text-sm py-2 px-4"
+              className="btn-primary flex items-center gap-1.5 text-xs py-2 px-3"
             >
-              <Bell size={16} />
-              Invia Notifica Push
+              <Bell size={14} />
+              Notifica Push
             </button>
             <button
               onClick={handleProcessQueue}
               disabled={isProcessingQueue || hasProcessedQueue}
-              className="btn-secondary flex items-center gap-2 text-sm py-2 px-4 disabled:opacity-50"
+              className="btn-secondary flex items-center gap-1.5 text-xs py-2 px-3 disabled:opacity-50"
             >
               {isProcessingQueue ? (
                 <>
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                    className="w-3 h-3 border-2 border-white border-t-transparent rounded-full"
                   />
                   Processando...
                 </>
               ) : (
                 <>
-                  <RefreshCw size={16} />
-                  Processa Coda Notifiche
+                  <RefreshCw size={14} />
+                  Processa Coda
                 </>
               )}
             </button>
           </div>
         </motion.div>
 
-        {/* Tab Switcher */}
-        <div className="bg-gray-800/50 rounded-xl p-1 flex gap-1">
+        {/* Tab Switcher - Snello */}
+        <div className="bg-gray-800/30 rounded-xl p-0.5 flex gap-0.5">
           <button
             onClick={() => setActiveTab('gare')}
-            className={`flex-1 py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 py-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
               activeTab === 'gare' 
                 ? 'bg-coral-500 text-white' 
-                : 'text-gray-400 hover:text-white'
+                : 'text-gray-400'
             }`}
           >
-            <Swords size={16} />
+            <Swords size={12} />
             Gare
           </button>
           <button
             onClick={() => setActiveTab('bonus')}
-            className={`flex-1 py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 py-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
               activeTab === 'bonus' 
                 ? 'bg-coral-500 text-white' 
-                : 'text-gray-400 hover:text-white'
+                : 'text-gray-400'
             }`}
           >
-            <Gift size={16} />
+            <Gift size={12} />
             Bonus
           </button>
           <button
             onClick={() => setActiveTab('squadre')}
-            className={`flex-1 py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 py-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
               activeTab === 'squadre' 
                 ? 'bg-coral-500 text-white' 
-                : 'text-gray-400 hover:text-white'
+                : 'text-gray-400'
             }`}
           >
-            <Users size={16} />
+            <Users size={12} />
             Squadre
           </button>
         </div>
@@ -250,7 +250,7 @@ export const AdminPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Content */}
+      {/* Content - Snello */}
       <div className="px-4 pb-6">
         <AnimatePresence mode="wait">
           {/* GARE TAB */}
@@ -260,67 +260,71 @@ export const AdminPage: React.FC = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
-              className="space-y-4 pt-4"
+              className="space-y-3 pt-3"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display font-bold text-lg flex items-center gap-2">
-                  <Trophy size={20} className="text-coral-500" />
-                  Gare Attive
-                </h2>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Trophy size={14} className="text-coral-500" />
+                  <h2 className="font-display font-bold text-sm">Gare Attive</h2>
+                </div>
                 <button
                   onClick={() => setShowCreaGara(true)}
-                  className="btn-primary flex items-center gap-2 text-sm py-2 px-4"
+                  className="btn-primary flex items-center gap-1.5 text-xs py-1.5 px-3"
                 >
-                  <Plus size={16} />
-                  Nuova Gara
+                  <Plus size={12} />
+                  Nuova
                 </button>
               </div>
               
               {gare.filter(g => g.stato !== 'completata').length === 0 ? (
-                <div className="card text-center py-12 text-gray-500">
-                  <Swords size={48} className="mx-auto mb-4 opacity-50" />
+                <div className="text-center py-8 text-gray-400 text-xs">
+                  <Swords size={32} className="mx-auto mb-2 opacity-50" />
                   <p>Nessuna gara attiva</p>
                 </div>
               ) : (
-                gare
-                  .filter(g => g.stato !== 'completata')
-                  .map((gara) => (
-                    <GaraCard 
-                      key={gara.id} 
-                      gara={gara} 
-                      isAdmin 
-                      onAssegnaVincitore={assegnaVincitore}
-                      onAssegnaClassifica={async (garaId, classifiche) => {
-                        await assegnaClassifica(garaId, classifiche);
-                        setSelectedGaraForClassifica(null);
-                      }}
-                    />
-                  ))
+                <div className="space-y-2">
+                  {gare
+                    .filter(g => g.stato !== 'completata')
+                    .map((gara) => (
+                      <GaraCard 
+                        key={gara.id} 
+                        gara={gara} 
+                        isAdmin 
+                        onAssegnaVincitore={assegnaVincitore}
+                        onAssegnaClassifica={async (garaId, classifiche) => {
+                          await assegnaClassifica(garaId, classifiche);
+                          setSelectedGaraForClassifica(null);
+                        }}
+                      />
+                    ))}
+                </div>
               )}
 
-              <h2 className="font-display font-bold text-lg flex items-center gap-2 pt-4">
-                <Check size={20} className="text-green-500" />
-                Gare Completate
-              </h2>
+              <div className="flex items-center gap-1.5 pt-3 mb-2 border-t border-white/5">
+                <Check size={14} className="text-green-500" />
+                <h2 className="font-display font-bold text-sm">Gare Completate</h2>
+              </div>
               
               {gare.filter(g => g.stato === 'completata').length === 0 ? (
-                <div className="card text-center py-8 text-gray-500">
+                <div className="text-center py-6 text-gray-400 text-xs">
                   <p>Nessuna gara completata</p>
                 </div>
               ) : (
-                gare
-                  .filter(g => g.stato === 'completata')
-                  .map((gara) => (
-                    <GaraCard 
-                      key={gara.id} 
-                      gara={gara} 
-                      isAdmin
-                      onAssegnaClassifica={async (garaId, classifiche) => {
-                        await assegnaClassifica(garaId, classifiche);
-                        setSelectedGaraForClassifica(null);
-                      }}
-                    />
-                  ))
+                <div className="space-y-2">
+                  {gare
+                    .filter(g => g.stato === 'completata')
+                    .map((gara) => (
+                      <GaraCard 
+                        key={gara.id} 
+                        gara={gara} 
+                        isAdmin
+                        onAssegnaClassifica={async (garaId, classifiche) => {
+                          await assegnaClassifica(garaId, classifiche);
+                          setSelectedGaraForClassifica(null);
+                        }}
+                      />
+                    ))}
+                </div>
               )}
             </motion.div>
           )}
@@ -332,30 +336,30 @@ export const AdminPage: React.FC = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-4 pt-4"
+              className="space-y-3 pt-3"
             >
-              <h2 className="font-display font-bold text-lg flex items-center gap-2">
-                <Gift size={20} className="text-party-300" />
-                Assegna Bonus Punti
-              </h2>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Gift size={14} className="text-party-300" />
+                <h2 className="font-display font-bold text-sm">Assegna Bonus Punti</h2>
+              </div>
 
-              {/* Search User */}
+              {/* Search User - Snello */}
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                 <input
                   type="text"
                   placeholder="Cerca giocatore..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="input pl-12"
+                  className="input pl-9 text-sm py-2"
                 />
               </div>
 
-              {/* User List */}
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+              {/* User List - Snello */}
+              <div className="space-y-1.5 max-h-96 overflow-y-auto">
                 {filteredUsers.length === 0 ? (
-                  <div className="card text-center py-8 text-gray-500">
-                    <p className="text-sm">Nessun utente trovato</p>
+                  <div className="text-center py-8 text-gray-400 text-xs">
+                    <p>Nessun utente trovato</p>
                   </div>
                 ) : (
                   filteredUsers.map((utente) => (
@@ -365,56 +369,56 @@ export const AdminPage: React.FC = () => {
                         setSelectedUser(utente.id);
                         setSearchQuery(utente.nickname);
                       }}
-                      className={`w-full card flex items-center gap-3 text-left transition-all ${
-                        selectedUser === utente.id ? 'border-coral-500 border-2' : ''
+                      className={`w-full flex items-center gap-2 text-left transition-all py-1.5 border-l-2 ${
+                        selectedUser === utente.id ? 'border-coral-500 pl-2 bg-coral-500/5' : 'border-gray-700/30 pl-2'
                       }`}
                     >
-                      <Avatar user={utente} size="md" />
+                      <Avatar user={utente} size="sm" />
                       <div className="flex-1">
-                        <span className="font-semibold">{utente.nickname}</span>
-                        <p className="text-xs text-gray-500">{utente.punti_personali} pts</p>
+                        <span className="font-semibold text-sm block">{utente.nickname}</span>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{utente.punti_personali} pts</p>
                       </div>
                       {selectedUser === utente.id && (
-                        <Check className="text-coral-500" size={20} />
+                        <Check className="text-coral-500" size={16} />
                       )}
                     </button>
                   ))
                 )}
               </div>
 
-              {/* Selected User Form */}
+              {/* Selected User Form - Snello */}
               {selectedUser && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="space-y-4"
+                  className="space-y-3 border-t border-white/5 pt-3"
                 >
                   {/* Points Input */}
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Punti da assegnare</label>
+                    <label className="block text-xs text-gray-300 mb-1.5 font-semibold">Punti da assegnare</label>
                     <input
                       type="number"
                       placeholder="Es: 25"
                       value={bonusPoints}
                       onChange={(e) => setBonusPoints(e.target.value)}
-                      className="input"
+                      className="input text-sm py-2"
                       min="1"
                       max="100"
                     />
                   </div>
 
-                  {/* Motivo Selection */}
+                  {/* Motivo Selection - Snello */}
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Motivo</label>
-                    <div className="flex flex-wrap gap-2">
+                    <label className="block text-xs text-gray-300 mb-1.5 font-semibold">Motivo</label>
+                    <div className="flex flex-wrap gap-1.5">
                       {motivoOptions.map((motivo) => (
                         <button
                           key={motivo}
                           onClick={() => setBonusMotivo(motivo)}
-                          className={`px-3 py-2 rounded-xl text-sm transition-all ${
+                          className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                             bonusMotivo === motivo
                               ? 'bg-coral-500 text-white'
-                              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                              : 'bg-gray-800/30 text-gray-400'
                           }`}
                         >
                           {motivo}
@@ -423,8 +427,8 @@ export const AdminPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Submit */}
-                  <div className="flex gap-3">
+                  {/* Submit - Snello */}
+                  <div className="flex gap-2 pt-1">
                     <button
                       onClick={() => {
                         setSelectedUser(null);
@@ -432,29 +436,29 @@ export const AdminPage: React.FC = () => {
                         setBonusPoints('');
                         setBonusMotivo('');
                       }}
-                      className="btn-ghost flex-1"
+                      className="btn-ghost flex-1 py-2 text-xs"
                     >
-                      <X size={18} className="inline mr-2" />
+                      <X size={14} className="inline mr-1" />
                       Annulla
                     </button>
                     <button
                       onClick={handleBonusSubmit}
                       disabled={!bonusPoints || !bonusMotivo || isSubmittingBonus}
-                      className="btn-primary flex-1 disabled:opacity-50 flex items-center justify-center"
+                      className="btn-primary flex-1 disabled:opacity-50 flex items-center justify-center py-2 text-xs"
                     >
                       {isSubmittingBonus ? (
                         <>
                           <motion.div
                             animate={{ rotate: 360 }}
                             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                            className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"
+                            className="w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-1.5"
                           />
                           Caricamento...
                         </>
                       ) : (
                         <>
-                          <Plus size={18} className="inline mr-2" />
-                          Assegna Bonus
+                          <Plus size={14} className="inline mr-1" />
+                          Assegna
                         </>
                       )}
                     </button>
@@ -464,48 +468,46 @@ export const AdminPage: React.FC = () => {
             </motion.div>
           )}
 
-          {/* SQUADRE TAB */}
+          {/* SQUADRE TAB - Improved spacing */}
           {activeTab === 'squadre' && (
             <motion.div
               key="squadre"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-4 pt-4"
+              className="space-y-2 pt-3"
             >
-              <div className="flex items-center justify-between">
-                <h2 className="font-display font-bold text-lg flex items-center gap-2">
-                  <Users size={20} className="text-turquoise-400" />
-                  Gestione Squadre
-                </h2>
-                <button className="btn-secondary text-sm py-2">
-                  <Shuffle size={16} className="inline mr-2" />
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Users size={14} className="text-turquoise-400" />
+                  <h2 className="font-display font-bold text-sm">Gestione Squadre</h2>
+                </div>
+                <button className="btn-secondary text-xs py-1.5 px-3">
+                  <Shuffle size={12} className="inline mr-1" />
                   Rimescola
                 </button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-1.5">
                 {squadre.map((squadra, index) => (
                   <motion.div
                     key={squadra.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="card"
+                    className="flex items-center gap-2 py-1.5 border-l-2 border-gray-700/30 pl-2"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl">{squadra.emoji}</span>
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{squadra.nome}</h3>
-                        <p className="text-sm text-gray-500">
-                          {squadra.membri.length || '5'} membri • {squadra.punti_squadra} pts
-                        </p>
-                      </div>
-                      <div 
-                        className="w-6 h-6 rounded-full"
-                        style={{ backgroundColor: squadra.colore }}
-                      />
+                    <span className="text-2xl">{squadra.emoji}</span>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-sm mb-0.5">{squadra.nome}</h3>
+                      <p className="text-[10px] text-gray-400">
+                        {squadra.membri.length || '5'} membri • {squadra.punti_squadra} pts
+                      </p>
                     </div>
+                    <div 
+                      className="w-5 h-5 rounded-full"
+                      style={{ backgroundColor: squadra.colore }}
+                    />
                   </motion.div>
                 ))}
               </div>
