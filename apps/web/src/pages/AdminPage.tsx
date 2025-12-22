@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Swords, Gift, Users, Search, Plus, Check, X, Trophy, Shuffle, Bell, RefreshCw } from 'lucide-react';
 import { useGame } from '../context/GameContext';
@@ -8,9 +8,10 @@ import { SendPushNotificationModal } from '../components/SendPushNotificationMod
 import { ClassificaGaraModal } from '../components/ClassificaGaraModal';
 import { CreaGaraModal } from '../components/CreaGaraModal';
 import { processPushNotificationQueue } from '../lib/pushNotifications';
+import { adminMaintenance } from '../lib/adminMaintenance';
 import type { Gara } from '../types';
 
-type TabType = 'gare' | 'bonus' | 'squadre';
+type TabType = 'gare' | 'bonus' | 'squadre' | 'manutenzione';
 
 export const AdminPage: React.FC = () => {
   const { 
@@ -21,7 +22,9 @@ export const AdminPage: React.FC = () => {
     assegnaVincitore,
     assegnaClassifica,
     creaGara,
-    aggiungiBonus 
+    aggiungiBonus,
+    refreshData,
+    proveInVerifica,
   } = useGame();
 
   const [activeTab, setActiveTab] = useState<TabType>('gare');
@@ -37,6 +40,9 @@ export const AdminPage: React.FC = () => {
   const [isProcessingQueue, setIsProcessingQueue] = useState(false);
   const [hasProcessedQueue, setHasProcessedQueue] = useState(false);
   const [queueProcessResult, setQueueProcessResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [maintenanceResult, setMaintenanceResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [maintenanceSearch, setMaintenanceSearch] = useState('');
 
   // Listener per aprire il modal classifica
   useEffect(() => {
@@ -65,6 +71,41 @@ export const AdminPage: React.FC = () => {
   const filteredUsers = leaderboardSingoli.filter(u =>
     u.nickname.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const maintenanceUsers = useMemo(() => {
+    const q = maintenanceSearch.trim().toLowerCase();
+    if (!q) return leaderboardSingoli;
+    return leaderboardSingoli.filter(u => u.nickname.toLowerCase().includes(q));
+  }, [leaderboardSingoli, maintenanceSearch]);
+
+  const toggleSelectedUser = (userId: string) => {
+    setSelectedUsers(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  };
+
+  const clearSelectedUsers = () => setSelectedUsers(new Set());
+
+  const showMaintenanceToast = (type: 'success' | 'error', message: string) => {
+    setMaintenanceResult({ type, message });
+    setTimeout(() => setMaintenanceResult(null), 5000);
+  };
+
+  const runMaintenance = async (
+    action: 'delete_users' | 'reset_user_points' | 'clear_prove_quest' | 'delete_completed_gare',
+    payload: Record<string, unknown>
+  ) => {
+    const result = await adminMaintenance(action, payload);
+    if ((result as any)?.success) {
+      showMaintenanceToast('success', 'Operazione completata ✅');
+      await refreshData();
+    } else {
+      showMaintenanceToast('error', `${(result as any).error || 'Errore'}${(result as any).details ? `: ${(result as any).details}` : ''}`);
+    }
+  };
 
   const handleBonusSubmit = async () => {
     if (!selectedUser || !bonusPoints || !bonusMotivo || isSubmittingBonus) return;
@@ -211,6 +252,17 @@ export const AdminPage: React.FC = () => {
             <Users size={12} />
             Squadre
           </button>
+          <button
+            onClick={() => setActiveTab('manutenzione')}
+            className={`flex-1 py-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
+              activeTab === 'manutenzione'
+                ? 'bg-coral-500 text-white'
+                : 'text-gray-400'
+            }`}
+          >
+            <RefreshCw size={12} />
+            Manut.
+          </button>
         </div>
       </div>
 
@@ -246,6 +298,27 @@ export const AdminPage: React.FC = () => {
               <X size={20} />
             )}
             <span className="font-semibold">{queueProcessResult.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Maintenance Result Toast */}
+      <AnimatePresence>
+        {maintenanceResult && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className={`fixed top-20 left-4 right-4 z-50 ${
+              maintenanceResult.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg`}
+          >
+            {maintenanceResult.type === 'success' ? (
+              <Check size={20} />
+            ) : (
+              <X size={20} />
+            )}
+            <span className="font-semibold">{maintenanceResult.message}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -510,6 +583,156 @@ export const AdminPage: React.FC = () => {
                     />
                   </motion.div>
                 ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* MANUTENZIONE TAB */}
+          {activeTab === 'manutenzione' && (
+            <motion.div
+              key="manutenzione"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-3 pt-3"
+            >
+              <div className="flex items-center gap-1.5">
+                <RefreshCw size={14} className="text-party-300" />
+                <h2 className="font-display font-bold text-sm">Manutenzione (Danger Zone)</h2>
+              </div>
+
+              <p className="text-[10px] text-gray-400 leading-relaxed">
+                Azioni irreversibili. Richiedono sessione Supabase (login email/password) + admin.
+              </p>
+
+              {/* Users */}
+              <div className="border-t border-white/5 pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <Users size={14} className="text-turquoise-400" />
+                    <h3 className="font-semibold text-sm">Utenti</h3>
+                  </div>
+                  <button
+                    onClick={clearSelectedUsers}
+                    className="text-[10px] text-gray-400 hover:text-gray-300"
+                  >
+                    Svuota ({selectedUsers.size})
+                  </button>
+                </div>
+
+                <div className="relative mb-2">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                  <input
+                    type="text"
+                    value={maintenanceSearch}
+                    onChange={(e) => setMaintenanceSearch(e.target.value)}
+                    placeholder="Cerca utente..."
+                    className="input pl-9 text-sm py-2"
+                  />
+                </div>
+
+                <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                  {maintenanceUsers.map((u) => {
+                    const isSelected = selectedUsers.has(u.id);
+                    return (
+                      <button
+                        key={u.id}
+                        onClick={() => toggleSelectedUser(u.id)}
+                        className={`w-full flex items-center gap-2 text-left transition-all py-1.5 border-l-2 ${
+                          isSelected ? 'border-coral-500 pl-2 bg-coral-500/5' : 'border-gray-700/30 pl-2'
+                        }`}
+                      >
+                        <Avatar user={u} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-sm truncate">{u.nickname}</span>
+                            {u.is_admin && <span className="badge-party text-[10px] px-1.5 py-0.5">admin</span>}
+                          </div>
+                          <div className="text-[10px] text-gray-400">{u.punti_personali} pts</div>
+                        </div>
+                        {isSelected && <Check size={16} className="text-coral-500" />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    className="btn-secondary flex-1 py-2 text-xs"
+                    disabled={selectedUsers.size === 0}
+                    onClick={async () => {
+                      if (selectedUsers.size === 0) return;
+                      const ok = window.confirm(`Azzerare i punti per ${selectedUsers.size} utenti?`);
+                      if (!ok) return;
+                      await runMaintenance('reset_user_points', { userIds: Array.from(selectedUsers) });
+                    }}
+                  >
+                    Azzera punti
+                  </button>
+                  <button
+                    className="btn-ghost flex-1 py-2 text-xs border border-red-500/40 text-red-400"
+                    disabled={selectedUsers.size === 0}
+                    onClick={async () => {
+                      if (selectedUsers.size === 0) return;
+                      const ok = window.confirm(
+                        `CANCELLARE ${selectedUsers.size} utenti?\n\nIrreversibile (DB + Auth se esiste).`
+                      );
+                      if (!ok) return;
+                      await runMaintenance('delete_users', { userIds: Array.from(selectedUsers) });
+                      clearSelectedUsers();
+                    }}
+                  >
+                    Cancella utenti
+                  </button>
+                </div>
+              </div>
+
+              {/* Prove */}
+              <div className="border-t border-white/5 pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold text-sm">Prove Quest</h3>
+                  <span className="text-[10px] text-gray-400">{proveInVerifica.length} in verifica</span>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    className="btn-secondary flex-1 py-2 text-xs"
+                    onClick={async () => {
+                      const ok = window.confirm('Pulire SOLO le prove in verifica? (resetta completed_at per permettere reinvio)');
+                      if (!ok) return;
+                      await runMaintenance('clear_prove_quest', { scope: 'in_verifica' });
+                    }}
+                  >
+                    Pulisci verifiche
+                  </button>
+                  <button
+                    className="btn-ghost flex-1 py-2 text-xs"
+                    onClick={async () => {
+                      const ok = window.confirm('Pulire TUTTE le prove inviate? (resetta completed_at per tutti)');
+                      if (!ok) return;
+                      await runMaintenance('clear_prove_quest', { scope: 'all' });
+                    }}
+                  >
+                    Pulisci tutto
+                  </button>
+                </div>
+              </div>
+
+              {/* Gare */}
+              <div className="border-t border-white/5 pt-3">
+                <h3 className="font-semibold text-sm mb-2">Gare</h3>
+                <button
+                  className="btn-ghost w-full py-2 text-xs border border-red-500/40 text-red-400"
+                  onClick={async () => {
+                    const ok = window.confirm(
+                      'Cancellare TUTTE le gare completate e fare rollback dei punti squadra?\n\nIrreversibile.'
+                    );
+                    if (!ok) return;
+                    await runMaintenance('delete_completed_gare', {});
+                  }}
+                >
+                  Cancella gare completate + rollback punti
+                </button>
               </div>
             </motion.div>
           )}
