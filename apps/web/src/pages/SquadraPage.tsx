@@ -86,18 +86,18 @@ export const SquadraPage: React.FC = () => {
           className="grid grid-cols-3 gap-2 py-2 border-b border-white/5"
         >
           <div className="text-center">
-            <div className="text-lg font-bold text-coral-500">{teamMembers.length}</div>
+              <div className="text-lg font-bold text-coral-500">{teamMembers.length}</div>
             <div className="text-[10px] text-gray-400">Membri</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-turquoise-400">
-              {teamGare.filter(g => g.vincitore_id === mySquadra.id).length}
             </div>
-            <div className="text-[10px] text-gray-400">Gare Vinte</div>
-          </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-party-300">
-              {Math.round(teamMembers.reduce((acc, m) => acc + m.punti, 0) / teamMembers.length)}
+              <div className="text-lg font-bold text-turquoise-400">
+                {teamGare.filter(g => g.vincitore_id === mySquadra.id).length}
+              </div>
+            <div className="text-[10px] text-gray-400">Gare Vinte</div>
+            </div>
+          <div className="text-center">
+              <div className="text-lg font-bold text-party-300">
+                {Math.round(teamMembers.reduce((acc, m) => acc + m.punti, 0) / teamMembers.length)}
             </div>
             <div className="text-[10px] text-gray-400">Media Pts</div>
           </div>

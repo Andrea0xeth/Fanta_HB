@@ -12,6 +12,7 @@ type Action =
   | 'reset_user_points'
   | 'clear_prove_quest'
   | 'delete_completed_gare'
+  | 'reshuffle_teams'
 
 type JsonObject = Record<string, unknown>
 
@@ -106,6 +107,48 @@ Deno.serve(async (req) => {
   }
 
   try {
+    if (action === 'reshuffle_teams') {
+      const includeAdmins = Boolean(payload?.includeAdmins)
+
+      const { data: squadre, error: squadreErr } = await supabaseAdmin
+        .from('squadre')
+        .select('id')
+        .order('created_at', { ascending: true })
+      if (squadreErr) throw squadreErr
+      const teamIds = (squadre || []).map((s: any) => s.id as string)
+      if (teamIds.length === 0) return jsonResponse(400, { error: 'No teams found' })
+
+      let usersQuery = supabaseAdmin.from('users').select('id,is_admin')
+      if (!includeAdmins) {
+        usersQuery = usersQuery.eq('is_admin', false)
+      }
+      const { data: users, error: usersErr } = await usersQuery
+      if (usersErr) throw usersErr
+
+      const userIds = (users || []).map((u: any) => u.id as string)
+      if (userIds.length === 0) return jsonResponse(200, { success: true, shuffled: 0 })
+
+      // Shuffle user ids (Fisher–Yates)
+      for (let i = userIds.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        const tmp = userIds[i]
+        userIds[i] = userIds[j]
+        userIds[j] = tmp
+      }
+
+      // Assign round-robin for balanced distribution
+      let updated = 0
+      for (let idx = 0; idx < userIds.length; idx++) {
+        const userId = userIds[idx]
+        const squadraId = teamIds[idx % teamIds.length]
+        const { error: updErr } = await supabaseAdmin.from('users').update({ squadra_id: squadraId }).eq('id', userId)
+        if (updErr) throw updErr
+        updated++
+      }
+
+      return jsonResponse(200, { success: true, updated_users: updated, teams: teamIds.length, include_admins: includeAdmins })
+    }
+
     if (action === 'delete_users') {
       const userIds = (payload?.userIds as string[] | undefined) || []
       if (userIds.length === 0) return jsonResponse(400, { error: 'Missing userIds' })

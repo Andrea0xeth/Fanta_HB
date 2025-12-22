@@ -4,7 +4,8 @@ type AdminAction =
   | 'delete_users'
   | 'reset_user_points'
   | 'clear_prove_quest'
-  | 'delete_completed_gare';
+  | 'delete_completed_gare'
+  | 'reshuffle_teams';
 
 type AdminMaintenanceResponse =
   | { success: true; [k: string]: any }

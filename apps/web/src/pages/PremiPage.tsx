@@ -137,9 +137,9 @@ export const PremiPage: React.FC = () => {
           return (
             <section key={tipo}>
               <div className="flex items-center gap-1.5 mb-2">
-                <Icon size={14} className={text} />
+                  <Icon size={14} className={text} />
                 <h2 className="font-display font-bold text-sm">Premi {tipoLabels[tipo]}</h2>
-              </div>
+                </div>
               
               <div className="space-y-2">
                 {premi.map((premio, index) => {

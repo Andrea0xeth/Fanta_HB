@@ -95,12 +95,16 @@ export const AdminPage: React.FC = () => {
   };
 
   const runMaintenance = async (
-    action: 'delete_users' | 'reset_user_points' | 'clear_prove_quest' | 'delete_completed_gare',
+    action: 'delete_users' | 'reset_user_points' | 'clear_prove_quest' | 'delete_completed_gare' | 'reshuffle_teams',
     payload: Record<string, unknown>
   ) => {
     const result = await adminMaintenance(action, payload);
     if ((result as any)?.success) {
-      showMaintenanceToast('success', 'Operazione completata ✅');
+      const details =
+        action === 'reshuffle_teams'
+          ? `Rimescolati ${(result as any).updated_users ?? 0} utenti su ${(result as any).teams ?? '?'} squadre ✅`
+          : 'Operazione completata ✅';
+      showMaintenanceToast('success', details);
       await refreshData();
     } else {
       showMaintenanceToast('error', `${(result as any).error || 'Errore'}${(result as any).details ? `: ${(result as any).details}` : ''}`);
@@ -357,18 +361,18 @@ export const AdminPage: React.FC = () => {
               ) : (
                 <div className="space-y-2">
                   {gare
-                    .filter(g => g.stato !== 'completata')
-                    .map((gara) => (
-                      <GaraCard 
-                        key={gara.id} 
-                        gara={gara} 
-                        isAdmin 
-                        onAssegnaVincitore={assegnaVincitore}
-                        onAssegnaClassifica={async (garaId, classifiche) => {
-                          await assegnaClassifica(garaId, classifiche);
-                          setSelectedGaraForClassifica(null);
-                        }}
-                      />
+                  .filter(g => g.stato !== 'completata')
+                  .map((gara) => (
+                    <GaraCard 
+                      key={gara.id} 
+                      gara={gara} 
+                      isAdmin 
+                      onAssegnaVincitore={assegnaVincitore}
+                      onAssegnaClassifica={async (garaId, classifiche) => {
+                        await assegnaClassifica(garaId, classifiche);
+                        setSelectedGaraForClassifica(null);
+                      }}
+                    />
                     ))}
                 </div>
               )}
@@ -385,17 +389,17 @@ export const AdminPage: React.FC = () => {
               ) : (
                 <div className="space-y-2">
                   {gare
-                    .filter(g => g.stato === 'completata')
-                    .map((gara) => (
-                      <GaraCard 
-                        key={gara.id} 
-                        gara={gara} 
-                        isAdmin
-                        onAssegnaClassifica={async (garaId, classifiche) => {
-                          await assegnaClassifica(garaId, classifiche);
-                          setSelectedGaraForClassifica(null);
-                        }}
-                      />
+                  .filter(g => g.stato === 'completata')
+                  .map((gara) => (
+                    <GaraCard 
+                      key={gara.id} 
+                      gara={gara} 
+                      isAdmin
+                      onAssegnaClassifica={async (garaId, classifiche) => {
+                        await assegnaClassifica(garaId, classifiche);
+                        setSelectedGaraForClassifica(null);
+                      }}
+                    />
                     ))}
                 </div>
               )}
@@ -555,7 +559,16 @@ export const AdminPage: React.FC = () => {
                   <Users size={14} className="text-turquoise-400" />
                   <h2 className="font-display font-bold text-sm">Gestione Squadre</h2>
                 </div>
-                <button className="btn-secondary text-xs py-1.5 px-3">
+                <button
+                  className="btn-secondary text-xs py-1.5 px-3"
+                  onClick={async () => {
+                    const ok = window.confirm(
+                      'Rimescolare gli utenti tra le squadre?\n\nQuesto riassegna gli utenti (non-admin) in modo bilanciato.\nI punti squadra NON vengono modificati.'
+                    );
+                    if (!ok) return;
+                    await runMaintenance('reshuffle_teams', {});
+                  }}
+                >
                   <Shuffle size={12} className="inline mr-1" />
                   Rimescola
                 </button>
@@ -571,16 +584,16 @@ export const AdminPage: React.FC = () => {
                     className="flex items-center gap-2 py-1.5 border-l-2 border-gray-700/30 pl-2"
                   >
                     <span className="text-2xl">{squadra.emoji}</span>
-                    <div className="flex-1">
+                      <div className="flex-1">
                       <h3 className="font-semibold text-sm mb-0.5">{squadra.nome}</h3>
                       <p className="text-[10px] text-gray-400">
-                        {squadra.membri.length || '5'} membri • {squadra.punti_squadra} pts
+                        {squadra.membri.length} membri • {squadra.punti_squadra} pts
                       </p>
-                    </div>
-                    <div 
+                      </div>
+                      <div 
                       className="w-5 h-5 rounded-full"
-                      style={{ backgroundColor: squadra.colore }}
-                    />
+                        style={{ backgroundColor: squadra.colore }}
+                      />
                   </motion.div>
                 ))}
               </div>
