@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-admin-token, x-client-info, apikey, content-type',
   'Access-Control-Max-Age': '86400',
 }
 
@@ -48,6 +48,13 @@ async function getAuthUserIdOrThrow(supabaseUrl: string, serviceRoleKey: string,
   return data.id
 }
 
+function isValidAdminToken(req: Request): boolean {
+  const expected = Deno.env.get('ADMIN_MAINTENANCE_TOKEN') || ''
+  if (!expected) return false
+  const provided = req.headers.get('x-admin-token') || ''
+  return provided === expected
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return jsonResponse(405, { error: 'Method not allowed' })
@@ -75,22 +82,28 @@ Deno.serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 
-  // Verify admin
-  let callerId = ''
-  try {
-    callerId = await getAuthUserIdOrThrow(supabaseUrl, supabaseServiceKey, req)
-  } catch (e) {
-    return jsonResponse(401, { error: 'Unauthorized', details: e instanceof Error ? e.message : String(e) })
+  // Verify admin: allow either Supabase session (email/password) OR admin PIN token
+  const pinOk = isValidAdminToken(req)
+  if (!pinOk) {
+    let callerId = ''
+    try {
+      callerId = await getAuthUserIdOrThrow(supabaseUrl, supabaseServiceKey, req)
+    } catch (e) {
+      return jsonResponse(401, {
+        error: 'Unauthorized',
+        details: 'Missing/invalid auth. Provide Authorization Bearer token or x-admin-token.',
+      })
+    }
+
+    const { data: adminRow, error: adminErr } = await supabaseAdmin
+      .from('users')
+      .select('id,is_admin')
+      .eq('id', callerId)
+      .single()
+
+    if (adminErr || !adminRow) return jsonResponse(403, { error: 'Forbidden', details: 'Admin profile not found' })
+    if (!adminRow.is_admin) return jsonResponse(403, { error: 'Forbidden', details: 'Not an admin user' })
   }
-
-  const { data: adminRow, error: adminErr } = await supabaseAdmin
-    .from('users')
-    .select('id,is_admin')
-    .eq('id', callerId)
-    .single()
-
-  if (adminErr || !adminRow) return jsonResponse(403, { error: 'Forbidden', details: 'Admin profile not found' })
-  if (!adminRow.is_admin) return jsonResponse(403, { error: 'Forbidden', details: 'Not an admin user' })
 
   try {
     if (action === 'delete_users') {

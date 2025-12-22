@@ -602,7 +602,7 @@ export const AdminPage: React.FC = () => {
               </div>
 
               <p className="text-[10px] text-gray-400 leading-relaxed">
-                Azioni irreversibili. Richiedono sessione Supabase (login email/password) + admin.
+                Azioni irreversibili. Serve il PIN Manutenzione (ti verrà chiesto al primo utilizzo) oppure una sessione Supabase.
               </p>
 
               {/* Users */}

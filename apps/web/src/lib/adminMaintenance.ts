@@ -17,21 +17,28 @@ export async function adminMaintenance(
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
   if (!supabaseUrl) return { error: 'SUPABASE_URL mancante' };
 
-  // Require a real Supabase session for these destructive ops
+  // Prefer Supabase session token if present (email/password).
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
-  if (!token) {
-    return {
-      error: 'Sessione mancante',
-      details: 'Per le operazioni di manutenzione devi essere loggato con email/password (sessione Supabase).',
-    };
+  const adminTokenKey = 'admin_maintenance_token';
+  let adminToken = localStorage.getItem(adminTokenKey) || '';
+
+  if (!token && !adminToken) {
+    const entered = window.prompt('Inserisci PIN Manutenzione Admin');
+    adminToken = (entered || '').trim();
+    if (adminToken) localStorage.setItem(adminTokenKey, adminToken);
+  }
+
+  if (!token && !adminToken) {
+    return { error: 'PIN mancante', details: 'Inserisci il PIN per usare la Manutenzione.' };
   }
 
   const res = await fetch(`${supabaseUrl}/functions/v1/admin-maintenance`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(adminToken ? { 'x-admin-token': adminToken } : {}),
     },
     body: JSON.stringify({ action, ...payload }),
   });
@@ -45,6 +52,10 @@ export async function adminMaintenance(
   }
 
   if (!res.ok) {
+    // If PIN is wrong, clear it so the next call will prompt again.
+    if (res.status === 401 || res.status === 403) {
+      localStorage.removeItem(adminTokenKey);
+    }
     return { error: data?.error || 'Errore', details: data?.details || `HTTP ${res.status}` };
   }
 
