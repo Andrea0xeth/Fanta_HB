@@ -56,6 +56,44 @@ function buildLinks(poi: Poi) {
   };
 }
 
+function isIOS() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  return /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+}
+
+function isAndroid() {
+  if (typeof navigator === 'undefined') return false;
+  return /Android/.test(navigator.userAgent || '');
+}
+
+function openNativeMaps(poi: Poi) {
+  const name = poi.name || poi.address || 'Destinazione';
+  const hasCoords = poi.lat !== undefined && poi.lng !== undefined;
+
+  // Android: geo: opens the native chooser (Maps/Waze/etc depending on installed apps)
+  if (isAndroid()) {
+    const geo = hasCoords
+      ? `geo:${poi.lat},${poi.lng}?q=${encodeURIComponent(`${poi.lat},${poi.lng}(${name})`)}`
+      : `geo:0,0?q=${encodeURIComponent(poi.address || name)}`;
+    window.location.href = geo;
+    return;
+  }
+
+  // iOS: maps:// opens Apple Maps app directly (native behavior)
+  if (isIOS()) {
+    const q = encodeURIComponent(poi.address || name);
+    const ll = hasCoords ? `${poi.lat},${poi.lng}` : '';
+    const url = hasCoords ? `maps://?ll=${ll}&q=${encodeURIComponent(name)}` : `maps://?q=${q}`;
+    window.location.href = url;
+    return;
+  }
+
+  // Desktop / fallback
+  const links = buildLinks(poi);
+  window.open(links.googleWeb, '_blank', 'noreferrer');
+}
+
 export const MappaPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
@@ -249,25 +287,41 @@ export const MappaPage: React.FC = () => {
               </div>
 
               <div className="px-4 py-4 space-y-2">
-                {(() => {
-                  const links = buildLinks(selectedPoi);
-                  return (
-                    <>
-                      <a className="btn-primary w-full text-center py-3 text-sm" href={links.appleWeb} target="_blank" rel="noreferrer">
-                        Apri in Apple Maps
-                      </a>
-                      <a className="btn-secondary w-full text-center py-3 text-sm" href={links.googleWeb} target="_blank" rel="noreferrer">
-                        Apri in Google Maps
-                      </a>
-                      <a className="btn-ghost w-full text-center py-3 text-sm" href={links.wazeWeb} target="_blank" rel="noreferrer">
-                        Apri in Waze
-                      </a>
-                      <p className="text-[10px] text-gray-400 text-center mt-2">
-                        Suggerimento: se hai l’app installata, di solito verrà proposta automaticamente.
-                      </p>
-                    </>
-                  );
-                })()}
+                <button
+                  className="btn-primary w-full py-3 text-sm flex items-center justify-center gap-2"
+                  onClick={() => openNativeMaps(selectedPoi)}
+                >
+                  <Navigation size={16} />
+                  Apri indicazioni
+                </button>
+
+                <button
+                  className="btn-secondary w-full py-3 text-sm"
+                  onClick={async () => {
+                    const links = buildLinks(selectedPoi);
+                    const shareUrl = links.appleWeb; // good default on iOS; works as web fallback elsewhere
+                    try {
+                      if (navigator.share) {
+                        await navigator.share({
+                          title: selectedPoi.name,
+                          text: selectedPoi.address || selectedPoi.name,
+                          url: shareUrl,
+                        });
+                      } else {
+                        await navigator.clipboard.writeText(shareUrl);
+                        alert('Link copiato!');
+                      }
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                >
+                  Condividi / Copia link
+                </button>
+
+                <p className="text-[10px] text-gray-400 text-center mt-2">
+                  Su Android si apre il selettore app (Maps/Waze ecc). Su iPhone si apre Apple Maps.
+                </p>
               </div>
             </motion.div>
           </motion.div>
