@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Clock, Camera, Video, FileText, ChevronRight, Check, Upload, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { Quest } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,6 +24,9 @@ const difficultyLabels = {
 };
 
 export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed }) => {
+  const MIN_VOTES_FOR_VALIDATION = 10;
+  const POSITIVE_THRESHOLD_PERCENT = 66;
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedType, setSelectedType] = useState<'foto' | 'video' | 'testo' | null>(null);
   const [proofText, setProofText] = useState('');
@@ -34,6 +37,16 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
   const [success, setSuccess] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Preview performance: per file grandi (video) evitiamo base64 e usiamo object URL (blob:).
+  // Cleanup: rilasciamo l'object URL quando cambia/unmount.
+  useEffect(() => {
+    return () => {
+      if (filePreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(filePreview);
+      }
+    };
+  }, [filePreview]);
   
   const timeRemaining = () => {
     const diff = new Date(quest.scadenza).getTime() - Date.now();
@@ -70,12 +83,11 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
     setError(null);
     setSelectedFile(file);
 
-    // Crea preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFilePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    // Crea preview (istantaneo e leggero)
+    setFilePreview((prev) => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
   };
 
   const handleTypeSelect = (type: 'foto' | 'video' | 'testo') => {
@@ -85,7 +97,10 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
     if (type === 'foto' || type === 'video') {
       // Reset file precedente
       setSelectedFile(null);
-      setFilePreview(null);
+      setFilePreview((prev) => {
+        if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+        return null;
+      });
       // Trigger file input
       setTimeout(() => {
         fileInputRef.current?.click();
@@ -93,13 +108,19 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
     } else {
       // Reset file se si passa a testo
       setSelectedFile(null);
-      setFilePreview(null);
+      setFilePreview((prev) => {
+        if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+        return null;
+      });
     }
   };
 
   const handleRemoveFile = () => {
     setSelectedFile(null);
-    setFilePreview(null);
+    setFilePreview((prev) => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return null;
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -143,7 +164,10 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
         setSelectedType(null);
         setProofText('');
         setSelectedFile(null);
-        setFilePreview(null);
+        setFilePreview((prev) => {
+          if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+          return null;
+        });
         setSuccess(false);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
@@ -164,7 +188,10 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
       setSelectedType(null);
       setProofText('');
       setSelectedFile(null);
-      setFilePreview(null);
+      setFilePreview((prev) => {
+        if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+        return null;
+      });
       setError(null);
       setSuccess(false);
       if (fileInputRef.current) {
@@ -174,6 +201,14 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
   };
 
   if (completed) {
+    const votiTotali = quest.prova?.voti_totali ?? 0;
+    const votiPositivi = quest.prova?.voti_positivi ?? 0;
+    const percentuale = votiTotali > 0 ? Math.round((votiPositivi / votiTotali) * 100) : 0;
+    const hasMinVotes = votiTotali >= MIN_VOTES_FOR_VALIDATION;
+    const hasThreshold = percentuale >= POSITIVE_THRESHOLD_PERCENT;
+    const isValidata = quest.prova?.stato === 'validata';
+    const isRifiutata = quest.prova?.stato === 'rifiutata';
+
     return (
       <motion.div 
         layout
@@ -185,9 +220,45 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
             <h3 className="font-semibold text-turquoise-400 text-sm truncate">
               {quest.emoji} {quest.titolo}
             </h3>
-            <p className="text-[10px] text-gray-400">Prova inviata! In attesa di verifica</p>
+            <p className="text-[10px] text-gray-400">
+              {isValidata
+                ? '✅ Validata: punti assegnati'
+                : isRifiutata
+                  ? '❌ Rifiutata'
+                  : 'Prova inviata! In attesa di verifica'}
+            </p>
           </div>
         </div>
+
+        {/* Contatore voti / soglia */}
+        {quest.prova && (
+          <div className="mt-2">
+            <div className="flex items-center justify-between text-[10px] text-gray-400">
+              <span>
+                Voti <span className="text-gray-200 font-semibold">{votiTotali}</span>/{MIN_VOTES_FOR_VALIDATION}
+              </span>
+              <span>
+                Positivi <span className="text-gray-200 font-semibold">{votiPositivi}</span> ({percentuale}%)
+              </span>
+            </div>
+
+            <div className="mt-1 h-1 bg-gray-800 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(100, percentuale)}%` }}
+                className={`h-full ${hasMinVotes && hasThreshold ? 'bg-green-500' : 'bg-coral-500'}`}
+              />
+            </div>
+
+            <p className="mt-1 text-[10px] text-gray-400">
+              {!hasMinVotes
+                ? `Servono ${MIN_VOTES_FOR_VALIDATION} voti (mancano ${MIN_VOTES_FOR_VALIDATION - votiTotali})`
+                : hasThreshold
+                  ? '✅ Soglia raggiunta (≥66%)'
+                  : `Serve ≥66% positivi (ancora ${POSITIVE_THRESHOLD_PERCENT - percentuale}%)`}
+            </p>
+          </div>
+        )}
       </motion.div>
     );
   }
@@ -237,6 +308,14 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
           >
             <div className="pt-2 mt-2 border-t border-gray-700/30">
               <p className="text-xs text-gray-300 mb-3 leading-relaxed">{quest.descrizione}</p>
+
+              {/* Nota sistema votazione */}
+              <div className="mb-3 px-3 py-2 rounded-xl border border-white/10 bg-white/5">
+                <p className="text-[11px] text-gray-300 leading-snug">
+                  Nota: i punti vengono assegnati solo se la prova raggiunge <span className="font-semibold text-gray-100">almeno 10 voti</span>{' '}
+                  e una percentuale positiva ≥ <span className="font-semibold text-gray-100">66%</span>.
+                </p>
+              </div>
               
               {/* Success message - Improved */}
               <AnimatePresence>

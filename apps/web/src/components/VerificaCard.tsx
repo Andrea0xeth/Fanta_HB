@@ -19,6 +19,7 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
   const [imageError, setImageError] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const MIN_VOTES_FOR_VALIDATION = 10;
   
   const percentuale = prova.voti_totali > 0 
     ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
@@ -71,6 +72,28 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
         </div>
       </div>
 
+      {/* Quest info (titolo/descrizione) */}
+      {prova.quest && (
+        <div className="mb-2 px-2 py-1.5 rounded-xl border border-white/10 bg-white/5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[10px] text-gray-400">Quest</div>
+              <div className="text-xs font-semibold text-gray-100 truncate">
+                {prova.quest.emoji} {prova.quest.titolo}
+              </div>
+            </div>
+            <div className="text-[10px] font-semibold text-coral-300 whitespace-nowrap">
+              +{prova.quest.punti} pt
+            </div>
+          </div>
+          {prova.quest.descrizione && (
+            <p className="text-[11px] text-gray-300 leading-snug mt-1 line-clamp-2">
+              {prova.quest.descrizione}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Content Preview - Mostra contenuto reale */}
       <div className="mb-2 rounded-2xl overflow-hidden glass">
         {prova.tipo === 'foto' && isValidUrl(prova.contenuto) ? (
@@ -94,27 +117,34 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
             {!videoError ? (
               <>
                 {!isVideoPlaying ? (
-                  <div 
-                    className="w-full h-full flex items-center justify-center cursor-pointer"
+                  <button
+                    type="button"
+                    className="w-full h-full relative flex items-center justify-center"
                     onClick={() => setIsVideoPlaying(true)}
                   >
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-16 h-16 rounded-full bg-coral-500/80 flex items-center justify-center">
-                        <Play className="text-white ml-1" size={24} />
-                      </div>
-                    </div>
-                    <img 
-                      src={prova.contenuto} 
-                      alt="Video thumbnail"
-                      className="w-full h-full object-cover opacity-50"
+                    {/* Carichiamo solo metadata per evitare download aggressivi prima del click */}
+                    <video
+                      src={prova.contenuto}
+                      preload="metadata"
+                      playsInline
+                      muted
+                      className="absolute inset-0 w-full h-full object-cover opacity-40"
                       onError={() => setVideoError(true)}
                     />
-                  </div>
+                    <div className="relative z-10 w-16 h-16 rounded-full bg-coral-500/80 flex items-center justify-center">
+                      <Play className="text-white ml-1" size={24} />
+                    </div>
+                    <div className="absolute bottom-2 left-2 right-2 text-center text-[10px] text-white/70">
+                      Tocca per riprodurre
+                    </div>
+                  </button>
                 ) : (
-                  <video 
+                  <video
                     src={prova.contenuto}
                     controls
                     autoPlay
+                    playsInline
+                    preload="auto"
                     className="w-full h-full object-cover"
                     onError={() => setVideoError(true)}
                   />
@@ -154,7 +184,11 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
           />
         </div>
         <p className="text-[10px] text-gray-400 mt-1 text-center">
-          {percentuale >= 66 ? '✅ Soglia raggiunta!' : `Serve 66% (ancora ${66 - percentuale}%)`}
+          {prova.voti_totali < MIN_VOTES_FOR_VALIDATION
+            ? `Servono ${MIN_VOTES_FOR_VALIDATION} voti (mancano ${MIN_VOTES_FOR_VALIDATION - prova.voti_totali})`
+            : percentuale >= 66
+              ? '✅ Soglia raggiunta!'
+              : `Serve 66% (ancora ${66 - percentuale}%)`}
         </p>
       </div>
 

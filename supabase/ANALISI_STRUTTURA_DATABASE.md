@@ -143,7 +143,7 @@ La funzione `check_proof_validation()`:
 
 3. **Valida se >= 66% e >= 3 voti**:
    ```sql
-   IF v_total >= 3 AND (v_positive::float / v_total) >= 0.66 THEN
+   IF v_total >= 10 AND (v_positive::float / v_total) >= 0.66 THEN
      UPDATE prove_quest SET stato = 'validata' WHERE id = NEW.prova_id;
      -- Assegna punti all'utente
      -- Crea notifica

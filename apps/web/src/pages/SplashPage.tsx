@@ -36,14 +36,12 @@ export const SplashPage: React.FC = () => {
     nickname: '',
     nome: '',
     cognome: '',
-    email: '',
-    telefono: '',
-    data_nascita: '',
   });
   const [authLoading, setAuthLoading] = useState(false);
   const [showDebug, setShowDebug] = useState(false); // Flag per mostrare debug
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [showPostContinueButton, setShowPostContinueButton] = useState(false);
+  const [showWelcomePlayOverlay, setShowWelcomePlayOverlay] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [emailPassword, setEmailPassword] = useState('');
   const [emailLoginData, setEmailLoginData] = useState({ email: '', password: '' });
@@ -90,6 +88,8 @@ export const SplashPage: React.FC = () => {
       return;
     }
 
+    setShowWelcomePlayOverlay(false);
+
     let cleanupFunctions: (() => void)[] = [];
 
     // Aspetta che il video sia montato nel DOM
@@ -104,6 +104,8 @@ export const SplashPage: React.FC = () => {
       // Reset video
       video.currentTime = 0;
       video.volume = 1;
+      // Audio sempre attivo (come richiesto)
+      video.muted = false;
       
       // Funzione per far partire il video
       const startVideo = () => {
@@ -114,15 +116,12 @@ export const SplashPage: React.FC = () => {
           playPromise
             .then(() => {
               console.log('✅ Video avviato con successo');
+              setShowWelcomePlayOverlay(false);
             })
             .catch(error => {
               console.error('❌ Error playing video:', error);
-              // Se l'autoplay fallisce, mostra il bottone continua
-              if (viewState === 'video-post') {
-                setShowPostContinueButton(true);
-              } else {
-                setShowContinueButton(true);
-              }
+              // Autoplay con audio può essere bloccato: mostriamo overlay "tocca per riprodurre"
+              setShowWelcomePlayOverlay(true);
             });
         }
       };
@@ -166,6 +165,13 @@ export const SplashPage: React.FC = () => {
       cleanupFunctions.forEach(cleanup => cleanup());
     };
   }, [viewState]);
+
+  const handleStartWelcomeVideo = () => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = false;
+    videoRef.current.volume = 1;
+    videoRef.current.play().then(() => setShowWelcomePlayOverlay(false)).catch(() => setShowWelcomePlayOverlay(true));
+  };
 
   // Handle "Entra nel Game" click - show choice between login and register
   const handleEnterGame = () => {
@@ -227,17 +233,12 @@ export const SplashPage: React.FC = () => {
 
   const handleEmailRegister = async () => {
     // Validazioni minime
-    if (!registrationData.nome || !registrationData.cognome || !registrationData.email) {
-      alert('Per favore compila tutti i campi obbligatori (Nome, Cognome, Email)');
+    if (!registrationData.nickname || !registrationData.nome || !registrationData.cognome || !registrationData.email) {
+      alert('Per favore compila tutti i campi obbligatori (Nickname, Nome, Cognome, Email)');
       return;
     }
     if (!emailPassword || emailPassword.length < 8) {
       alert('La password deve essere lunga almeno 8 caratteri');
-      return;
-    }
-    // Validazione foto profilo obbligatoria
-    if (!registrationData.foto_profilo) {
-      alert('Per favore carica una foto profilo');
       return;
     }
 
@@ -246,6 +247,7 @@ export const SplashPage: React.FC = () => {
     try {
       const payload: EmailPasswordRegistrationData = {
         ...registrationData,
+        email: registrationData.email!,
         password: emailPassword,
       };
       await registerWithEmailPassword(payload);
@@ -279,14 +281,8 @@ export const SplashPage: React.FC = () => {
   // Handle registration with passkey (crea nuovo account)
   const handleAuth = async () => {
     // Validazione campi obbligatori
-    if (!registrationData.nome || !registrationData.cognome || !registrationData.email) {
-      alert('Per favore compila tutti i campi obbligatori (Nome, Cognome, Email)');
-      return;
-    }
-    
-    // Validazione foto profilo obbligatoria
-    if (!registrationData.foto_profilo) {
-      alert('Per favore carica una foto profilo');
+    if (!registrationData.nickname || !registrationData.nome || !registrationData.cognome) {
+      alert('Per favore compila tutti i campi obbligatori (Nickname, Nome, Cognome)');
       return;
     }
 
@@ -405,6 +401,7 @@ export const SplashPage: React.FC = () => {
             autoPlay
             playsInline
             muted={false}
+            preload="auto"
             onEnded={handlePreVideoEnd}
             onLoadedData={() => {
               if (videoRef.current && videoRef.current.paused) {
@@ -427,6 +424,23 @@ export const SplashPage: React.FC = () => {
             }}
             className="w-full h-full object-cover"
           />
+
+          {/* Overlay play (quando autoplay con audio viene bloccato) */}
+          <AnimatePresence>
+            {showWelcomePlayOverlay && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={handleStartWelcomeVideo}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 z-10"
+              >
+                <div className="px-4 py-3 rounded-2xl glass-strong border border-white/20 text-white/90 text-sm font-semibold">
+                  Tocca per riprodurre
+                </div>
+              </motion.button>
+            )}
+          </AnimatePresence>
           
           {/* Skip button */}
           <motion.button
@@ -485,6 +499,7 @@ export const SplashPage: React.FC = () => {
             autoPlay
             playsInline
             muted={false}
+            preload="auto"
             onEnded={handlePostVideoEnd}
             onLoadedData={() => {
               // Assicurati che il video parta quando è caricato
@@ -504,6 +519,23 @@ export const SplashPage: React.FC = () => {
             }}
             className="w-full h-full object-cover"
           />
+
+          {/* Overlay play (quando autoplay con audio viene bloccato) */}
+          <AnimatePresence>
+            {showWelcomePlayOverlay && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={handleStartWelcomeVideo}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 z-10"
+              >
+                <div className="px-4 py-3 rounded-2xl glass-strong border border-white/20 text-white/90 text-sm font-semibold">
+                  Tocca per riprodurre
+                </div>
+              </motion.button>
+            )}
+          </AnimatePresence>
           
           {/* Skip button */}
           <motion.button
@@ -596,27 +628,10 @@ export const SplashPage: React.FC = () => {
             />
           </div>
           
-          <input
-            type="email"
-            placeholder="Email *"
-            value={registrationData.email}
-            onChange={(e) => updateField('email', e.target.value)}
-            className="input text-center text-sm"
-            required
-          />
-          
-          <input
-            type="tel"
-            placeholder="Telefono"
-            value={registrationData.telefono}
-            onChange={(e) => updateField('telefono', e.target.value)}
-            className="input text-center text-sm"
-          />
-          
           {/* Foto Profilo Upload */}
           <div className="space-y-2">
             <label className="block text-xs text-gray-400 text-center">
-              Foto Profilo *
+              Foto Profilo (opzionale)
             </label>
             <div className="relative">
               <input
@@ -625,20 +640,25 @@ export const SplashPage: React.FC = () => {
                 onChange={handleAvatarChange}
                 className="hidden"
                 id="avatar-upload"
-                required
               />
               <label
                 htmlFor="avatar-upload"
-                className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-600 rounded-2xl cursor-pointer hover:border-coral-500 transition-colors"
+                className="flex items-center justify-center gap-3 w-full border-2 border-dashed border-gray-600 rounded-2xl cursor-pointer hover:border-coral-500 transition-colors px-4 py-3"
               >
                 {avatarPreview ? (
-                  <img
-                    src={avatarPreview}
-                    alt="Preview"
-                    className="w-full h-full object-cover rounded-2xl"
-                  />
+                  <>
+                    <img
+                      src={avatarPreview}
+                      alt="Preview"
+                      className="w-16 h-16 rounded-2xl bg-black/30 object-contain"
+                    />
+                    <div className="text-left">
+                      <div className="text-xs text-gray-200 font-semibold">Foto caricata</div>
+                      <div className="text-[10px] text-gray-400">Clicca per cambiarla</div>
+                    </div>
+                  </>
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-gray-500">
+                  <div className="flex items-center justify-center gap-3 text-gray-500">
                     <svg
                       className="w-8 h-8 mb-2"
                       fill="none"
@@ -652,7 +672,10 @@ export const SplashPage: React.FC = () => {
                         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
-                    <span className="text-xs">Clicca per caricare</span>
+                    <div className="text-left">
+                      <div className="text-xs text-gray-300 font-semibold">Carica una foto</div>
+                      <div className="text-[10px] text-gray-500">Opzionale</div>
+                    </div>
                   </div>
                 )}
               </label>
@@ -661,7 +684,7 @@ export const SplashPage: React.FC = () => {
           
           <button
             onClick={handleAuth}
-            disabled={authLoading || !registrationData.nome || !registrationData.cognome || !registrationData.email || !registrationData.foto_profilo}
+            disabled={authLoading || !registrationData.nickname || !registrationData.nome || !registrationData.cognome}
             className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-2 active:scale-95 transition-transform duration-75"
           >
             {authLoading ? (
@@ -837,7 +860,7 @@ export const SplashPage: React.FC = () => {
           {/* Foto Profilo Upload */}
           <div className="space-y-2">
             <label className="block text-xs text-gray-400 text-center">
-              Foto Profilo *
+              Foto Profilo (opzionale)
             </label>
             <div className="relative">
               <input
@@ -846,20 +869,25 @@ export const SplashPage: React.FC = () => {
                 onChange={handleAvatarChange}
                 className="hidden"
                 id="avatar-upload-email"
-                required
               />
               <label
                 htmlFor="avatar-upload-email"
-                className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-600 rounded-2xl cursor-pointer hover:border-coral-500 transition-colors"
+                className="flex items-center justify-center gap-3 w-full border-2 border-dashed border-gray-600 rounded-2xl cursor-pointer hover:border-coral-500 transition-colors px-4 py-3"
               >
                 {avatarPreview ? (
-                  <img
-                    src={avatarPreview}
-                    alt="Preview"
-                    className="w-full h-full object-cover rounded-2xl"
-                  />
+                  <>
+                    <img
+                      src={avatarPreview}
+                      alt="Preview"
+                      className="w-16 h-16 rounded-2xl bg-black/30 object-contain"
+                    />
+                    <div className="text-left">
+                      <div className="text-xs text-gray-200 font-semibold">Foto caricata</div>
+                      <div className="text-[10px] text-gray-400">Clicca per cambiarla</div>
+                    </div>
+                  </>
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-gray-500">
+                  <div className="flex items-center justify-center gap-3 text-gray-500">
                     <svg
                       className="w-8 h-8 mb-2"
                       fill="none"
@@ -873,7 +901,10 @@ export const SplashPage: React.FC = () => {
                         d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
-                    <span className="text-xs">Clicca per caricare</span>
+                    <div className="text-left">
+                      <div className="text-xs text-gray-300 font-semibold">Carica una foto</div>
+                      <div className="text-[10px] text-gray-500">Opzionale</div>
+                    </div>
                   </div>
                 )}
               </label>
@@ -882,7 +913,7 @@ export const SplashPage: React.FC = () => {
 
           <button
             onClick={handleEmailRegister}
-            disabled={authLoading || !registrationData.nome || !registrationData.cognome || !registrationData.email || !emailPassword || !registrationData.foto_profilo}
+            disabled={authLoading || !registrationData.nickname || !registrationData.nome || !registrationData.cognome || !registrationData.email || !emailPassword}
             className="btn-primary w-full flex items-center justify-center gap-2 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-2 active:scale-95 transition-transform duration-75"
           >
             {authLoading ? (

@@ -280,8 +280,8 @@ BEGIN
   SET voti_totali = v_total, voti_positivi = v_positive
   WHERE id = NEW.prova_id;
   
-  -- Se almeno 3 voti e >= 66% positivi, valida
-  IF v_total >= 3 AND (v_positive::float / v_total) >= 0.66 THEN
+  -- Se almeno 10 voti e >= 66% positivi, valida
+  IF v_total >= 10 AND (v_positive::float / v_total) >= 0.66 THEN
     UPDATE prove_quest SET stato = 'validata' WHERE id = NEW.prova_id;
     
     -- Ottieni punti della quest e user_id

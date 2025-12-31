@@ -20,9 +20,9 @@ export interface RegistrationData {
   nickname: string;
   nome: string;
   cognome: string;
-  email: string;
-  telefono: string;
-  data_nascita: string;
+  email?: string;
+  telefono?: string;
+  data_nascita?: string;
   foto_profilo?: File;
 }
 
@@ -33,6 +33,7 @@ export interface EmailPasswordCredentials {
 }
 
 export interface EmailPasswordRegistrationData extends RegistrationData {
+  email: string;
   password: string;
 }
 
@@ -62,6 +63,13 @@ export interface Quest {
   emoji: string;
   scadenza: string;
   completed?: boolean; // Indica se la quest è stata inviata/completata
+  // Stato prova dell'utente (per mostrare progress voti/validazione nella UI)
+  prova?: {
+    id: string;
+    stato: QuestStatus;
+    voti_positivi: number;
+    voti_totali: number;
+  };
 }
 
 export interface ProvaQuest {
@@ -69,6 +77,7 @@ export interface ProvaQuest {
   quest_id: string;
   user_id: string;
   user: User;
+  quest?: Quest;
   tipo: ProofType;
   contenuto: string; // URL or text
   stato: QuestStatus;

@@ -188,6 +188,46 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       
       // Se c'è un utente, carica le sue quest assegnate, altrimenti carica tutte le quest (per admin/preview)
       if (user) {
+        const attachUserProofsToQuests = async (questsList: Quest[]) => {
+          try {
+            const questIds = questsList.map((q) => q.id);
+            if (questIds.length === 0) return questsList;
+
+            // Carica l'ultima prova dell'utente per ciascuna quest (qualsiasi stato)
+            const { data: myProofs, error: myProofsError } = await supabase
+              .from('prove_quest')
+              .select('id, quest_id, stato, voti_positivi, voti_totali, created_at')
+              .eq('user_id', user.id)
+              .in('quest_id', questIds)
+              .order('created_at', { ascending: false });
+
+            if (myProofsError) throw myProofsError;
+
+            const map = new Map<string, any>();
+            (myProofs || []).forEach((p: any) => {
+              // keep the latest per quest_id (data already ordered desc)
+              if (!map.has(p.quest_id)) map.set(p.quest_id, p);
+            });
+
+            return questsList.map((q) => {
+              const p = map.get(q.id);
+              if (!p) return q;
+              return {
+                ...q,
+                prova: {
+                  id: p.id,
+                  stato: p.stato,
+                  voti_positivi: p.voti_positivi ?? 0,
+                  voti_totali: p.voti_totali ?? 0,
+                },
+              };
+            });
+          } catch (e) {
+            console.warn('[Quests] Impossibile caricare prove utente per UI:', e);
+            return questsList;
+          }
+        };
+
         // Assegna le quest giornaliere se non già assegnate
         const { error: assignError } = await supabase.rpc('assign_daily_quests', {
           p_user_id: user.id,
@@ -228,7 +268,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
             scadenza: q.scadenza || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
           }));
 
-          setQuests(questsList);
+          setQuests(await attachUserProofsToQuests(questsList));
         } else {
           // Mappa le quest assegnate al formato Quest
           const questsList = ((userQuestsData as any[]) || []).map((q: any) => ({
@@ -244,7 +284,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
             completed: q.completed || false, // Indica se la quest è stata inviata
           }));
 
-          setQuests(questsList);
+          setQuests(await attachUserProofsToQuests(questsList));
         }
       } else {
         // Se non c'è utente, carica tutte le quest (per preview/admin)
@@ -341,7 +381,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         .from('prove_quest')
         .select(`
           *,
-          user:users(*)
+          user:users(*),
+          quest:quest(*)
         `)
         .eq('stato', 'in_verifica')
         .order('created_at', { ascending: false });
@@ -353,6 +394,19 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         quest_id: p.quest_id,
         user_id: p.user_id,
         user: dbRowToUser(p.user),
+        quest: p.quest
+          ? {
+              id: p.quest.id,
+              giorno: p.quest.giorno,
+              titolo: p.quest.titolo,
+              descrizione: p.quest.descrizione || '',
+              punti: p.quest.punti,
+              difficolta: p.quest.difficolta,
+              tipo_prova: (p.quest.tipo_prova || []) as ('foto' | 'video' | 'testo')[],
+              emoji: p.quest.emoji,
+              scadenza: p.quest.scadenza || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            }
+          : undefined,
         tipo: p.tipo as 'foto' | 'video' | 'testo',
         contenuto: p.contenuto,
         stato: p.stato as 'pending' | 'in_verifica' | 'validata' | 'rifiutata',
@@ -1152,7 +1206,18 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
       // Aggiorna lo stato locale delle quest immediatamente
       setQuests(prev => prev.map(q => 
-        q.id === questId ? { ...q, completed: true } : q
+        q.id === questId
+          ? {
+              ...q,
+              completed: true,
+              prova: {
+                id: provaData.id as string,
+                stato: provaData.stato as any,
+                voti_positivi: provaData.voti_positivi ?? 0,
+                voti_totali: provaData.voti_totali ?? 0,
+              },
+            }
+          : q
       ));
 
       // Aggiorna lo stato locale della prova

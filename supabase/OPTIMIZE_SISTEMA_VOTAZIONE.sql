@@ -85,8 +85,8 @@ BEGIN
   WHERE id = NEW.prova_id
     AND (voti_totali != v_total OR voti_positivi != v_positive);
 
-  -- Valida se >= 3 voti, >= 66% positivi, e non già validata
-  IF v_total >= 3 
+  -- Valida se >= 10 voti, >= 66% positivi, e non già validata
+  IF v_total >= 10 
      AND (v_positive::float / v_total) >= 0.66 
      AND v_stato != 'validata' THEN
     

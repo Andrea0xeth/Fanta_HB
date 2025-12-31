@@ -58,10 +58,10 @@ BEGIN
     AND (voti_totali != v_total OR voti_positivi != v_positive);
 
   -- Valida se:
-  -- 1. Almeno 3 voti totali (minimo per validazione)
+  -- 1. Almeno 10 voti totali (minimo per validazione)
   -- 2. Voti positivi >= 66% degli utenti attivi (non dei votanti!)
   -- 3. Non già validata
-  IF v_total >= 3 
+  IF v_total >= 10 
      AND v_positive >= v_required_positive_votes
      AND v_stato != 'validata' THEN
     
