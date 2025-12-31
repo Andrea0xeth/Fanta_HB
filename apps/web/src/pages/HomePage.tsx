@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Calendar, Flame, CheckCircle2, X } from 'lucide-react';
+import { Bell, Calendar, Flame, CheckCircle2, Map, X } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { QuestCard } from '../components/QuestCard';
 import { VerificaCard } from '../components/VerificaCard';
@@ -9,8 +9,10 @@ import { CircusNeonDecorations } from '../components/CircusNeonDecorations';
 import { Avatar } from '../components/Avatar';
 import { PushNotificationSettings } from '../components/PushNotificationSettings';
 import { NotificationsModal } from '../components/NotificationsModal';
+import { useNavigate } from 'react-router-dom';
 
 export const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const { 
     user, 
     mySquadra, 
@@ -69,6 +71,17 @@ export const HomePage: React.FC = () => {
                   {unreadNotifiche > 9 ? '9+' : unreadNotifiche}
                 </span>
               )}
+            </motion.button>
+
+            {/* Mappa */}
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/mappa')}
+              className="relative p-1.5"
+              aria-label="Apri mappa Fuerteventura"
+              title="Mappa"
+            >
+              <Map size={18} className="text-gray-400" />
             </motion.button>
             
             {/* Verifiche */}

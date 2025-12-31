@@ -8,6 +8,7 @@ import { SquadraPage } from './pages/SquadraPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { PremiPage } from './pages/PremiPage';
 import { AdminPage } from './pages/AdminPage';
+import { MappaPage } from './pages/MappaPage';
 
 // Protected Route wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -45,6 +46,7 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route path="/home" element={<HomePage />} />
+        <Route path="/mappa" element={<MappaPage />} />
         <Route path="/squadra" element={<SquadraPage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/premi" element={<PremiPage />} />
