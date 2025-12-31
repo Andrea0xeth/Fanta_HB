@@ -574,26 +574,49 @@ export const AdminPage: React.FC = () => {
                 </button>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {squadre.map((squadra, index) => (
                   <motion.div
                     key={squadra.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="flex items-center gap-2 py-1.5 border-l-2 border-gray-700/30 pl-2"
+                    className="border-l-2 border-gray-700/30 pl-2 py-1.5"
                   >
-                    <span className="text-2xl">{squadra.emoji}</span>
-                      <div className="flex-1">
-                      <h3 className="font-semibold text-sm mb-0.5">{squadra.nome}</h3>
-                      <p className="text-[10px] text-gray-400">
-                        {squadra.membri.length} membri • {squadra.punti_squadra} pts
-                      </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{squadra.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm truncate">{squadra.nome}</h3>
+                        <p className="text-[10px] text-gray-400">
+                          {squadra.membri.length} membri • {squadra.punti_squadra} pts
+                        </p>
                       </div>
-                      <div 
-                      className="w-5 h-5 rounded-full"
+                      <div
+                        className="w-5 h-5 rounded-full"
                         style={{ backgroundColor: squadra.colore }}
                       />
+                    </div>
+
+                    {/* Mostra membri (così il rimescolo è visibile) */}
+                    <div className="mt-1.5 pl-8">
+                      {squadra.membri.length === 0 ? (
+                        <span className="text-[10px] text-gray-500">Nessun membro</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {squadra.membri
+                            .slice()
+                            .sort((a, b) => a.nickname.localeCompare(b.nickname))
+                            .map((m) => (
+                              <span
+                                key={m.id}
+                                className="px-2 py-0.5 rounded-full text-[10px] bg-gray-800/40 text-gray-300"
+                              >
+                                {m.nickname}
+                              </span>
+                            ))}
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
                 ))}
               </div>
@@ -607,7 +630,7 @@ export const AdminPage: React.FC = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="space-y-3 pt-3"
+              className="space-y-3 pt-3 pb-24"
             >
               <div className="flex items-center gap-1.5">
                 <RefreshCw size={14} className="text-party-300" />
@@ -617,6 +640,59 @@ export const AdminPage: React.FC = () => {
               <p className="text-[10px] text-gray-400 leading-relaxed">
                 Azioni irreversibili. Serve il PIN Manutenzione (ti verrà chiesto al primo utilizzo) oppure una sessione Supabase.
               </p>
+
+              {/* Quick actions (mettiamo in alto le cose che prima finivano troppo in basso) */}
+              <div className="border-t border-white/5 pt-3 space-y-3">
+                {/* Gare */}
+                <div>
+                  <h3 className="font-semibold text-sm mb-2">Gare</h3>
+                  <button
+                    className="btn-ghost w-full py-2 text-xs border border-red-500/40 text-red-400"
+                    onClick={async () => {
+                      const ok = window.confirm(
+                        'Cancellare TUTTE le gare completate e fare rollback dei punti squadra?\n\nIrreversibile.'
+                      );
+                      if (!ok) return;
+                      await runMaintenance('delete_completed_gare', {});
+                    }}
+                  >
+                    Cancella gare completate + rollback punti
+                  </button>
+                </div>
+
+                {/* Prove */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-sm">Prove Quest</h3>
+                    <span className="text-[10px] text-gray-400">{proveInVerifica.length} in verifica</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      className="btn-secondary flex-1 py-2 text-xs"
+                      onClick={async () => {
+                        const ok = window.confirm(
+                          'Pulire SOLO le prove in verifica? (resetta completed_at per permettere reinvio)'
+                        );
+                        if (!ok) return;
+                        await runMaintenance('clear_prove_quest', { scope: 'in_verifica' });
+                      }}
+                    >
+                      Pulisci verifiche
+                    </button>
+                    <button
+                      className="btn-ghost flex-1 py-2 text-xs"
+                      onClick={async () => {
+                        const ok = window.confirm('Pulire TUTTE le prove inviate? (resetta completed_at per tutti)');
+                        if (!ok) return;
+                        await runMaintenance('clear_prove_quest', { scope: 'all' });
+                      }}
+                    >
+                      Pulisci tutto
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               {/* Users */}
               <div className="border-t border-white/5 pt-3">
@@ -644,7 +720,8 @@ export const AdminPage: React.FC = () => {
                   />
                 </div>
 
-                <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                {/* NB: niente scroll interno qui, così si può scrollare l'intera pagina */}
+                <div className="space-y-1.5">
                   {maintenanceUsers.map((u) => {
                     const isSelected = selectedUsers.has(u.id);
                     return (
@@ -700,53 +777,6 @@ export const AdminPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Prove */}
-              <div className="border-t border-white/5 pt-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-sm">Prove Quest</h3>
-                  <span className="text-[10px] text-gray-400">{proveInVerifica.length} in verifica</span>
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    className="btn-secondary flex-1 py-2 text-xs"
-                    onClick={async () => {
-                      const ok = window.confirm('Pulire SOLO le prove in verifica? (resetta completed_at per permettere reinvio)');
-                      if (!ok) return;
-                      await runMaintenance('clear_prove_quest', { scope: 'in_verifica' });
-                    }}
-                  >
-                    Pulisci verifiche
-                  </button>
-                  <button
-                    className="btn-ghost flex-1 py-2 text-xs"
-                    onClick={async () => {
-                      const ok = window.confirm('Pulire TUTTE le prove inviate? (resetta completed_at per tutti)');
-                      if (!ok) return;
-                      await runMaintenance('clear_prove_quest', { scope: 'all' });
-                    }}
-                  >
-                    Pulisci tutto
-                  </button>
-                </div>
-              </div>
-
-              {/* Gare */}
-              <div className="border-t border-white/5 pt-3">
-                <h3 className="font-semibold text-sm mb-2">Gare</h3>
-                <button
-                  className="btn-ghost w-full py-2 text-xs border border-red-500/40 text-red-400"
-                  onClick={async () => {
-                    const ok = window.confirm(
-                      'Cancellare TUTTE le gare completate e fare rollback dei punti squadra?\n\nIrreversibile.'
-                    );
-                    if (!ok) return;
-                    await runMaintenance('delete_completed_gare', {});
-                  }}
-                >
-                  Cancella gare completate + rollback punti
-                </button>
-              </div>
             </motion.div>
           )}
         </AnimatePresence>
