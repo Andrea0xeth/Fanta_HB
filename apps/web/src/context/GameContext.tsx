@@ -55,9 +55,10 @@ interface GameContextType {
   updateAvatar: (file: File) => Promise<void>;
   
   // Squadre management (admin only)
-  creaSquadra: (squadra: { nome: string; emoji: string; colore: string }) => Promise<void>;
+  creaSquadra: (squadra: { nome: string; emoji: string; colore: string; userIds?: string[] }) => Promise<void>;
   modificaSquadra: (squadraId: string, updates: { nome?: string; emoji?: string; colore?: string }) => Promise<void>;
   eliminaSquadra: (squadraId: string) => Promise<void>;
+  cambiaSquadraUtente: (userId: string, nuovaSquadraId: string | null) => Promise<void>;
   
   // Computed
   mySquadra: Squadra | null;
@@ -1534,7 +1535,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   };
 
   // Squadre management (admin only)
-  const creaSquadra = async (squadra: { nome: string; emoji: string; colore: string }) => {
+  const creaSquadra = async (squadra: { nome: string; emoji: string; colore: string; userIds?: string[] }) => {
     if (!user?.is_admin) {
       throw new Error('Solo gli admin possono creare squadre');
     }
@@ -1544,6 +1545,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     }
 
     try {
+      // Crea la squadra
       const { data, error } = await supabase
         .from('squadre')
         .insert({
@@ -1561,6 +1563,24 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       }
 
       console.log('[Crea Squadra] ✅ Squadra creata:', data);
+
+      // Se ci sono utenti da assegnare, assegnali alla squadra
+      if (squadra.userIds && squadra.userIds.length > 0 && data) {
+        const squadraId = (data as any).id;
+        const { error: updateError } = await (supabase
+          .from('users') as any)
+          .update({ squadra_id: squadraId })
+          .in('id', squadra.userIds);
+
+        if (updateError) {
+          console.error('[Crea Squadra] Errore assegnazione utenti:', updateError);
+          // Non facciamo fallire la creazione della squadra, ma loggiamo l'errore
+          console.warn('[Crea Squadra] ⚠️ Squadra creata ma alcuni utenti non sono stati assegnati');
+        } else {
+          console.log('[Crea Squadra] ✅ Utenti assegnati alla squadra');
+        }
+      }
+
       await loadData();
     } catch (error) {
       console.error('[Crea Squadra] ❌ Errore completo:', error);
@@ -1664,6 +1684,54 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     }
   };
 
+  const cambiaSquadraUtente = async (userId: string, nuovaSquadraId: string | null) => {
+    if (!user?.is_admin) {
+      throw new Error('Solo gli admin possono cambiare la squadra degli utenti');
+    }
+
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase non configurato');
+    }
+
+    try {
+      setIsLoading(true);
+      console.log('[Cambia Squadra Utente] Cambio squadra per utente:', userId, '→', nuovaSquadraId);
+
+      // Se nuovaSquadraId è null, rimuovi l'utente dalla squadra
+      // Altrimenti verifica che la squadra esista
+      if (nuovaSquadraId !== null) {
+        const { data: squadraData, error: squadraError } = await supabase
+          .from('squadre')
+          .select('id')
+          .eq('id', nuovaSquadraId)
+          .single();
+
+        if (squadraError || !squadraData) {
+          throw new Error(`Squadra non trovata: ${squadraError?.message || 'Squadra inesistente'}`);
+        }
+      }
+
+      // Aggiorna la squadra dell'utente
+      const { error: updateError } = await (supabase
+        .from('users') as any)
+        .update({ squadra_id: nuovaSquadraId })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('[Cambia Squadra Utente] Errore aggiornamento:', updateError);
+        throw new Error(`Errore durante l'aggiornamento della squadra: ${updateError.message}`);
+      }
+
+      console.log('[Cambia Squadra Utente] ✅ Squadra utente aggiornata');
+      await loadData(); // Refresh data per aggiornare le squadre con i nuovi membri
+    } catch (error) {
+      console.error('[Cambia Squadra Utente] ❌ Errore completo:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Computed values
   const mySquadra = user?.squadra_id 
     ? squadre.find(s => s.id === user.squadra_id) || null 
@@ -1703,6 +1771,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     creaSquadra,
     modificaSquadra,
     eliminaSquadra,
+    cambiaSquadraUtente,
     mySquadra,
     leaderboardSquadre,
     leaderboardSingoli,

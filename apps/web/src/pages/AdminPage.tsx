@@ -28,6 +28,7 @@ export const AdminPage: React.FC = () => {
     creaSquadra,
     modificaSquadra,
     eliminaSquadra,
+    cambiaSquadraUtente,
   } = useGame();
 
   const [activeTab, setActiveTab] = useState<TabType>('gare');
@@ -47,12 +48,17 @@ export const AdminPage: React.FC = () => {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [maintenanceSearch, setMaintenanceSearch] = useState('');
   const [showCreaSquadra, setShowCreaSquadra] = useState(false);
-  const [editingSquadra, setEditingSquadra] = useState<string | null>(null);
   const [squadraNome, setSquadraNome] = useState('');
   const [squadraEmoji, setSquadraEmoji] = useState('');
   const [squadraColore, setSquadraColore] = useState('#FF6B6B');
   const [isSubmittingSquadra, setIsSubmittingSquadra] = useState(false);
   const [squadraError, setSquadraError] = useState<string | null>(null);
+  const [selectedUsersForSquadra, setSelectedUsersForSquadra] = useState<Set<string>>(new Set());
+  const [searchUsersForSquadra, setSearchUsersForSquadra] = useState('');
+  const [showModificaSquadra, setShowModificaSquadra] = useState(false);
+  const [squadraDaModificare, setSquadraDaModificare] = useState<string | null>(null);
+  const [editingSquadraMembers, setEditingSquadraMembers] = useState<Set<string>>(new Set());
+  const [searchEditingMembers, setSearchEditingMembers] = useState('');
 
   // Listener per aprire il modal classifica
   useEffect(() => {
@@ -577,6 +583,8 @@ export const AdminPage: React.FC = () => {
                       setSquadraEmoji('🏆');
                       setSquadraColore('#FF6B6B');
                       setSquadraError(null);
+                      setSelectedUsersForSquadra(new Set());
+                      setSearchUsersForSquadra('');
                     }}
                     className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
                   >
@@ -608,82 +616,8 @@ export const AdminPage: React.FC = () => {
                     transition={{ delay: index * 0.05 }}
                     className="border-l-2 border-gray-700/30 pl-2 py-1.5"
                   >
-                    {editingSquadra === squadra.id ? (
-                      // Modifica squadra
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={squadraEmoji}
-                            onChange={(e) => setSquadraEmoji(e.target.value)}
-                            placeholder="Emoji"
-                            className="input text-2xl w-16 text-center py-1"
-                            maxLength={2}
-                          />
-                          <input
-                            type="text"
-                            value={squadraNome}
-                            onChange={(e) => setSquadraNome(e.target.value)}
-                            placeholder="Nome squadra"
-                            className="input flex-1 text-sm py-1.5"
-                          />
-                          <input
-                            type="color"
-                            value={squadraColore}
-                            onChange={(e) => setSquadraColore(e.target.value)}
-                            className="w-8 h-8 rounded cursor-pointer"
-                          />
-                        </div>
-                        {squadraError && (
-                          <p className="text-[10px] text-red-400">{squadraError}</p>
-                        )}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={async () => {
-                              if (!squadraNome.trim() || !squadraEmoji.trim()) {
-                                setSquadraError('Nome ed emoji sono obbligatori');
-                                return;
-                              }
-                              setIsSubmittingSquadra(true);
-                              setSquadraError(null);
-                              try {
-                                await modificaSquadra(squadra.id, {
-                                  nome: squadraNome.trim(),
-                                  emoji: squadraEmoji.trim(),
-                                  colore: squadraColore,
-                                });
-                                setEditingSquadra(null);
-                                setSquadraNome('');
-                                setSquadraEmoji('');
-                                setSquadraColore('#FF6B6B');
-                              } catch (error: any) {
-                                setSquadraError(error.message || 'Errore durante la modifica');
-                              } finally {
-                                setIsSubmittingSquadra(false);
-                              }
-                            }}
-                            disabled={isSubmittingSquadra}
-                            className="btn-primary flex-1 text-xs py-1.5 disabled:opacity-50"
-                          >
-                            {isSubmittingSquadra ? 'Salvataggio...' : 'Salva'}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingSquadra(null);
-                              setSquadraNome('');
-                              setSquadraEmoji('');
-                              setSquadraColore('#FF6B6B');
-                              setSquadraError(null);
-                            }}
-                            className="btn-ghost text-xs py-1.5 px-3"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      // Visualizza squadra
-                      <>
+                    {/* Visualizza squadra */}
+                    <>
                         <div className="flex items-center gap-2">
                           <span className="text-2xl">{squadra.emoji}</span>
                           <div className="flex-1 min-w-0">
@@ -723,18 +657,23 @@ export const AdminPage: React.FC = () => {
                         <div className="flex gap-2 mt-2 pl-8">
                           <button
                             onClick={() => {
-                              setEditingSquadra(squadra.id);
+                              setSquadraDaModificare(squadra.id);
                               setSquadraNome(squadra.nome);
                               setSquadraEmoji(squadra.emoji);
                               setSquadraColore(squadra.colore);
+                              // Inizializza con i membri attuali già selezionati
+                              setEditingSquadraMembers(new Set(squadra.membri.map(m => m.id)));
+                              setSearchEditingMembers('');
                               setSquadraError(null);
+                              setShowModificaSquadra(true);
                             }}
                             className="btn-secondary text-[10px] py-1 px-2"
                           >
                             Modifica
                           </button>
                           <button
-                            onClick={async () => {
+                            onClick={async (e) => {
+                              e.stopPropagation();
                               const ok = window.confirm(
                                 `Eliminare la squadra "${squadra.nome}"?\n\nQuesta azione è irreversibile.\n\nNota: La squadra deve essere vuota (nessun membro) e non deve avere gare associate.`
                               );
@@ -750,8 +689,7 @@ export const AdminPage: React.FC = () => {
                             Elimina
                           </button>
                         </div>
-                      </>
-                    )}
+                    </>
                   </motion.div>
                 ))}
               </div>
@@ -963,6 +901,8 @@ export const AdminPage: React.FC = () => {
                 setSquadraEmoji('');
                 setSquadraColore('#FF6B6B');
                 setSquadraError(null);
+                setSelectedUsersForSquadra(new Set());
+                setSearchUsersForSquadra('');
               }
             }}
           >
@@ -1046,6 +986,77 @@ export const AdminPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Selezione Utenti */}
+                <div>
+                  <label className="block text-xs text-gray-300 mb-1.5 font-semibold">
+                    Utenti da assegnare (opzionale)
+                  </label>
+                  <input
+                    type="text"
+                    value={searchUsersForSquadra}
+                    onChange={(e) => setSearchUsersForSquadra(e.target.value)}
+                    placeholder="Cerca utenti..."
+                    className="input text-sm py-2 w-full mb-2"
+                    disabled={isSubmittingSquadra}
+                  />
+                  <div className="max-h-48 overflow-y-auto scrollbar-hide border border-white/10 rounded-lg p-2 space-y-1">
+                    {leaderboardSingoli
+                      .filter(u => 
+                        u.nickname.toLowerCase().includes(searchUsersForSquadra.toLowerCase())
+                      )
+                      .map((u) => {
+                        const isSelected = selectedUsersForSquadra.has(u.id);
+                        const hasSquadra = u.squadra_id !== null;
+                        return (
+                          <label
+                            key={u.id}
+                            className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-turquoise-500/20 border border-turquoise-500/40'
+                                : 'hover:bg-white/5 border border-transparent'
+                            } ${hasSquadra && !isSelected ? 'opacity-50' : ''}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                const newSet = new Set(selectedUsersForSquadra);
+                                if (e.target.checked) {
+                                  newSet.add(u.id);
+                                } else {
+                                  newSet.delete(u.id);
+                                }
+                                setSelectedUsersForSquadra(newSet);
+                              }}
+                              disabled={isSubmittingSquadra}
+                              className="rounded"
+                            />
+                            <Avatar user={u} size="sm" />
+                            <span className="text-xs flex-1">
+                              {u.nickname}
+                              {u.is_admin && (
+                                <span className="ml-1 text-[10px] text-party-300">(Admin)</span>
+                              )}
+                            </span>
+                            {hasSquadra && !isSelected && (
+                              <span className="text-[10px] text-gray-400">
+                                {squadre.find(s => s.id === u.squadra_id)?.nome || 'Squadra'}
+                              </span>
+                            )}
+                          </label>
+                        );
+                      })}
+                    {leaderboardSingoli.filter(u => u.nickname.toLowerCase().includes(searchUsersForSquadra.toLowerCase())).length === 0 && (
+                      <p className="text-xs text-gray-500 text-center py-4">Nessun utente trovato</p>
+                    )}
+                  </div>
+                  {selectedUsersForSquadra.size > 0 && (
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      {selectedUsersForSquadra.size} utente{selectedUsersForSquadra.size > 1 ? 'i' : ''} selezionato{selectedUsersForSquadra.size > 1 ? 'i' : ''}
+                    </p>
+                  )}
+                </div>
+
                 {squadraError && (
                   <div className="bg-red-500/20 border border-red-500/40 rounded-lg p-2">
                     <p className="text-xs text-red-400">{squadraError}</p>
@@ -1062,6 +1073,8 @@ export const AdminPage: React.FC = () => {
                         setSquadraEmoji('');
                         setSquadraColore('#FF6B6B');
                         setSquadraError(null);
+                        setSelectedUsersForSquadra(new Set());
+                        setSearchUsersForSquadra('');
                       }
                     }}
                     className="btn-ghost flex-1 py-2 text-xs"
@@ -1082,11 +1095,14 @@ export const AdminPage: React.FC = () => {
                           nome: squadraNome.trim(),
                           emoji: squadraEmoji.trim(),
                           colore: squadraColore,
+                          userIds: Array.from(selectedUsersForSquadra),
                         });
                         setShowCreaSquadra(false);
                         setSquadraNome('');
                         setSquadraEmoji('');
                         setSquadraColore('#FF6B6B');
+                        setSelectedUsersForSquadra(new Set());
+                        setSearchUsersForSquadra('');
                       } catch (error: any) {
                         setSquadraError(error.message || 'Errore durante la creazione');
                       } finally {
@@ -1117,6 +1133,272 @@ export const AdminPage: React.FC = () => {
             </motion.div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* Modifica Squadra Modal */}
+      <AnimatePresence>
+        {showModificaSquadra && squadraDaModificare && (() => {
+          const squadra = squadre.find(s => s.id === squadraDaModificare);
+          if (!squadra) return null;
+          
+          return (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 z-50 flex items-end"
+              onClick={() => {
+                if (!isSubmittingSquadra) {
+                  setShowModificaSquadra(false);
+                  setSquadraDaModificare(null);
+                  setSquadraNome('');
+                  setSquadraEmoji('');
+                  setSquadraColore('#FF6B6B');
+                  setEditingSquadraMembers(new Set());
+                  setSearchEditingMembers('');
+                  setSquadraError(null);
+                }
+              }}
+            >
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 25 }}
+                className="w-full glass-strong rounded-t-3xl overflow-hidden flex flex-col mb-20 max-h-[90vh]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <Users size={18} className="text-turquoise-400" />
+                    <div>
+                      <div className="text-base font-bold">Modifica Squadra</div>
+                      <div className="text-[10px] text-gray-400">{squadra.nome}</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!isSubmittingSquadra) {
+                        setShowModificaSquadra(false);
+                        setSquadraDaModificare(null);
+                        setSquadraNome('');
+                        setSquadraEmoji('');
+                        setSquadraColore('#FF6B6B');
+                        setEditingSquadraMembers(new Set());
+                        setSearchEditingMembers('');
+                        setSquadraError(null);
+                      }
+                    }}
+                    className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+                    aria-label="Chiudi"
+                    disabled={isSubmittingSquadra}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto scrollbar-hide px-4 py-4 space-y-3">
+                  {/* Nome */}
+                  <div>
+                    <label className="block text-xs text-gray-300 mb-1.5 font-semibold">Nome Squadra</label>
+                    <input
+                      type="text"
+                      value={squadraNome}
+                      onChange={(e) => setSquadraNome(e.target.value)}
+                      placeholder="Es: Squadra Alpha"
+                      className="input text-sm py-2 w-full"
+                      disabled={isSubmittingSquadra}
+                    />
+                  </div>
+
+                  {/* Emoji */}
+                  <div>
+                    <label className="block text-xs text-gray-300 mb-1.5 font-semibold">Emoji</label>
+                    <input
+                      type="text"
+                      value={squadraEmoji}
+                      onChange={(e) => setSquadraEmoji(e.target.value)}
+                      placeholder="🏆"
+                      className="input text-2xl text-center py-2 w-full"
+                      maxLength={2}
+                      disabled={isSubmittingSquadra}
+                    />
+                  </div>
+
+                  {/* Colore */}
+                  <div>
+                    <label className="block text-xs text-gray-300 mb-1.5 font-semibold">Colore</label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={squadraColore}
+                        onChange={(e) => setSquadraColore(e.target.value)}
+                        className="w-12 h-12 rounded cursor-pointer"
+                        disabled={isSubmittingSquadra}
+                      />
+                      <div
+                        className="flex-1 h-12 rounded"
+                        style={{ backgroundColor: squadraColore }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Gestione Membri */}
+                  <div>
+                    <label className="block text-xs text-gray-300 mb-1.5 font-semibold">
+                      Membri della squadra
+                    </label>
+                    <input
+                      type="text"
+                      value={searchEditingMembers}
+                      onChange={(e) => setSearchEditingMembers(e.target.value)}
+                      placeholder="Cerca utenti..."
+                      className="input text-sm py-2 w-full mb-2"
+                      disabled={isSubmittingSquadra}
+                    />
+                    <div className="max-h-48 overflow-y-auto scrollbar-hide border border-white/10 rounded-lg p-2 space-y-1">
+                      {leaderboardSingoli
+                        .filter(u => 
+                          u.nickname.toLowerCase().includes(searchEditingMembers.toLowerCase())
+                        )
+                        .map((u) => {
+                          const isSelected = editingSquadraMembers.has(u.id);
+                          const isCurrentMember = squadra.membri.some(m => m.id === u.id);
+                          
+                          return (
+                            <label
+                              key={u.id}
+                              className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                                isSelected
+                                  ? 'bg-turquoise-500/20 border border-turquoise-500/40'
+                                  : 'hover:bg-white/5 border border-transparent'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  const newSet = new Set(editingSquadraMembers);
+                                  if (e.target.checked) {
+                                    // Aggiungi alla squadra
+                                    newSet.add(u.id);
+                                  } else {
+                                    // Rimuovi dalla squadra
+                                    newSet.delete(u.id);
+                                  }
+                                  setEditingSquadraMembers(newSet);
+                                }}
+                                disabled={isSubmittingSquadra}
+                                className="rounded"
+                              />
+                              <Avatar user={u} size="sm" />
+                              <span className="text-xs flex-1">
+                                {u.nickname}
+                                {u.is_admin && (
+                                  <span className="ml-1 text-[10px] text-party-300">(Admin)</span>
+                                )}
+                              </span>
+                              {isCurrentMember && !isSelected && (
+                                <span className="text-[10px] text-orange-400">Sarà rimosso</span>
+                              )}
+                              {!isCurrentMember && isSelected && (
+                                <span className="text-[10px] text-turquoise-400">Sarà aggiunto</span>
+                              )}
+                            </label>
+                          );
+                        })}
+                      {leaderboardSingoli.filter(u => u.nickname.toLowerCase().includes(searchEditingMembers.toLowerCase())).length === 0 && (
+                        <p className="text-xs text-gray-500 text-center py-4">Nessun utente trovato</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {squadraError && (
+                    <div className="bg-red-500/20 border border-red-500/40 rounded-lg p-2">
+                      <p className="text-xs text-red-400">{squadraError}</p>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => {
+                        if (!isSubmittingSquadra) {
+                          setShowModificaSquadra(false);
+                          setSquadraDaModificare(null);
+                          setSquadraNome('');
+                          setSquadraEmoji('');
+                          setSquadraColore('#FF6B6B');
+                          setEditingSquadraMembers(new Set());
+                          setSearchEditingMembers('');
+                          setSquadraError(null);
+                        }
+                      }}
+                      className="btn-ghost flex-1 py-2 text-xs"
+                      disabled={isSubmittingSquadra}
+                    >
+                      Annulla
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!squadraNome.trim() || !squadraEmoji.trim()) {
+                          setSquadraError('Nome ed emoji sono obbligatori');
+                          return;
+                        }
+                        setIsSubmittingSquadra(true);
+                        setSquadraError(null);
+                        try {
+                          // Salva modifiche nome/emoji/colore
+                          await modificaSquadra(squadra.id, {
+                            nome: squadraNome.trim(),
+                            emoji: squadraEmoji.trim(),
+                            colore: squadraColore,
+                          });
+
+                          // Applica modifiche ai membri
+                          // editingSquadraMembers contiene tutti gli utenti che DOVREBBERO essere nella squadra
+                          const membriAttuali = new Set(squadra.membri.map(m => m.id));
+                          
+                          // Trova utenti da aggiungere (in editingSquadraMembers ma non in membriAttuali)
+                          const utentiDaAggiungere = Array.from(editingSquadraMembers).filter(id => !membriAttuali.has(id));
+                          
+                          // Trova utenti da rimuovere (in membriAttuali ma non in editingSquadraMembers)
+                          const utentiDaRimuovere = Array.from(membriAttuali).filter(id => !editingSquadraMembers.has(id));
+
+                          // Aggiungi nuovi membri
+                          for (const userId of utentiDaAggiungere) {
+                            await cambiaSquadraUtente(userId, squadra.id);
+                          }
+                          
+                          // Rimuovi membri
+                          for (const userId of utentiDaRimuovere) {
+                            await cambiaSquadraUtente(userId, null);
+                          }
+
+                          setShowModificaSquadra(false);
+                          setSquadraDaModificare(null);
+                          setSquadraNome('');
+                          setSquadraEmoji('');
+                          setSquadraColore('#FF6B6B');
+                          setEditingSquadraMembers(new Set());
+                          setSearchEditingMembers('');
+                        } catch (error: any) {
+                          setSquadraError(error.message || 'Errore durante la modifica');
+                        } finally {
+                          setIsSubmittingSquadra(false);
+                        }
+                      }}
+                      className="btn-primary flex-1 py-2 text-xs"
+                      disabled={isSubmittingSquadra}
+                    >
+                      {isSubmittingSquadra ? 'Salvataggio...' : 'Salva modifiche'}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
     </div>
   );

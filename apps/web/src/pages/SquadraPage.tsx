@@ -4,9 +4,10 @@ import { Users, Trophy, Flame, Crown, Swords } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { GaraCard } from '../components/GaraCard';
 import { Avatar } from '../components/Avatar';
+import { Countdown } from '../components/Countdown';
 
 export const SquadraPage: React.FC = () => {
-  const { user, mySquadra, gare, leaderboardSquadre } = useGame();
+  const { user, mySquadra, gare, leaderboardSquadre, gameState } = useGame();
 
   // Usa i membri reali della squadra se disponibili, altrimenti mock
   const teamMembers = mySquadra?.membri && mySquadra.membri.length > 0
@@ -32,10 +33,65 @@ export const SquadraPage: React.FC = () => {
     g => g.squadra_a_id === mySquadra?.id || g.squadra_b_id === mySquadra?.id
   );
 
+  // Se l'utente non ha una squadra, mostra countdown e messaggio di attesa
   if (!mySquadra) {
+    const eventDate = gameState.data_inizio 
+      ? new Date(gameState.data_inizio).toISOString()
+      : new Date('2026-01-08T00:00:00+01:00').toISOString();
+
     return (
-      <div className="h-full bg-dark flex items-center justify-center">
-        <p className="text-gray-500">Nessuna squadra assegnata</p>
+      <div className="min-h-full bg-dark flex flex-col">
+        {/* Header */}
+        <div className="flex-shrink-0 border-b border-white/5 px-4 pt-safe pb-3">
+          <div className="flex items-center justify-center gap-2">
+            <Users size={16} className="text-turquoise-400" />
+            <div className="text-sm font-semibold">La Tua Squadra</div>
+          </div>
+        </div>
+
+        {/* Content - Countdown e messaggio */}
+        <div className="flex-1 px-4 py-8">
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-8"
+          >
+            <div className="mb-8">
+              <motion.div
+                animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+                transition={{ duration: 3, repeat: Infinity }}
+                className="mb-6"
+              >
+                <Users size={64} className="text-turquoise-400 mx-auto" />
+              </motion.div>
+              
+              <h2 className="font-display font-bold text-2xl mb-4 bg-gradient-to-r from-turquoise-400 via-coral-500 to-turquoise-400 bg-clip-text text-transparent">
+                La Tua Squadra Ti Attende! ⚔️
+              </h2>
+              
+              <p className="text-gray-300 text-sm mb-8 leading-relaxed max-w-md mx-auto">
+                Stai per essere assegnato a una squadra epica! Unisciti ai tuoi compagni e preparati per tre giorni di sfide indimenticabili, gare all'ultimo respiro e avventure che rimarranno nella storia. 
+                <br /><br />
+                <span className="text-turquoise-400 font-semibold">Gli admin ti assegneranno presto alla tua squadra!</span>
+              </p>
+            </div>
+            
+            <div className="mb-8">
+              <Countdown targetDate={eventDate} />
+            </div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="glass rounded-2xl p-4 border border-turquoise-500/20 max-w-md mx-auto"
+            >
+              <p className="text-gray-400 text-xs leading-relaxed">
+                💡 <span className="font-semibold text-turquoise-400">Suggerimento:</span> Una volta assegnato, potrai vedere i tuoi compagni, le gare della squadra e competere per la vittoria!
+              </p>
+            </motion.div>
+          </motion.section>
+        </div>
       </div>
     );
   }

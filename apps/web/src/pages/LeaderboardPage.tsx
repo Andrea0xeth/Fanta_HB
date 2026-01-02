@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, User, TrendingUp, TrendingDown, Minus, Crown, Flame } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { Avatar } from '../components/Avatar';
+import { UserProfileModal } from '../components/UserProfileModal';
 
 type TabType = 'squadre' | 'singoli';
 
 export const LeaderboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('squadre');
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const { user, mySquadra, leaderboardSquadre, leaderboardSingoli } = useGame();
 
   // Mock delta values
@@ -229,8 +231,14 @@ export const LeaderboardPage: React.FC = () => {
                     }`}
                   >
                     <PositionBadge position={index + 1} />
-                    <Avatar user={giocatore} size="sm" />
-                    <div className="flex-1 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => setProfileUserId(giocatore.id)}
+                      className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                      aria-label={`Apri profilo ${giocatore.nickname}`}
+                    >
+                      <Avatar user={giocatore} size="sm" />
+                      <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="font-semibold truncate text-sm">{giocatore.nickname}</span>
                         {index === 0 && <Crown size={12} className="text-party-300 flex-shrink-0" />}
@@ -242,7 +250,8 @@ export const LeaderboardPage: React.FC = () => {
                         <span>{squadra?.emoji}</span>
                         <span className="truncate">{squadra?.nome}</span>
                       </div>
-                    </div>
+                      </div>
+                    </button>
                     <DeltaIndicator delta={getDelta(index)} />
                     <div className="text-right min-w-[55px]">
                       <div className="font-bold text-turquoise-400 text-sm">{puntiTotali}</div>
@@ -258,6 +267,12 @@ export const LeaderboardPage: React.FC = () => {
           )}
         </AnimatePresence>
       </div>
+
+      <UserProfileModal
+        isOpen={Boolean(profileUserId)}
+        userId={profileUserId}
+        onClose={() => setProfileUserId(null)}
+      />
     </div>
   );
 };
