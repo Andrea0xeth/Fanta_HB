@@ -306,6 +306,8 @@ export const SplashPage: React.FC = () => {
   // Handle register choice - show pre-registration video then form
   const handleRegister = () => {
     setShowContinueButton(false); // Reset continue button state
+    // Reset email flag per passkey registration
+    setRegistrationData(prev => ({ ...prev, email: undefined }));
     setViewState('video-pre');
     // Il video partirà automaticamente grazie all'useEffect
   };
@@ -317,7 +319,14 @@ export const SplashPage: React.FC = () => {
   
   const handleContinueFromPreVideo = () => {
     setShowContinueButton(false);
-    setViewState('auth');
+    // Se siamo arrivati qui da "Registrati con Email", vai al form email
+    // Altrimenti vai al form passkey
+    if (registrationData.email === 'email-register-flag') {
+      setRegistrationData(prev => ({ ...prev, email: '' }));
+      setViewState('auth-email-register');
+    } else {
+      setViewState('auth');
+    }
   };
 
   // Handle registration with passkey (crea nuovo account)
@@ -403,7 +412,14 @@ export const SplashPage: React.FC = () => {
   const handleSkipVideo = () => {
     if (viewState === 'video-pre') {
       setShowContinueButton(false);
-      setViewState('auth');
+      // Se siamo arrivati qui da "Registrati con Email", vai al form email
+      // Altrimenti vai al form passkey
+      if (registrationData.email === 'email-register-flag') {
+        setRegistrationData(prev => ({ ...prev, email: '' }));
+        setViewState('auth-email-register');
+      } else {
+        setViewState('auth');
+      }
     } else if (viewState === 'video-post') {
       setShowPostContinueButton(false);
       navigate('/home', { replace: true });
@@ -1244,7 +1260,12 @@ export const SplashPage: React.FC = () => {
               </button>
 
               <button
-                onClick={() => setViewState('auth-email-register')}
+                onClick={() => {
+                  // Imposta un flag per sapere che veniamo da email registration
+                  setRegistrationData(prev => ({ ...prev, email: 'email-register-flag' }));
+                  setShowContinueButton(false);
+                  setViewState('video-pre');
+                }}
                 disabled={authLoading}
                 className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all duration-75 border border-gray-600/30 rounded-xl hover:border-gray-500/50"
               >
