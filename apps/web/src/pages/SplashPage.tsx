@@ -8,7 +8,6 @@ import { PWAInstallPrompt } from '../components/PWAInstallPrompt';
 import { WebAuthnDebug } from '../components/WebAuthnDebug';
 import { CircusNeonDecorations } from '../components/CircusNeonDecorations';
 import type { RegistrationData, EmailPasswordRegistrationData } from '../types';
-import { getCachedVideoSrc } from '../lib/videoCache';
 
 type ViewState =
   | 'splash'
@@ -50,11 +49,7 @@ export const SplashPage: React.FC = () => {
   const [emailPassword, setEmailPassword] = useState('');
   const [emailLoginData, setEmailLoginData] = useState({ email: '', password: '' });
   const videoRef = useRef<HTMLVideoElement>(null);
-  const revokeVideoSrcRef = useRef<null | (() => void)>(null);
-  const [videoSrc, setVideoSrc] = useState<string>('');
-  const [isVideoReady, setIsVideoReady] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
-  const [videoLoadProgress, setVideoLoadProgress] = useState(0);
   
   // Redirect automatico se già autenticato
   useEffect(() => {
@@ -95,66 +90,21 @@ export const SplashPage: React.FC = () => {
 
   // Redirect automatico se già autenticato (rimuove il prompt "Continua" / "Cambia account")
 
-  // Carica il videoSrc e prepara il video quando cambia viewState
+  // Gestisci il video quando cambia viewState - APPROCCIO SEMPLIFICATO
   useEffect(() => {
     if (viewState !== 'video-pre' && viewState !== 'video-post') {
-      setIsVideoReady(false);
       setIsVideoLoading(false);
       return;
     }
 
-    const targetUrl = viewState === 'video-pre' ? VIDEO_PRE_URL : VIDEO_POST_URL;
-    let cancelled = false;
-
-    // Reset stato
-    setShowWelcomePlayOverlay(false);
-    setIsVideoReady(false);
-    setIsVideoLoading(true);
-    setVideoLoadProgress(0);
-    
-    // Cleanup blob precedente
-    revokeVideoSrcRef.current?.();
-    revokeVideoSrcRef.current = null;
-    
-    // Imposta URL iniziale (fallback diretto)
-    setVideoSrc(targetUrl);
-
-    // Prova a caricare dalla cache, altrimenti usa URL diretto
-    getCachedVideoSrc(targetUrl)
-      .then(({ src, revoke }) => {
-        if (cancelled) {
-          revoke?.();
-          return;
-        }
-        setVideoSrc(src);
-        revokeVideoSrcRef.current = revoke ?? null;
-        setIsVideoReady(true);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          // Se la cache fallisce, usa URL diretto
-          setVideoSrc(targetUrl);
-          setIsVideoReady(true);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-      revokeVideoSrcRef.current?.();
-      revokeVideoSrcRef.current = null;
-    };
-  }, [viewState, VIDEO_PRE_URL, VIDEO_POST_URL]);
-
-  // Gestisci il play del video quando è pronto
-  useEffect(() => {
-    if (!isVideoReady || !videoRef.current) return;
-    if (viewState !== 'video-pre' && viewState !== 'video-post') return;
+    if (!videoRef.current) return;
 
     const video = videoRef.current;
     let hasStarted = false;
-    let cleanupFunctions: (() => void)[] = [];
 
-    // Reset video
+    // Reset
+    setShowWelcomePlayOverlay(false);
+    setIsVideoLoading(true);
     video.currentTime = 0;
     video.volume = 1;
     video.muted = false;
@@ -166,7 +116,7 @@ export const SplashPage: React.FC = () => {
 
       try {
         await videoRef.current.play();
-        console.log('✅ Video avviato con successo');
+        console.log('✅ Video avviato');
         setShowWelcomePlayOverlay(false);
         setIsVideoLoading(false);
       } catch (error) {
@@ -177,69 +127,38 @@ export const SplashPage: React.FC = () => {
       }
     };
 
-    // Gestore progresso caricamento
-    const handleProgress = () => {
-      if (videoRef.current && videoRef.current.buffered.length > 0) {
-        const buffered = videoRef.current.buffered.end(0);
-        const duration = videoRef.current.duration;
-        if (duration > 0) {
-          const progress = (buffered / duration) * 100;
-          setVideoLoadProgress(progress);
-        }
-      }
-    };
-
-    // Gestori eventi
+    // Gestori eventi semplici
     const handleCanPlay = () => {
       setIsVideoLoading(false);
-      if (videoRef.current && videoRef.current.paused && !hasStarted) {
-        startVideo();
-      }
-    };
-
-    const handleCanPlayThrough = () => {
-      setIsVideoLoading(false);
-      if (videoRef.current && videoRef.current.paused && !hasStarted) {
+      if (video.paused && !hasStarted) {
         startVideo();
       }
     };
 
     const handleLoadedData = () => {
-      if (videoRef.current && videoRef.current.paused && !hasStarted) {
+      if (video.paused && !hasStarted) {
         startVideo();
       }
     };
 
-    // Aggiungi listener
     video.addEventListener('canplay', handleCanPlay, { once: true });
-    video.addEventListener('canplaythrough', handleCanPlayThrough, { once: true });
     video.addEventListener('loadeddata', handleLoadedData, { once: true });
-    video.addEventListener('progress', handleProgress);
     video.addEventListener('waiting', () => setIsVideoLoading(true));
     video.addEventListener('playing', () => setIsVideoLoading(false));
 
-    cleanupFunctions.push(() => {
-      if (videoRef.current) {
-        videoRef.current.removeEventListener('canplay', handleCanPlay);
-        videoRef.current.removeEventListener('canplaythrough', handleCanPlayThrough);
-        videoRef.current.removeEventListener('loadeddata', handleLoadedData);
-        videoRef.current.removeEventListener('progress', handleProgress);
-      }
-    });
-
-    // Forza il caricamento
+    // Forza reload
     video.load();
 
     // Se già pronto, avvia subito
-    if (video.readyState >= 3) {
-      setIsVideoLoading(false);
+    if (video.readyState >= 3 && !hasStarted) {
       startVideo();
     }
 
     return () => {
-      cleanupFunctions.forEach(cleanup => cleanup());
+      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('loadeddata', handleLoadedData);
     };
-  }, [isVideoReady, viewState]);
+  }, [viewState]);
 
   const handleStartWelcomeVideo = async () => {
     if (!videoRef.current) return;
@@ -502,22 +421,12 @@ export const SplashPage: React.FC = () => {
                 className="w-16 h-16 border-4 border-coral-500 border-t-transparent rounded-full mb-4"
               />
               <p className="text-white text-sm font-semibold">Caricamento video...</p>
-              {videoLoadProgress > 0 && (
-                <div className="w-48 h-1 bg-gray-700 rounded-full mt-3 overflow-hidden">
-                  <motion.div
-                    className="h-full bg-coral-500"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${videoLoadProgress}%` }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-              )}
             </div>
           )}
 
           <video
             ref={videoRef}
-            src={videoSrc || VIDEO_PRE_URL}
+            src={VIDEO_PRE_URL}
             autoPlay
             playsInline
             muted={false}
@@ -621,22 +530,12 @@ export const SplashPage: React.FC = () => {
                 className="w-16 h-16 border-4 border-coral-500 border-t-transparent rounded-full mb-4"
               />
               <p className="text-white text-sm font-semibold">Caricamento video...</p>
-              {videoLoadProgress > 0 && (
-                <div className="w-48 h-1 bg-gray-700 rounded-full mt-3 overflow-hidden">
-                  <motion.div
-                    className="h-full bg-coral-500"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${videoLoadProgress}%` }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-              )}
             </div>
           )}
 
           <video
             ref={videoRef}
-            src={videoSrc || VIDEO_POST_URL}
+            src={VIDEO_POST_URL}
             autoPlay
             playsInline
             muted={false}

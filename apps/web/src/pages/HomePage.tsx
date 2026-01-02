@@ -11,7 +11,6 @@ import { PushNotificationSettings } from '../components/PushNotificationSettings
 import { NotificationsModal } from '../components/NotificationsModal';
 import { Countdown } from '../components/Countdown';
 import { useNavigate } from 'react-router-dom';
-import { getCachedVideoSrc } from '../lib/videoCache';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -39,36 +38,9 @@ export const HomePage: React.FC = () => {
   const [showDailyQuests, setShowDailyQuests] = useState(true); // Di default aperta
   const [showVideo, setShowVideo] = useState(false);
   const BALLETTO_URL = '/videos/balletto.mp4';
-  const [ballettoSrc, setBallettoSrc] = useState<string>(BALLETTO_URL);
-  const revokeBallettoSrcRef = useRef<null | (() => void)>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    if (!showVideo) return;
-
-    let cancelled = false;
-    revokeBallettoSrcRef.current?.();
-    revokeBallettoSrcRef.current = null;
-    setBallettoSrc(BALLETTO_URL);
-
-    getCachedVideoSrc(BALLETTO_URL).then(({ src, revoke }) => {
-      if (cancelled) {
-        revoke?.();
-        return;
-      }
-      setBallettoSrc(src);
-      revokeBallettoSrcRef.current = revoke ?? null;
-      requestAnimationFrame(() => videoRef.current?.load());
-    });
-
-    return () => {
-      cancelled = true;
-      revokeBallettoSrcRef.current?.();
-      revokeBallettoSrcRef.current = null;
-      setBallettoSrc(BALLETTO_URL);
-    };
-  }, [showVideo, BALLETTO_URL]);
 
   const pendingVerifications = proveInVerifica.filter(
     p => p.stato === 'in_verifica' && p.user_id !== user?.id
@@ -776,7 +748,7 @@ export const HomePage: React.FC = () => {
               <div className="relative w-full bg-black">
                 <video
                   ref={videoRef}
-                  src={ballettoSrc}
+                  src={BALLETTO_URL}
                   controls
                   autoPlay
                   className="w-full h-auto"
