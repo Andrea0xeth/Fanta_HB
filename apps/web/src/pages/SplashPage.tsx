@@ -120,13 +120,34 @@ export const SplashPage: React.FC = () => {
       // Set src synchronously so we can call play() inside the gesture
       if (video.src !== new URL(url, window.location.origin).toString()) {
         video.src = url;
-        // Don't call load(): on some browsers it cancels in-flight buffering and restarts.
+        // iOS Safari often needs an explicit load() after changing src
+        // but we only do it when the src actually changes.
+        video.load();
       }
       video.currentTime = 0;
       video.volume = 1;
       video.muted = false;
     }
   };
+
+  // iOS Safari quirks: ensure inline playback attributes are set
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.setAttribute('playsinline', 'true');
+    v.setAttribute('webkit-playsinline', 'true');
+    v.preload = 'auto';
+  }, []);
+
+  // Warm up iOS Safari cache: link-preload is often ignored on iOS, hidden <video preload> works better.
+  // This is best-effort; it should make first play feel "instant".
+  const renderVideoWarmup = () => (
+    <div style={{ display: 'none' }} aria-hidden="true">
+      <video src={VIDEO_PRE_URL} preload="auto" muted playsInline />
+      <video src={VIDEO_POST_URL} preload="auto" muted playsInline />
+      <video src="/videos/balletto.mp4" preload="auto" muted playsInline />
+    </div>
+  );
 
   const startVideoFromGesture = async () => {
     const video = videoRef.current;
@@ -1252,6 +1273,7 @@ export const SplashPage: React.FC = () => {
         DC-30 Fuerteventura - 🎂 © 2026
       </motion.p>
 
+      {renderVideoWarmup()}
       {renderVideoOverlay()}
     </div>
   );
