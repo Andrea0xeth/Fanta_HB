@@ -64,7 +64,7 @@ export const SplashPage: React.FC = () => {
   const [flickerTimings] = useState(() => ({
     dc30: 2.5 + Math.random() * 1.5, // Tra 2.5s e 4s
     diCiaccio: 2.3 + Math.random() * 1.4, // Tra 2.3s e 3.7s
-    circociaccio: 2.4 + Math.random() * 1.6, // Tra 2.4s e 4s
+    ciaccioloco: 2.4 + Math.random() * 1.6, // Tra 2.4s e 4s
     fuerteventura: 2.6 + Math.random() * 1.3, // Tra 2.6s e 3.9s
   }));
 
@@ -1033,7 +1033,7 @@ export const SplashPage: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* CIRCOLOCO Fuerteventura - White Neon - Larger */}
+        {/* CIACCIOLOCO Fuerteventura - White Neon - Larger */}
         <motion.div 
           className="neon-3d-glow-white mb-4"
           initial={{ opacity: 0, scale: 0.9 }}
@@ -1043,7 +1043,7 @@ export const SplashPage: React.FC = () => {
           <h2 
             className="neon-white text-4xl md:text-5xl font-bold text-center tracking-wider uppercase"
             style={{
-              animation: `neon-flicker-white ${flickerTimings.circociaccio}s infinite`,
+              animation: `neon-flicker-white ${flickerTimings.ciaccioloco}s infinite`,
               width: '290px',
               paddingTop: '0px',
               paddingBottom: '0px',
@@ -1054,7 +1054,7 @@ export const SplashPage: React.FC = () => {
               marginRight: '0px',
             }}
           >
-            CIRCOCIACCIO
+            CIACCIOLOCO
           </h2>
           <p 
             className="text-xl md:text-2xl font-semibold text-center tracking-wider uppercase mt-1"

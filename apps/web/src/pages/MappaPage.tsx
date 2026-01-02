@@ -28,8 +28,8 @@ const POIS: Poi[] = [
     note: 'Base 🏨',
   },
   {
-    id: 'circociaccio-house',
-    name: 'CIRCOCIACCIO HOUSE',
+    id: 'ciaccioloco-house',
+    name: 'CIACCIOLOCO HOUSE',
     category: 'Special',
     lat: 28.6100,
     lng: -13.9300,
