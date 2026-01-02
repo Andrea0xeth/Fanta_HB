@@ -9,7 +9,7 @@ import { CircusNeonDecorations } from '../components/CircusNeonDecorations';
 import { Avatar } from '../components/Avatar';
 import { PushNotificationSettings } from '../components/PushNotificationSettings';
 import { NotificationsModal } from '../components/NotificationsModal';
-import { CountdownGate } from '../components/CountdownGate';
+import { Countdown } from '../components/Countdown';
 import { useNavigate } from 'react-router-dom';
 
 export const HomePage: React.FC = () => {
@@ -44,13 +44,16 @@ export const HomePage: React.FC = () => {
 
   const nextGara = gare.find(g => g.stato !== 'completata');
 
+  // Controlla se l'evento è iniziato
+  const eventDate = gameState.data_inizio 
+    ? new Date(gameState.data_inizio).toISOString()
+    : new Date('2026-01-08T00:00:00+01:00').toISOString();
+  const now = Date.now();
+  const start = new Date(eventDate).getTime();
+  const hasStarted = now >= start || gameState.evento_iniziato || user?.is_admin;
+
   return (
-    <CountdownGate
-      title="30diCiaccioGame"
-      description="Tre giorni di sfide epiche, quest impossibili e gare all'ultimo respiro ti attendono! Completa le missioni, vinci le gare e scala la classifica per diventare il campione assoluto. L'avventura sta per iniziare... 🔥"
-      icon={<Flame size={48} className="text-coral-500" />}
-    >
-      <div className="min-h-full bg-dark flex flex-col">
+    <div className="min-h-full bg-dark flex flex-col">
       {/* Header - Snello e compatto */}
       <div className="flex-shrink-0 border-b border-white/5 px-4 pt-safe pb-3">
         <div className="flex items-center justify-between mb-3">
@@ -185,44 +188,66 @@ export const HomePage: React.FC = () => {
 
       {/* Content - Scrollable, snello */}
       <div className="flex-1 px-4 py-3 pb-28 space-y-3">
-        {/* Next Gara Section */}
-        {nextGara && (
-          <section>
-            <div className="flex items-center gap-1.5 mb-2">
-              <CircusNeonDecorations variant="clown-face" size="small" color="orange" />
-              <h2 className="font-display font-bold text-sm">Prossima Gara</h2>
+        {!hasStarted ? (
+          /* Countdown Section - Mostra solo se l'evento non è iniziato */
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-8"
+          >
+            <div className="mb-6">
+              <Flame size={48} className="text-coral-500 mx-auto mb-4" />
+              <h2 className="font-display font-bold text-xl mb-2">30diCiaccioGame</h2>
+              <p className="text-gray-400 text-sm mb-6">
+                Tre giorni di sfide epiche, quest impossibili e gare all'ultimo respiro ti attendono! 
+                Completa le missioni, vinci le gare e scala la classifica per diventare il campione assoluto. 
+                L'avventura sta per iniziare... 🔥
+              </p>
             </div>
-            <GaraCard gara={nextGara} />
-          </section>
-        )}
+            <Countdown targetDate={eventDate} />
+          </motion.section>
+        ) : (
+          <>
+            {/* Next Gara Section */}
+            {nextGara && (
+              <section>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <CircusNeonDecorations variant="clown-face" size="small" color="orange" />
+                  <h2 className="font-display font-bold text-sm">Prossima Gara</h2>
+                </div>
+                <GaraCard gara={nextGara} />
+              </section>
+            )}
 
-        {/* Quest Section */}
-        <section>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
-              <CircusNeonDecorations variant="star" size="small" color="red" />
-              <h2 className="font-display font-bold text-sm">Quest del Giorno</h2>
-            </div>
-            <span className="text-[10px] text-gray-400">{quests.length} disponibili</span>
-          </div>
-          
-          <div className="space-y-2">
-            {quests.map((quest, index) => (
-              <motion.div
-                key={quest.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <QuestCard 
-                  quest={quest} 
-                  onSubmit={submitProva}
-                  completed={quest.completed}
-                />
-              </motion.div>
-            ))}
-          </div>
-        </section>
+            {/* Quest Section */}
+            <section>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <CircusNeonDecorations variant="star" size="small" color="red" />
+                  <h2 className="font-display font-bold text-sm">Quest del Giorno</h2>
+                </div>
+                <span className="text-[10px] text-gray-400">{quests.length} disponibili</span>
+              </div>
+              
+              <div className="space-y-2">
+                {quests.map((quest, index) => (
+                  <motion.div
+                    key={quest.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <QuestCard 
+                      quest={quest} 
+                      onSubmit={submitProva}
+                      completed={quest.completed}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
       </div>
 
       {/* Verifica Modal */}
@@ -401,7 +426,6 @@ export const HomePage: React.FC = () => {
         isOpen={showNotifiche}
         onClose={() => setShowNotifiche(false)}
       />
-      </div>
-    </CountdownGate>
+    </div>
   );
 };
