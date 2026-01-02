@@ -52,6 +52,12 @@ interface GameContextType {
   }) => Promise<void>;
   aggiungiBonus: (userId: string, punti: number, motivo: string) => Promise<void>;
   refreshData: () => Promise<void>;
+  updateAvatar: (file: File) => Promise<void>;
+  
+  // Squadre management (admin only)
+  creaSquadra: (squadra: { nome: string; emoji: string; colore: string }) => Promise<void>;
+  modificaSquadra: (squadraId: string, updates: { nome?: string; emoji?: string; colore?: string }) => Promise<void>;
+  eliminaSquadra: (squadraId: string) => Promise<void>;
   
   // Computed
   mySquadra: Squadra | null;
@@ -1478,6 +1484,186 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     await loadData();
   };
 
+  // Update user avatar
+  const updateAvatar = async (file: File) => {
+    if (!user) {
+      throw new Error('Devi essere loggato per aggiornare l\'avatar');
+    }
+
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase non configurato');
+    }
+
+    try {
+      console.log('[Update Avatar] Inizio aggiornamento avatar...');
+      
+      // Carica il file su storage
+      const avatarUrl = await uploadAvatar(file, user.id);
+      
+      if (!avatarUrl) {
+        throw new Error('Errore durante il caricamento dell\'avatar');
+      }
+
+      console.log('[Update Avatar] Avatar caricato:', avatarUrl);
+
+      // Aggiorna il campo avatar nella tabella users
+      const { error: updateError } = await (supabase
+        .from('users') as any)
+        .update({ avatar: avatarUrl })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('[Update Avatar] Errore aggiornamento database:', updateError);
+        throw new Error(`Errore durante l'aggiornamento dell'avatar: ${updateError.message}`);
+      }
+
+      console.log('[Update Avatar] ✅ Avatar aggiornato con successo');
+
+      // Ricarica i dati dell'utente
+      const updatedUser = await fetchUserById(user.id);
+      if (updatedUser) {
+        setLoggedInUser(updatedUser);
+      }
+
+      // Ricarica tutti i dati per aggiornare l'avatar ovunque
+      await loadData();
+    } catch (error) {
+      console.error('[Update Avatar] ❌ Errore completo:', error);
+      throw error;
+    }
+  };
+
+  // Squadre management (admin only)
+  const creaSquadra = async (squadra: { nome: string; emoji: string; colore: string }) => {
+    if (!user?.is_admin) {
+      throw new Error('Solo gli admin possono creare squadre');
+    }
+
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase non configurato');
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('squadre')
+        .insert({
+          nome: squadra.nome,
+          emoji: squadra.emoji,
+          colore: squadra.colore,
+          punti_squadra: 0,
+        } as any)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[Crea Squadra] Errore:', error);
+        throw new Error(`Errore durante la creazione della squadra: ${error.message}`);
+      }
+
+      console.log('[Crea Squadra] ✅ Squadra creata:', data);
+      await loadData();
+    } catch (error) {
+      console.error('[Crea Squadra] ❌ Errore completo:', error);
+      throw error;
+    }
+  };
+
+  const modificaSquadra = async (squadraId: string, updates: { nome?: string; emoji?: string; colore?: string }) => {
+    if (!user?.is_admin) {
+      throw new Error('Solo gli admin possono modificare squadre');
+    }
+
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase non configurato');
+    }
+
+    try {
+      const updateData: any = {};
+      if (updates.nome !== undefined) updateData.nome = updates.nome;
+      if (updates.emoji !== undefined) updateData.emoji = updates.emoji;
+      if (updates.colore !== undefined) updateData.colore = updates.colore;
+
+      if (Object.keys(updateData).length === 0) {
+        throw new Error('Nessun campo da aggiornare');
+      }
+
+      const { error } = await (supabase
+        .from('squadre') as any)
+        .update(updateData)
+        .eq('id', squadraId);
+
+      if (error) {
+        console.error('[Modifica Squadra] Errore:', error);
+        throw new Error(`Errore durante la modifica della squadra: ${error.message}`);
+      }
+
+      console.log('[Modifica Squadra] ✅ Squadra modificata');
+      await loadData();
+    } catch (error) {
+      console.error('[Modifica Squadra] ❌ Errore completo:', error);
+      throw error;
+    }
+  };
+
+  const eliminaSquadra = async (squadraId: string) => {
+    if (!user?.is_admin) {
+      throw new Error('Solo gli admin possono eliminare squadre');
+    }
+
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase non configurato');
+    }
+
+    try {
+      // Verifica se ci sono membri nella squadra
+      const { data: membriData, error: membriError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('squadra_id', squadraId);
+
+      if (membriError) {
+        console.error('[Elimina Squadra] Errore verifica membri:', membriError);
+        throw new Error(`Errore durante la verifica dei membri: ${membriError.message}`);
+      }
+
+      if (membriData && membriData.length > 0) {
+        throw new Error(`Impossibile eliminare la squadra: ci sono ancora ${membriData.length} membri assegnati. Rimuovi prima i membri dalla squadra.`);
+      }
+
+      // Verifica se ci sono gare associate
+      const { data: gareData, error: gareError } = await supabase
+        .from('gare')
+        .select('id')
+        .or(`squadra_a_id.eq.${squadraId},squadra_b_id.eq.${squadraId}`);
+
+      if (gareError) {
+        console.error('[Elimina Squadra] Errore verifica gare:', gareError);
+        throw new Error(`Errore durante la verifica delle gare: ${gareError.message}`);
+      }
+
+      if (gareData && gareData.length > 0) {
+        throw new Error(`Impossibile eliminare la squadra: ci sono ancora ${gareData.length} gare associate. Elimina prima le gare.`);
+      }
+
+      // Elimina la squadra
+      const { error } = await supabase
+        .from('squadre')
+        .delete()
+        .eq('id', squadraId);
+
+      if (error) {
+        console.error('[Elimina Squadra] Errore:', error);
+        throw new Error(`Errore durante l'eliminazione della squadra: ${error.message}`);
+      }
+
+      console.log('[Elimina Squadra] ✅ Squadra eliminata');
+      await loadData();
+    } catch (error) {
+      console.error('[Elimina Squadra] ❌ Errore completo:', error);
+      throw error;
+    }
+  };
+
   // Computed values
   const mySquadra = user?.squadra_id 
     ? squadre.find(s => s.id === user.squadra_id) || null 
@@ -1513,6 +1699,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     creaGara,
     aggiungiBonus,
     refreshData,
+    updateAvatar,
+    creaSquadra,
+    modificaSquadra,
+    eliminaSquadra,
     mySquadra,
     leaderboardSquadre,
     leaderboardSingoli,

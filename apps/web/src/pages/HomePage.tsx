@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Calendar, Flame, CheckCircle2, Map, X } from 'lucide-react';
+import { Bell, Calendar, Flame, CheckCircle2, Map, X, Camera, Loader2 } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { QuestCard } from '../components/QuestCard';
 import { VerificaCard } from '../components/VerificaCard';
@@ -23,12 +23,16 @@ export const HomePage: React.FC = () => {
     notifiche,
     submitProva,
     votaProva,
-    logout
+    logout,
+    updateAvatar
   } = useGame();
   
   const [showVerifica, setShowVerifica] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifiche, setShowNotifiche] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const pendingVerifications = proveInVerifica.filter(
     p => p.stato === 'in_verifica' && p.user_id !== user?.id
@@ -266,11 +270,68 @@ export const HomePage: React.FC = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="text-center mb-4">
-                <div className="mx-auto mb-3">
+                <div className="mx-auto mb-3 relative inline-block">
                   <Avatar user={user} size="lg" />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingAvatar}
+                    className="absolute bottom-0 right-0 p-1.5 bg-coral-500 rounded-full text-white hover:bg-coral-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Cambia foto profilo"
+                  >
+                    {isUploadingAvatar ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Camera size={14} />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      // Validazione file
+                      if (file.size > 5 * 1024 * 1024) {
+                        setAvatarError('Il file è troppo grande. Massimo 5MB');
+                        return;
+                      }
+
+                      if (!file.type.startsWith('image/')) {
+                        setAvatarError('Il file deve essere un\'immagine');
+                        return;
+                      }
+
+                      setIsUploadingAvatar(true);
+                      setAvatarError(null);
+
+                      try {
+                        await updateAvatar(file);
+                        // Reset input
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
+                      } catch (error: any) {
+                        setAvatarError(error.message || 'Errore durante il caricamento della foto');
+                      } finally {
+                        setIsUploadingAvatar(false);
+                      }
+                    }}
+                  />
                 </div>
                 <h2 className="font-bold text-lg">{user?.nickname || 'Giocatore'}</h2>
                 <p className="text-gray-500 text-sm">Membro di {mySquadra?.nome}</p>
+                {avatarError && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-red-400 text-xs mt-2"
+                  >
+                    {avatarError}
+                  </motion.p>
+                )}
               </div>
               
               <div className="grid grid-cols-2 gap-2 mb-4">
