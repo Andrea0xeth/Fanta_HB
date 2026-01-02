@@ -1,30 +1,38 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Trophy, Flame, Crown, Swords } from 'lucide-react';
+import { Users, Trophy, Flame, Crown, Swords, Info } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { GaraCard } from '../components/GaraCard';
 import { Avatar } from '../components/Avatar';
 import { Countdown } from '../components/Countdown';
+import { SquadraModal } from '../components/SquadraModal';
+import { UserProfileModal } from '../components/UserProfileModal';
 
 export const SquadraPage: React.FC = () => {
   const { user, mySquadra, gare, leaderboardSquadre, gameState } = useGame();
+  const [showSquadraModal, setShowSquadraModal] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
 
   // Usa i membri reali della squadra se disponibili, altrimenti mock
-  const teamMembers = mySquadra?.membri && mySquadra.membri.length > 0
-    ? mySquadra.membri.map(m => ({
-        id: m.id,
-        nickname: m.nickname,
-        punti: m.punti_personali,
-        isMVP: false,
-        avatar: m.avatar || undefined,
-      })).sort((a, b) => b.punti - a.punti)
-    : [
-        { id: '1', nickname: 'Pippo', punti: 85, isMVP: true },
-        { id: '2', nickname: 'Pluto', punti: 62, isMVP: false },
-        { id: '3', nickname: 'Paperino', punti: 54, isMVP: false },
-        { id: '4', nickname: 'Topolino', punti: 48, isMVP: false },
-        { id: user?.id || '5', nickname: user?.nickname || 'Tu', punti: user?.punti_personali || 0, isMVP: false },
-      ].sort((a, b) => b.punti - a.punti);
+  const teamMembers = useMemo(() => {
+    return mySquadra?.membri && mySquadra.membri.length > 0
+      ? mySquadra.membri
+          .map((m) => ({
+            id: m.id,
+            nickname: m.nickname,
+            punti: m.punti_personali,
+            isMVP: false,
+            avatar: m.avatar || undefined,
+          }))
+          .sort((a, b) => b.punti - a.punti)
+      : [
+          { id: '1', nickname: 'Pippo', punti: 85, isMVP: true },
+          { id: '2', nickname: 'Pluto', punti: 62, isMVP: false },
+          { id: '3', nickname: 'Paperino', punti: 54, isMVP: false },
+          { id: '4', nickname: 'Topolino', punti: 48, isMVP: false },
+          { id: user?.id || '5', nickname: user?.nickname || 'Tu', punti: user?.punti_personali || 0, isMVP: false },
+        ].sort((a, b) => b.punti - a.punti);
+  }, [mySquadra?.membri, user?.id, user?.nickname, user?.punti_personali]);
 
   const myPosition = leaderboardSquadre.findIndex(s => s.id === mySquadra?.id) + 1;
   
@@ -66,7 +74,7 @@ export const SquadraPage: React.FC = () => {
               </motion.div>
               
               <h2 className="font-display font-bold text-2xl mb-4 bg-gradient-to-r from-turquoise-400 via-coral-500 to-turquoise-400 bg-clip-text text-transparent">
-                La Tua Squadra Ti Attende! ⚔️
+                La Tua Squadra Sta Arrivando! ⚔️
               </h2>
               
               <p className="text-gray-300 text-sm mb-8 leading-relaxed max-w-md mx-auto">
@@ -110,6 +118,16 @@ export const SquadraPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
+          <div className="flex items-center justify-end">
+            <button
+              onClick={() => setShowSquadraModal(true)}
+              className="p-1.5 rounded-xl hover:bg-white/5 text-gray-300"
+              aria-label="Dettagli squadra"
+              title="Dettagli"
+            >
+              <Info size={16} />
+            </button>
+          </div>
           <div className="flex items-center justify-center gap-2 mb-1">
             <motion.div
               animate={{ scale: [1, 1.05, 1] }}
@@ -180,29 +198,34 @@ export const SquadraPage: React.FC = () => {
                 <div className="w-5 text-center font-bold text-gray-500 text-[10px] flex-shrink-0">
                   {index + 1}
                 </div>
-                <Avatar 
-                  user={{ 
-                    id: member.id, 
-                    nickname: member.nickname, 
-                    avatar: (member as any).avatar,
-                    punti_personali: member.punti,
-                    squadra_id: null,
-                    is_admin: false,
-                    created_at: ''
-                  }} 
-                  size="sm" 
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-sm truncate">{member.nickname}</span>
-                    {member.isMVP && (
-                      <Crown size={12} className="text-party-300 flex-shrink-0" />
-                    )}
-                    {member.id === user?.id && (
-                      <span className="badge-coral flex-shrink-0 text-[10px] px-1.5 py-0.5">Tu</span>
-                    )}
+                <button
+                  type="button"
+                  onClick={() => setProfileUserId(member.id)}
+                  className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                  aria-label={`Apri profilo ${member.nickname}`}
+                >
+                  <Avatar
+                    user={{
+                      id: member.id,
+                      nickname: member.nickname,
+                      avatar: (member as any).avatar,
+                      punti_personali: member.punti,
+                      squadra_id: mySquadra.id,
+                      is_admin: false,
+                      created_at: '',
+                    }}
+                    size="sm"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-sm truncate">{member.nickname}</span>
+                      {member.isMVP && <Crown size={12} className="text-party-300 flex-shrink-0" />}
+                      {member.id === user?.id && (
+                        <span className="badge-coral flex-shrink-0 text-[10px] px-1.5 py-0.5">Tu</span>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </button>
                 <div className="text-right flex-shrink-0">
                   <span className="font-bold text-turquoise-400 text-sm">{member.punti}</span>
                   <span className="text-gray-400 text-[10px] ml-0.5">pts</span>
@@ -272,6 +295,21 @@ export const SquadraPage: React.FC = () => {
           </div>
         </section>
       </div>
+
+      <SquadraModal
+        isOpen={showSquadraModal}
+        squadra={mySquadra}
+        posizione={myPosition}
+        gareVinte={teamGare.filter((g) => g.vincitore_id === mySquadra.id).length}
+        members={teamMembers.map((m) => ({ id: m.id, nickname: m.nickname, punti: m.punti, avatar: (m as any).avatar }))}
+        onClose={() => setShowSquadraModal(false)}
+        onSelectMember={(id) => {
+          setShowSquadraModal(false);
+          setProfileUserId(id);
+        }}
+      />
+
+      <UserProfileModal isOpen={Boolean(profileUserId)} userId={profileUserId} onClose={() => setProfileUserId(null)} />
     </div>
   );
 };

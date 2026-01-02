@@ -84,6 +84,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [squadre, setSquadre] = useState<Squadra[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]); // Tutti gli utenti, inclusi quelli senza squadra
   const [quests, setQuests] = useState<Quest[]>([]);
   const [gare, setGare] = useState<Gara[]>([]);
   const [proveInVerifica, setProveInVerifica] = useState<ProvaQuest[]>([]);
@@ -187,6 +188,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       });
 
       setSquadre(squadreWithMembers);
+      setAllUsers(users); // Salva tutti gli utenti per la leaderboard singoli
 
       // Carica quest del giorno corrente
       // Assicurati che il giorno sia sempre tra 1 e 3 (il constraint del database lo richiede)
@@ -1739,10 +1741,16 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
   const leaderboardSquadre = [...squadre].sort((a, b) => b.punti_squadra - a.punti_squadra);
   
-  // Calcola leaderboard singoli dai dati reali
-  const leaderboardSingoli = squadre
-    .flatMap(s => s.membri)
-    .sort((a, b) => b.punti_personali - a.punti_personali);
+  // Calcola leaderboard singoli da tutti gli utenti (inclusi quelli senza squadra)
+  const leaderboardSingoli = [...allUsers]
+    .sort((a, b) => {
+      // Calcola punti totali per ogni utente
+      const squadraA = squadre.find(s => s.id === a.squadra_id);
+      const squadraB = squadre.find(s => s.id === b.squadra_id);
+      const puntiTotaliA = Math.round(a.punti_personali * 0.7 + (squadraA?.punti_squadra || 0) * 0.3);
+      const puntiTotaliB = Math.round(b.punti_personali * 0.7 + (squadraB?.punti_squadra || 0) * 0.3);
+      return puntiTotaliB - puntiTotaliA;
+    });
 
   const value: GameContextType = {
     user,

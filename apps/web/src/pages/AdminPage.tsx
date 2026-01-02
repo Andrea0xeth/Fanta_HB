@@ -1264,6 +1264,9 @@ export const AdminPage: React.FC = () => {
                         .map((u) => {
                           const isSelected = editingSquadraMembers.has(u.id);
                           const isCurrentMember = squadra.membri.some(m => m.id === u.id);
+                          const hasOtherSquadra = u.squadra_id !== null && u.squadra_id !== squadra.id;
+                          const hasNoSquadra = u.squadra_id === null;
+                          const otherSquadra = hasOtherSquadra ? squadre.find(s => s.id === u.squadra_id) : null;
                           
                           return (
                             <label
@@ -1271,8 +1274,10 @@ export const AdminPage: React.FC = () => {
                               className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
                                 isSelected
                                   ? 'bg-turquoise-500/20 border border-turquoise-500/40'
-                                  : 'hover:bg-white/5 border border-transparent'
-                              }`}
+                                  : isCurrentMember
+                                    ? 'bg-white/5 border border-transparent'
+                                    : 'hover:bg-white/5 border border-transparent'
+                              } ${hasOtherSquadra && !isSelected ? 'opacity-75' : ''}`}
                             >
                               <input
                                 type="checkbox"
@@ -1303,6 +1308,17 @@ export const AdminPage: React.FC = () => {
                               )}
                               {!isCurrentMember && isSelected && (
                                 <span className="text-[10px] text-turquoise-400">Sarà aggiunto</span>
+                              )}
+                              {isCurrentMember && isSelected && (
+                                <span className="text-[10px] text-gray-400">Membro attuale</span>
+                              )}
+                              {hasNoSquadra && !isSelected && (
+                                <span className="text-[10px] text-gray-500">Senza squadra</span>
+                              )}
+                              {hasOtherSquadra && !isSelected && otherSquadra && (
+                                <span className="text-[10px] text-gray-500">
+                                  {otherSquadra.emoji} {otherSquadra.nome}
+                                </span>
                               )}
                             </label>
                           );
