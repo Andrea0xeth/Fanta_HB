@@ -101,6 +101,7 @@ export const SplashPage: React.FC = () => {
     setShowWelcomePlayOverlay(false);
 
     let cleanupFunctions: (() => void)[] = [];
+    let hasStarted = false;
 
     // Aspetta che il video sia montato nel DOM
     const timeoutId = setTimeout(() => {
@@ -114,25 +115,27 @@ export const SplashPage: React.FC = () => {
       // Reset video
       video.currentTime = 0;
       video.volume = 1;
-      // Audio sempre attivo (come richiesto)
+      // Audio sempre attivo
       video.muted = false;
       
-      // Funzione per far partire il video
-      const startVideo = () => {
-        if (!videoRef.current) return;
+      // Funzione per far partire il video con audio
+      const startVideo = async () => {
+        if (!videoRef.current || hasStarted) return;
+        hasStarted = true;
         
-        const playPromise = videoRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              console.log('✅ Video avviato con successo');
-              setShowWelcomePlayOverlay(false);
-            })
-            .catch(error => {
-              console.error('❌ Error playing video:', error);
-              // Autoplay con audio può essere bloccato: mostriamo overlay "tocca per riprodurre"
-              setShowWelcomePlayOverlay(true);
-            });
+        try {
+          // Prova a far partire con audio
+          const playPromise = videoRef.current.play();
+          if (playPromise !== undefined) {
+            await playPromise;
+            console.log('✅ Video avviato con successo (con audio)');
+            setShowWelcomePlayOverlay(false);
+          }
+        } catch (error) {
+          console.error('❌ Error playing video:', error);
+          hasStarted = false;
+          // Autoplay bloccato: mostriamo overlay "tocca per riprodurre"
+          setShowWelcomePlayOverlay(true);
         }
       };
       
@@ -141,38 +144,49 @@ export const SplashPage: React.FC = () => {
       
       // Gestori eventi per quando il video è pronto
       const handleCanPlay = () => {
-        if (videoRef.current && videoRef.current.paused) {
+        if (videoRef.current && videoRef.current.paused && !hasStarted) {
           startVideo();
         }
       };
       
       const handleLoadedData = () => {
-        if (videoRef.current && videoRef.current.paused) {
+        if (videoRef.current && videoRef.current.paused && !hasStarted) {
+          startVideo();
+        }
+      };
+
+      const handleLoadedMetadata = () => {
+        if (videoRef.current && videoRef.current.paused && !hasStarted) {
           startVideo();
         }
       };
       
-      // Aggiungi listener
+      // Aggiungi listener multipli per essere sicuri
       video.addEventListener('canplay', handleCanPlay, { once: true });
+      video.addEventListener('canplaythrough', handleCanPlay, { once: true });
       video.addEventListener('loadeddata', handleLoadedData, { once: true });
+      video.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
       
       // Salva cleanup functions
       cleanupFunctions.push(() => {
         if (videoRef.current) {
           videoRef.current.removeEventListener('canplay', handleCanPlay);
+          videoRef.current.removeEventListener('canplaythrough', handleCanPlay);
           videoRef.current.removeEventListener('loadeddata', handleLoadedData);
+          videoRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
         }
       });
       
       // Prova a far partire immediatamente se già caricato
-      if (video.readyState >= 2) {
+      if (video.readyState >= 2 && !hasStarted) {
         startVideo();
       }
-    }, 150);
+    }, 200);
     
     return () => {
       clearTimeout(timeoutId);
       cleanupFunctions.forEach(cleanup => cleanup());
+      hasStarted = false;
     };
   }, [viewState]);
 
@@ -208,11 +222,18 @@ export const SplashPage: React.FC = () => {
     };
   }, [viewState, VIDEO_PRE_URL, VIDEO_POST_URL]);
 
-  const handleStartWelcomeVideo = () => {
+  const handleStartWelcomeVideo = async () => {
     if (!videoRef.current) return;
-    videoRef.current.muted = false;
-    videoRef.current.volume = 1;
-    videoRef.current.play().then(() => setShowWelcomePlayOverlay(false)).catch(() => setShowWelcomePlayOverlay(true));
+    try {
+      videoRef.current.muted = false;
+      videoRef.current.volume = 1;
+      await videoRef.current.play();
+      setShowWelcomePlayOverlay(false);
+      console.log('✅ Video avviato manualmente');
+    } catch (error) {
+      console.error('❌ Errore avvio manuale:', error);
+      setShowWelcomePlayOverlay(true);
+    }
   };
 
   // Handle "Entra nel Game" click - show choice between login and register
@@ -461,24 +482,12 @@ export const SplashPage: React.FC = () => {
             muted={false}
             preload="auto"
             onEnded={handlePreVideoEnd}
-            onLoadedData={() => {
-              if (videoRef.current && videoRef.current.paused) {
-                videoRef.current.play().catch((err) => {
-                  console.error('Errore play onLoadedData:', err);
-                  setShowContinueButton(true);
-                });
-              }
-            }}
-            onCanPlay={() => {
-              if (videoRef.current && videoRef.current.paused) {
-                videoRef.current.play().catch((err) => {
-                  console.error('Errore play onCanPlay:', err);
-                  setShowContinueButton(true);
-                });
-              }
-            }}
             onPlay={() => {
-              console.log('✅ Video in riproduzione');
+              console.log('✅ Video in riproduzione (con audio)');
+            }}
+            onError={(e) => {
+              console.error('❌ Errore video:', e);
+              setShowWelcomePlayOverlay(true);
             }}
             className="w-full h-full object-cover"
           />
@@ -559,21 +568,12 @@ export const SplashPage: React.FC = () => {
             muted={false}
             preload="auto"
             onEnded={handlePostVideoEnd}
-            onLoadedData={() => {
-              // Assicurati che il video parta quando è caricato
-              if (videoRef.current && videoRef.current.paused) {
-                videoRef.current.play().catch((err) => {
-                  console.error('Errore play onLoadedData:', err);
-                });
-              }
+            onPlay={() => {
+              console.log('✅ Video post in riproduzione (con audio)');
             }}
-            onCanPlay={() => {
-              // Forza il play quando il video è pronto
-              if (videoRef.current && videoRef.current.paused) {
-                videoRef.current.play().catch((err) => {
-                  console.error('Errore play onCanPlay:', err);
-                });
-              }
+            onError={(e) => {
+              console.error('❌ Errore video post:', e);
+              setShowWelcomePlayOverlay(true);
             }}
             className="w-full h-full object-cover"
           />
