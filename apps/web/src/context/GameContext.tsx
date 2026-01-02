@@ -358,16 +358,42 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         }
       }
 
+      // Carica tutte le squadre partecipanti per ogni gara dalla tabella gare_squadre
+      const squadrePartecipantiMap = new Map<string, Squadra[]>();
+      
+      if (gareIds.length > 0) {
+        const { data: gareSquadreData } = await supabase
+          .from('gare_squadre')
+          .select('gara_id, squadra_id')
+          .in('gara_id', gareIds);
+
+        if (gareSquadreData) {
+          gareSquadreData.forEach((gs: any) => {
+            if (!squadrePartecipantiMap.has(gs.gara_id)) {
+              squadrePartecipantiMap.set(gs.gara_id, []);
+            }
+            const squadra = squadreWithMembers.find(s => s.id === gs.squadra_id);
+            if (squadra) {
+              squadrePartecipantiMap.get(gs.gara_id)!.push(squadra);
+            }
+          });
+        }
+      }
+
       const gareList = (gareData || []).map((g: Database['public']['Tables']['gare']['Row']) => {
         const squadraA = squadreWithMembers.find(s => s.id === g.squadra_a_id);
         const squadraB = squadreWithMembers.find(s => s.id === g.squadra_b_id);
         const classifica = classificheMap.get(g.id) || undefined;
         
         // Determina tutte le squadre partecipanti
-        // Se c'è una classifica, usa quella (può avere più di 2 squadre)
-        // Altrimenti usa solo A e B (gara 1v1)
+        // Priorità: 1) gare_squadre, 2) classifica, 3) squadra A e B
         let squadrePartecipanti: Squadra[] = [];
-        if (classifica && classifica.length > 0) {
+        const squadreDaGareSquadre = squadrePartecipantiMap.get(g.id);
+        
+        if (squadreDaGareSquadre && squadreDaGareSquadre.length > 0) {
+          // Usa le squadre dalla tabella gare_squadre (più affidabile)
+          squadrePartecipanti = squadreDaGareSquadre;
+        } else if (classifica && classifica.length > 0) {
           // Usa le squadre dalla classifica
           squadrePartecipanti = classifica
             .map(c => squadreWithMembers.find(s => s.id === c.squadra_id))
@@ -1375,9 +1401,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         giorno: gara.giorno,
       });
 
-      // Salva le prime due squadre in squadra_a_id e squadra_b_id per retrocompatibilità
-      // Le altre squadre saranno gestite tramite classifiche_gare quando si assegna la classifica
-      const { data, error } = await supabase
+      // Crea la gara (salva le prime due squadre in squadra_a_id e squadra_b_id per retrocompatibilità)
+      const { data: garaData, error } = await supabase
         .from('gare')
         .insert({
           nome: gara.nome,
@@ -1389,14 +1414,35 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
           giorno: gara.giorno,
           stato: 'programmata',
         } as any)
-        .select();
+        .select()
+        .single();
 
       if (error) {
         console.error('[Crea Gara] Errore database:', error);
         throw new Error(`Errore durante la creazione della gara: ${error.message}`);
       }
 
-      console.log('[Crea Gara] ✅ Gara creata con successo:', data);
+      if (!garaData) {
+        throw new Error('Errore: la gara non è stata creata');
+      }
+
+      console.log('[Crea Gara] ✅ Gara creata con successo:', garaData);
+
+      // Salva tutte le squadre partecipanti nella tabella gare_squadre
+      if (gara.squadre_ids && gara.squadre_ids.length > 0) {
+        const { error: squadreError } = await supabase.rpc('aggiungi_squadre_a_gara', {
+          p_gara_id: (garaData as any).id,
+          p_squadre_ids: gara.squadre_ids,
+        } as any);
+
+        if (squadreError) {
+          console.error('[Crea Gara] Errore salvataggio squadre:', squadreError);
+          // Non facciamo fallire la creazione della gara, ma loggiamo l'errore
+          console.warn('[Crea Gara] ⚠️ Gara creata ma alcune squadre non sono state salvate');
+        } else {
+          console.log('[Crea Gara] ✅ Squadre partecipanti salvate:', gara.squadre_ids);
+        }
+      }
 
       await loadData();
     } catch (error) {
