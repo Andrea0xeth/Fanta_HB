@@ -97,6 +97,8 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
   };
 
   const handleTypeSelect = (type: 'foto' | 'video' | 'testo') => {
+    if (isSpecialQuestLocked) return;
+    
     setSelectedType(type);
     setError(null);
     
@@ -390,11 +392,14 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
               <div className="flex gap-2 mb-4">
                 {quest.tipo_prova.includes('foto') && (
                   <button
-                    onClick={() => handleTypeSelect('foto')}
+                    onClick={() => !isSpecialQuestLocked && handleTypeSelect('foto')}
+                    disabled={isSpecialQuestLocked}
                     className={`flex-1 py-3 rounded-2xl flex flex-col items-center gap-1 transition-all ${
-                      selectedType === 'foto' 
-                        ? 'bg-coral-500 text-white shadow-lg' 
-                        : 'glass text-gray-400 hover:text-gray-300'
+                      isSpecialQuestLocked
+                        ? 'glass text-gray-600 cursor-not-allowed opacity-50'
+                        : selectedType === 'foto' 
+                          ? 'bg-coral-500 text-white shadow-lg' 
+                          : 'glass text-gray-400 hover:text-gray-300'
                     }`}
                   >
                     <Camera size={18} />
@@ -403,11 +408,14 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                 )}
                 {quest.tipo_prova.includes('video') && (
                   <button
-                    onClick={() => handleTypeSelect('video')}
+                    onClick={() => !isSpecialQuestLocked && handleTypeSelect('video')}
+                    disabled={isSpecialQuestLocked}
                     className={`flex-1 py-3 rounded-2xl flex flex-col items-center gap-1 transition-all ${
-                      selectedType === 'video' 
-                        ? 'bg-coral-500 text-white shadow-lg' 
-                        : 'glass text-gray-400 hover:text-gray-300'
+                      isSpecialQuestLocked
+                        ? 'glass text-gray-600 cursor-not-allowed opacity-50'
+                        : selectedType === 'video' 
+                          ? 'bg-coral-500 text-white shadow-lg' 
+                          : 'glass text-gray-400 hover:text-gray-300'
                     }`}
                   >
                     <Video size={18} />
@@ -416,11 +424,14 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                 )}
                 {quest.tipo_prova.includes('testo') && (
                   <button
-                    onClick={() => handleTypeSelect('testo')}
+                    onClick={() => !isSpecialQuestLocked && handleTypeSelect('testo')}
+                    disabled={isSpecialQuestLocked}
                     className={`flex-1 py-3 rounded-2xl flex flex-col items-center gap-1 transition-all ${
-                      selectedType === 'testo' 
-                        ? 'bg-coral-500 text-white shadow-lg' 
-                        : 'glass text-gray-400 hover:text-gray-300'
+                      isSpecialQuestLocked
+                        ? 'glass text-gray-600 cursor-not-allowed opacity-50'
+                        : selectedType === 'testo' 
+                          ? 'bg-coral-500 text-white shadow-lg' 
+                          : 'glass text-gray-400 hover:text-gray-300'
                     }`}
                   >
                     <FileText size={18} />

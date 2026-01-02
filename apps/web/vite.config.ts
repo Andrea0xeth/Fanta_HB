@@ -2,8 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import basicSsl from '@vitejs/plugin-basic-ssl'
-import { readFileSync, writeFileSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { join } from 'path'
+import { homedir } from 'os'
 
 // Plugin per iniettare il codice push handler nel service worker generato
 const injectPushHandler = () => {
@@ -34,18 +35,48 @@ const injectPushHandler = () => {
   }
 }
 
+// Funzione per verificare se mkcert è configurato
+function getMkcertCertificates() {
+  const homeDir = homedir()
+  // Percorsi standard per mkcert su macOS/Linux
+  const certPaths = [
+    join(homeDir, '.local/share/mkcert'),
+    join(homeDir, '.mkcert'),
+    join(process.cwd(), 'mkcert'),
+  ]
+  
+  for (const certPath of certPaths) {
+    const certFile = join(certPath, 'localhost+2.pem')
+    const keyFile = join(certPath, 'localhost+2-key.pem')
+    
+    if (existsSync(certFile) && existsSync(keyFile)) {
+      console.log('✅ Trovati certificati mkcert, uso quelli (trusted su mobile)')
+      return {
+        cert: readFileSync(certFile),
+        key: readFileSync(keyFile),
+      }
+    }
+  }
+  
+  return null
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   server: {
     // HTTPS RICHIESTO per WebAuthn su Safari iOS
     // Safari iOS blocca WebAuthn su HTTP anche su reti locali
-    // L'utente dovrà accettare il certificato self-signed (normale in sviluppo)
-    https: {}, // Usa il certificato generato da basicSsl()
+    // 
+    // PRIORITÀ:
+    // 1. Se mkcert è configurato, usa quei certificati (trusted su mobile)
+    // 2. Altrimenti usa basicSsl (self-signed, funziona solo su desktop)
+    https: getMkcertCertificates() || {}, // Usa mkcert se disponibile, altrimenti basicSsl
     host: true, // Espone su rete locale
   },
   plugins: [
     react(),
-    basicSsl(), // Genera certificato SSL self-signed per sviluppo
+    // Usa basicSsl solo se mkcert non è disponibile
+    ...(getMkcertCertificates() ? [] : [basicSsl()]), // Genera certificato SSL self-signed solo se mkcert non c'è
     VitePWA({
       // Usa 'prompt' per permettere all'utente di scegliere quando aggiornare
       // Il nostro hook intercetterà quando c'è un nuovo SW in attesa

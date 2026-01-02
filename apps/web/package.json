@@ -17,7 +17,8 @@
     "apply:push-notifications": "node scripts/apply-push-notifications.js",
     "apply:push-queue": "node scripts/apply-push-queue.js",
     "apply:storage-policies": "node scripts/apply-storage-policies.js",
-    "apply:bonus-policies": "node scripts/apply-bonus-punti-policies.js"
+    "apply:bonus-policies": "node scripts/apply-bonus-punti-policies.js",
+    "setup:mkcert": "node scripts/setup-mkcert.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

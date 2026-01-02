@@ -36,18 +36,40 @@ const POIS: Poi[] = [
     address: 'OÚM, Cl. Majanicho, 35, 35650 La Oliva, Las Palmas, Spagna',
     note: 'Casa 🏠',
   },
+  // Paesi
   { id: 'corralejo', name: 'Corralejo', category: 'Paesi', lat: 28.7397, lng: -13.8680, note: 'Nord – vibe, locali, dunes vicine' },
   { id: 'puerto-del-rosario', name: 'Puerto del Rosario', category: 'Paesi', lat: 28.5004, lng: -13.8627, note: 'Capitale' },
   { id: 'el-cotillo', name: 'El Cotillo', category: 'Paesi', lat: 28.6818, lng: -14.0096, note: 'Tramonti + lagune' },
   { id: 'betancuria', name: 'Betancuria', category: 'Paesi', lat: 28.4246, lng: -14.0564, note: 'Borgo storico in montagna' },
-  { id: 'costa-calma', name: 'Costa Calma', category: 'Paesi', lat: 28.1617, lng: -14.2287 },
-  { id: 'morro-jable', name: 'Morro Jable', category: 'Paesi', lat: 28.0506, lng: -14.3556 },
+  { id: 'costa-calma', name: 'Costa Calma', category: 'Paesi', lat: 28.1617, lng: -14.2287, note: 'Resort zona sud' },
+  { id: 'morro-jable', name: 'Morro Jable', category: 'Paesi', lat: 28.0506, lng: -14.3556, note: 'Porto sud, spiagge' },
+  { id: 'la-oliva', name: 'La Oliva', category: 'Paesi', lat: 28.6100, lng: -13.9300, note: 'Centro nord, Casa de los Coroneles' },
+  { id: 'antigua', name: 'Antigua', category: 'Paesi', lat: 28.4231, lng: -14.0136, note: 'Centro isola, mulini' },
+  { id: 'pajara', name: 'Pájara', category: 'Paesi', lat: 28.3500, lng: -14.1069, note: 'Sud, chiesa storica' },
+  { id: 'tuineje', name: 'Tuineje', category: 'Paesi', lat: 28.3236, lng: -14.0478, note: 'Sud, tradizione' },
+  { id: 'gran-tarajal', name: 'Gran Tarajal', category: 'Paesi', lat: 28.2119, lng: -14.0208, note: 'Porto peschereccio' },
 
+  // Spiagge
+  { id: 'cofete', name: 'Playa de Cofete', category: 'Spiagge', lat: 28.1131, lng: -14.3590, note: 'Wild (strada sterrata)' },
+  { id: 'sotavento', name: 'Playa de Sotavento', category: 'Spiagge', lat: 28.1345, lng: -14.2979, note: 'Kite / laguna con marea' },
+  { id: 'jandia', name: 'Playa de Jandía', category: 'Spiagge', lat: 28.0500, lng: -14.3500, note: 'Spiaggia lunga sud' },
+  { id: 'esquinzo', name: 'Playa de Esquinzo', category: 'Spiagge', lat: 28.2000, lng: -14.1500, note: 'Spiaggia isolata' },
+  { id: 'concha', name: 'Playa de la Concha', category: 'Spiagge', lat: 28.6800, lng: -14.0100, note: 'El Cotillo, lagune' },
+  { id: 'grandes-playas', name: 'Grandes Playas', category: 'Spiagge', lat: 28.7000, lng: -13.8500, note: 'Corralejo, kite' },
+  { id: 'ajuy-beach', name: 'Playa de Ajuy', category: 'Spiagge', lat: 28.3922, lng: -14.1569, note: 'Spiaggia nera, grotte' },
+  { id: 'el-burro', name: 'Playa del Burro', category: 'Spiagge', lat: 28.6500, lng: -13.9500, note: 'Spiaggia tranquilla' },
+
+  // Attrazioni
   { id: 'dunas-corralejo', name: 'Dunas de Corralejo', category: 'Attrazioni', lat: 28.7176, lng: -13.8450, note: 'Dune + vista Oceano' },
   { id: 'calderon-hondo', name: 'Calderón Hondo (cratere)', category: 'Attrazioni', lat: 28.6094, lng: -13.9756, note: 'Trekking facile' },
   { id: 'ajuy-caves', name: 'Cuevas de Ajuy', category: 'Attrazioni', lat: 28.3922, lng: -14.1569, note: 'Grotte + paesino' },
-  { id: 'cofete', name: 'Playa de Cofete', category: 'Spiagge', lat: 28.1131, lng: -14.3590, note: 'Wild (strada sterrata)' },
-  { id: 'sotavento', name: 'Playa de Sotavento', category: 'Spiagge', lat: 28.1345, lng: -14.2979, note: 'Kite / laguna con marea' },
+  { id: 'faro-entallada', name: 'Faro de la Entallada', category: 'Attrazioni', lat: 28.2000, lng: -14.0000, note: 'Faro panoramico' },
+  { id: 'oasis-park', name: 'Oasis Park', category: 'Attrazioni', lat: 28.1500, lng: -14.2000, note: 'Zoo + camel safari' },
+  { id: 'museo-queso', name: 'Museo del Queso Majorero', category: 'Attrazioni', lat: 28.4231, lng: -14.0136, note: 'Antigua, tradizione' },
+  { id: 'isla-lobos', name: 'Isla de Lobos', category: 'Attrazioni', lat: 28.7500, lng: -13.8200, note: 'Isola riserva naturale' },
+  { id: 'casa-coroneles', name: 'Casa de los Coroneles', category: 'Attrazioni', lat: 28.6100, lng: -13.9300, note: 'La Oliva, palazzo storico' },
+  { id: 'mirador-morvelo', name: 'Mirador de Morro Velosa', category: 'Attrazioni', lat: 28.4500, lng: -14.0500, note: 'Vista panoramica' },
+  { id: 'salinas-del-carmen', name: 'Salinas del Carmen', category: 'Attrazioni', lat: 28.4500, lng: -13.8500, note: 'Museo del sale' },
 ];
 
 function buildLinks(poi: Poi) {
@@ -281,10 +303,10 @@ export const MappaPage: React.FC = () => {
                     <CircleMarker
                       key={p.id}
                       center={[p.lat as number, p.lng as number]}
-                      radius={isHighlighted ? (isSpecial ? 14 : 11) : (isSpecial ? 10 : 7)}
+                      radius={isHighlighted ? (isSpecial ? 10 : 8) : (isSpecial ? 7 : 5)}
                       pathOptions={{
                         color: isHighlighted ? '#FF6B6B' : color,
-                        weight: isHighlighted ? 3 : 2,
+                        weight: isHighlighted ? 2.5 : 1.5,
                         fillColor: isHighlighted ? '#FF6B6B' : fill,
                         fillOpacity: isHighlighted ? 1 : 0.85,
                       }}

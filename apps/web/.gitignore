@@ -62,6 +62,11 @@ pnpm-debug.log*
 *.temp
 .cache/
 
+# ============================================
+# mkcert certificates (local development)
+# ============================================
+mkcert/
+
 
 
 
