@@ -9,6 +9,7 @@ import { CircusNeonDecorations } from '../components/CircusNeonDecorations';
 import { Avatar } from '../components/Avatar';
 import { PushNotificationSettings } from '../components/PushNotificationSettings';
 import { NotificationsModal } from '../components/NotificationsModal';
+import { CountdownGate } from '../components/CountdownGate';
 import { useNavigate } from 'react-router-dom';
 
 export const HomePage: React.FC = () => {
@@ -44,7 +45,12 @@ export const HomePage: React.FC = () => {
   const nextGara = gare.find(g => g.stato !== 'completata');
 
   return (
-    <div className="min-h-full bg-dark flex flex-col">
+    <CountdownGate
+      title="30diCiaccioGame"
+      description="Tre giorni di sfide epiche, quest impossibili e gare all'ultimo respiro ti attendono! Completa le missioni, vinci le gare e scala la classifica per diventare il campione assoluto. L'avventura sta per iniziare... 🔥"
+      icon={<Flame size={48} className="text-coral-500" />}
+    >
+      <div className="min-h-full bg-dark flex flex-col">
       {/* Header - Snello e compatto */}
       <div className="flex-shrink-0 border-b border-white/5 px-4 pt-safe pb-3">
         <div className="flex items-center justify-between mb-3">
@@ -369,6 +375,7 @@ export const HomePage: React.FC = () => {
         isOpen={showNotifiche}
         onClose={() => setShowNotifiche(false)}
       />
-    </div>
+      </div>
+    </CountdownGate>
   );
 };

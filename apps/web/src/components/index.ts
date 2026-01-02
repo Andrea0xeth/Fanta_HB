@@ -3,6 +3,7 @@ export { Layout } from './Layout';
 export { QuestCard } from './QuestCard';
 export { VerificaCard } from './VerificaCard';
 export { Countdown } from './Countdown';
+export { CountdownGate } from './CountdownGate';
 export { GaraCard } from './GaraCard';
 export { PWAInstallPrompt } from './PWAInstallPrompt';
 export { Avatar } from './Avatar';

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, User, TrendingUp, TrendingDown, Minus, Crown, Flame } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { Avatar } from '../components/Avatar';
+import { CountdownGate } from '../components/CountdownGate';
 
 type TabType = 'squadre' | 'singoli';
 
@@ -56,8 +57,13 @@ export const LeaderboardPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full bg-dark flex flex-col">
-      {/* Header - Snello */}
+    <CountdownGate
+      title="Classifica"
+      description="Guarda chi domina la classifica! Ogni punto conta, ogni sfida vinta ti avvicina alla gloria. Sfida i migliori, supera i record e conquista il podio. La competizione è spietata, ma solo i più forti sopravvivono! 🏆"
+      icon={<Trophy size={48} className="text-party-300" />}
+    >
+      <div className="min-h-full bg-dark flex flex-col">
+        {/* Header - Snello */}
       <div className="flex-shrink-0 border-b border-white/5 px-4 pt-safe pb-3">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
@@ -259,5 +265,6 @@ export const LeaderboardPage: React.FC = () => {
         </AnimatePresence>
       </div>
     </div>
+    </CountdownGate>
   );
 };

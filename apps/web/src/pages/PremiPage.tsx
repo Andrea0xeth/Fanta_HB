@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Gift, Star, Zap, Users, User, Calendar, Sparkles } from 'lucide-react';
 import { useGame } from '../context/GameContext';
+import { CountdownGate } from '../components/CountdownGate';
 import type { Premio } from '../types';
 
 const mockPremi: Premio[] = [
@@ -93,8 +94,13 @@ export const PremiPage: React.FC = () => {
   const totalPoints = Math.round(userPoints * 0.7 + teamPoints * 0.3);
 
   return (
-    <div className="min-h-full bg-dark flex flex-col">
-      {/* Header - Snello */}
+    <CountdownGate
+      title="Premi"
+      description="Tesori leggendari ti attendono! Completa le quest più difficili, vinci le gare più epiche e accumula punti per sbloccare premi incredibili. Dalle cene esclusive ai gadget tecnologici, ogni premio è un passo verso la gloria eterna! 🎁"
+      icon={<Gift size={48} className="text-coral-500" />}
+    >
+      <div className="min-h-full bg-dark flex flex-col">
+        {/* Header - Snello */}
       <div className="flex-shrink-0 border-b border-white/5 px-4 pt-safe pb-3">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
@@ -227,5 +233,6 @@ export const PremiPage: React.FC = () => {
         </motion.div>
       </div>
     </div>
+    </CountdownGate>
   );
 };

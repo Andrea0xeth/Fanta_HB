@@ -4,6 +4,7 @@ import { Users, Trophy, Flame, Crown, Swords } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { GaraCard } from '../components/GaraCard';
 import { Avatar } from '../components/Avatar';
+import { CountdownGate } from '../components/CountdownGate';
 
 export const SquadraPage: React.FC = () => {
   const { user, mySquadra, gare, leaderboardSquadre } = useGame();
@@ -41,7 +42,12 @@ export const SquadraPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-full bg-dark flex flex-col">
+    <CountdownGate
+      title="La Tua Squadra"
+      description="Unisciti alla tua squadra e preparati per la battaglia! Scopri i tuoi compagni, coordina le strategie e preparati a dominare le gare. L'unità fa la forza, e insieme conquisterete la vittoria! 💪"
+      icon={<Users size={48} className="text-turquoise-400" />}
+    >
+      <div className="min-h-full bg-dark flex flex-col">
       {/* Hero Header - Snello */}
       <div 
         className="flex-shrink-0 border-b border-white/5 px-4 pt-safe pb-3"
@@ -217,5 +223,6 @@ export const SquadraPage: React.FC = () => {
         </section>
       </div>
     </div>
+    </CountdownGate>
   );
 };
