@@ -1,5 +1,5 @@
 -- ============================================
--- 30diCiaccioGame - Database Schema
+-- DC-30 - Database Schema
 -- ============================================
 -- Esegui questo file nella console SQL di Supabase
 -- oppure usa: supabase db push

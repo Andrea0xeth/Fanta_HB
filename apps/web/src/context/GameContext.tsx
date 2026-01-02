@@ -1899,7 +1899,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
     try {
       setIsLoading(true);
-      console.log('[Crea Premio] Creazione premio:', premio);
+      console.log('[Crea Premio] 🚀 Inizio creazione premio');
+      console.log('[Crea Premio] 📋 Dati ricevuti:', JSON.stringify(premio, null, 2));
 
       // Prepara i dati per l'insert
       const insertData: any = {
@@ -1909,25 +1910,37 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         tipo: premio.tipo,
       };
 
+      console.log('[Crea Premio] 🔍 Tipo premio:', premio.tipo);
+      console.log('[Crea Premio] 🔍 Posizione classifica ricevuta:', premio.posizione_classifica);
+      console.log('[Crea Premio] 🔍 Punti richiesti ricevuti:', premio.punti_richiesti);
+
       if (premio.tipo === 'squadra') {
         // Per premi di squadra: punti_richiesti = null, posizione_classifica = numero
+        console.log('[Crea Premio] 🏆 Premio di tipo squadra');
         insertData.punti_richiesti = null;
         if (premio.posizione_classifica && premio.posizione_classifica > 0) {
           insertData.posizione_classifica = premio.posizione_classifica;
+          console.log('[Crea Premio] ✅ Posizione classifica impostata:', premio.posizione_classifica);
         } else {
+          console.error('[Crea Premio] ❌ Errore: Posizione classifica mancante o invalida');
+          console.error('[Crea Premio] ❌ Valore ricevuto:', premio.posizione_classifica);
           throw new Error('Posizione classifica deve essere un numero maggiore di 0 per i premi di squadra');
         }
       } else {
         // Per altri premi: posizione_classifica = null, punti_richiesti = numero
+        console.log('[Crea Premio] 🎁 Premio di tipo:', premio.tipo);
         insertData.posizione_classifica = null;
         if (premio.punti_richiesti && premio.punti_richiesti > 0) {
           insertData.punti_richiesti = premio.punti_richiesti;
+          console.log('[Crea Premio] ✅ Punti richiesti impostati:', premio.punti_richiesti);
         } else {
+          console.error('[Crea Premio] ❌ Errore: Punti richiesti mancanti o invalidi');
+          console.error('[Crea Premio] ❌ Valore ricevuto:', premio.punti_richiesti);
           throw new Error('Punti richiesti deve essere un numero maggiore di 0');
         }
       }
 
-      console.log('[Crea Premio] Dati insert:', insertData);
+      console.log('[Crea Premio] 📤 Dati finali per insert:', JSON.stringify(insertData, null, 2));
 
       const { data: newPremio, error } = await supabase
         .from('premi')
@@ -1936,19 +1949,29 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         .single();
 
       if (error) {
-        console.error('[Crea Premio] Errore:', error);
-        throw new Error(`Errore durante la creazione del premio: ${error.message}`);
+        console.error('[Crea Premio] ❌ Errore Supabase:', error);
+        console.error('[Crea Premio] ❌ Codice errore:', error.code);
+        console.error('[Crea Premio] ❌ Messaggio errore:', error.message);
+        console.error('[Crea Premio] ❌ Dettagli errore:', error.details);
+        console.error('[Crea Premio] ❌ Hint errore:', error.hint);
+        throw new Error(`Errore durante la creazione del premio: ${error.message}${error.details ? ` (${error.details})` : ''}${error.hint ? ` - ${error.hint}` : ''}`);
       }
 
-      console.log('[Crea Premio] ✅ Premio creato:', newPremio);
+      console.log('[Crea Premio] ✅ Premio creato con successo:', newPremio);
       
       // Ricarica i dati per aggiornare la lista
       await loadData();
-    } catch (error) {
+      console.log('[Crea Premio] ✅ Dati ricaricati');
+    } catch (error: any) {
       console.error('[Crea Premio] ❌ Errore completo:', error);
+      console.error('[Crea Premio] ❌ Stack trace:', error.stack);
+      if (error.message) {
+        console.error('[Crea Premio] ❌ Messaggio errore:', error.message);
+      }
       throw error;
     } finally {
       setIsLoading(false);
+      console.log('[Crea Premio] 🏁 Fine operazione');
     }
   };
 

@@ -40,7 +40,7 @@ export const LeaderboardPage: React.FC = () => {
         >
           <Trophy className="w-6 h-6 text-party-300 mx-auto mb-1" />
           <h1 className="text-lg font-display font-bold mb-0.5">Classifica</h1>
-          <p className="text-gray-400 text-[10px]">Chi vincerà il 30diCiaccioGame?</p>
+          <p className="text-gray-400 text-[10px]">Chi vincerà il DC-30?</p>
         </motion.div>
 
         {/* Tab Switcher - Snello - Mostra solo se l'utente ha una squadra */}

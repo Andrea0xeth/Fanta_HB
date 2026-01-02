@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
 
     // Prepara il payload della notifica
     const notificationPayload = JSON.stringify({
-      title: payload.title || '30diCiaccioGame',
+      title: payload.title || 'DC-30',
       body: payload.body || payload.message || 'Nuova notifica',
       icon: payload.icon || '/pwa-192x192.png',
       badge: payload.badge || '/pwa-192x192.png',

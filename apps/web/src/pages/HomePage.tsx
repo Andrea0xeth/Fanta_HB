@@ -68,7 +68,7 @@ export const HomePage: React.FC = () => {
             </motion.button>
             <div>
               <h1 className="font-display font-bold text-sm text-gradient leading-tight">{user?.nickname || 'Giocatore'}</h1>
-              <p className="text-[10px] text-gray-400 leading-tight">30diCiaccioGame</p>
+              <p className="text-[10px] text-gray-400 leading-tight">DC-30</p>
             </div>
           </div>
           
@@ -217,7 +217,7 @@ export const HomePage: React.FC = () => {
           >
             <div className="mb-6">
               <Flame size={48} className="text-coral-500 mx-auto mb-4" />
-              <h2 className="font-display font-bold text-xl mb-2">30diCiaccioGame</h2>
+              <h2 className="font-display font-bold text-xl mb-2">DC-30</h2>
               <p className="text-gray-400 text-sm mb-6">
                 Tre giorni di sfide epiche, quest impossibili e gare all'ultimo respiro ti attendono! 
                 Completa le missioni, vinci le gare e scala la classifica per diventare il campione assoluto. 

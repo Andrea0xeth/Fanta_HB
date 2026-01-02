@@ -181,7 +181,7 @@ export const AdminPage: React.FC = () => {
         >
           <Crown className="w-6 h-6 text-party-300 mx-auto mb-1.5" />
           <h1 className="text-lg font-display font-bold mb-0.5">Admin Panel</h1>
-          <p className="text-gray-400 text-[10px]">Gestisci il 30diCiaccioGame</p>
+          <p className="text-gray-400 text-[10px]">Gestisci il DC-30</p>
           <div className="mt-3 flex items-center justify-center">
             <button
               onClick={() => setShowPushNotificationModal(true)}
@@ -826,28 +826,51 @@ export const AdminPage: React.FC = () => {
                         setIsSubmittingPremio(true);
                         setPremioError(null);
                         try {
+                          console.log('[AdminPage] 🚀 Inizio creazione premio');
+                          console.log('[AdminPage] 📋 Dati form:', {
+                            titolo: premioTitolo,
+                            descrizione: premioDescrizione,
+                            immagine: premioImmagine,
+                            tipo: premioTipo,
+                            premioPosizione,
+                            premioPunti,
+                          });
+
                           const posizioneNum = premioTipo === 'squadra' ? parseInt(premioPosizione) : undefined;
                           const puntiNum = premioTipo !== 'squadra' ? parseInt(premioPunti) : null;
                           
+                          console.log('[AdminPage] 🔍 Valori parsati:', {
+                            posizioneNum,
+                            puntiNum,
+                            premioTipo,
+                          });
+                          
                           if (premioTipo === 'squadra' && (isNaN(posizioneNum!) || posizioneNum! <= 0)) {
+                            console.error('[AdminPage] ❌ Errore validazione: Posizione classifica invalida');
                             setPremioError('Posizione classifica deve essere un numero maggiore di 0');
                             setIsSubmittingPremio(false);
                             return;
                           }
                           if (premioTipo !== 'squadra' && (isNaN(puntiNum!) || puntiNum! <= 0)) {
+                            console.error('[AdminPage] ❌ Errore validazione: Punti richiesti invalidi');
                             setPremioError('Punti richiesti deve essere un numero maggiore di 0');
                             setIsSubmittingPremio(false);
                             return;
                           }
 
-                          await creaPremio({
+                          const premioData = {
                             titolo: premioTitolo.trim(),
                             descrizione: premioDescrizione.trim() || undefined,
                             immagine: premioImmagine || '🎁',
                             tipo: premioTipo,
                             punti_richiesti: puntiNum,
                             posizione_classifica: posizioneNum,
-                          });
+                          };
+
+                          console.log('[AdminPage] 📤 Dati da inviare a creaPremio:', JSON.stringify(premioData, null, 2));
+
+                          await creaPremio(premioData);
+                          console.log('[AdminPage] ✅ Premio creato con successo');
                           setSuccessMessage(`Premio "${premioTitolo.trim()}" creato con successo!`);
                           setTimeout(() => setSuccessMessage(null), 3000);
                           // Chiudi il form e resetta i campi
@@ -862,10 +885,14 @@ export const AdminPage: React.FC = () => {
                           // Refresh esplicito dei dati
                           await refreshData();
                         } catch (error: any) {
-                          console.error('[AdminPage] Errore creazione premio:', error);
-                          setPremioError(error.message || 'Errore durante la creazione');
+                          console.error('[AdminPage] ❌ Errore creazione premio:', error);
+                          console.error('[AdminPage] ❌ Tipo errore:', typeof error);
+                          console.error('[AdminPage] ❌ Messaggio errore:', error?.message);
+                          console.error('[AdminPage] ❌ Stack trace:', error?.stack);
+                          setPremioError(error?.message || 'Errore durante la creazione');
                         } finally {
                           setIsSubmittingPremio(false);
+                          console.log('[AdminPage] 🏁 Fine operazione creazione premio');
                         }
                       }}
                       disabled={isSubmittingPremio || !premioTitolo.trim() || (premioTipo === 'squadra' ? !premioPosizione : !premioPunti)}

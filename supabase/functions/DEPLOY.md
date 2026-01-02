@@ -14,7 +14,7 @@ supabase login
 
 3. **Linka il progetto** (se non già fatto):
 ```bash
-cd /Users/andrearitondale/PROJECTS/30diCiaccioGame
+cd /Users/andrearitondale/PROJECTS/DC-30
 supabase link --project-ref smqoyszeqikjrhwgclrr
 ```
 

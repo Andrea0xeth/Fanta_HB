@@ -18,7 +18,7 @@ self.addEventListener('push', (event) => {
   console.log('[Service Worker] Push notification ricevuta:', event);
 
   let notificationData = {
-    title: '30diCiaccioGame',
+    title: 'DC-30',
     body: 'Hai ricevuto una nuova notifica!',
     icon: '/pwa-192x192.png',
     badge: '/pwa-192x192.png',

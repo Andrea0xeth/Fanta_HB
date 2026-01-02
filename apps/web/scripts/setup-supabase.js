@@ -17,7 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = join(__dirname, '..', '..', '..');
 
-console.log('🚀 Setup automatico Supabase per 30diCiaccioGame\n');
+console.log('🚀 Setup automatico Supabase per DC-30\n');
 
 // Leggi variabili d'ambiente
 let supabaseUrl = '';

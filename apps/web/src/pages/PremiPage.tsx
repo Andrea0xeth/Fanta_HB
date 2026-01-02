@@ -42,7 +42,7 @@ export const PremiPage: React.FC = () => {
           >
             <Gift className="w-6 h-6 text-party-300 mx-auto mb-1" />
             <h1 className="text-lg font-display font-bold mb-0.5">Premi</h1>
-            <p className="text-gray-400 text-[10px]">Cosa puoi vincere al 30diCiaccioGame!</p>
+            <p className="text-gray-400 text-[10px]">Cosa puoi vincere al DC-30!</p>
           </motion.div>
         </div>
 
@@ -67,7 +67,7 @@ export const PremiPage: React.FC = () => {
               </h2>
               
               <p className="text-gray-400 text-sm leading-relaxed max-w-md mx-auto">
-                I premi per il 30diCiaccioGame verranno annunciati presto. Continua a giocare e accumula punti per essere pronto quando saranno disponibili!
+                I premi per il DC-30 verranno annunciati presto. Continua a giocare e accumula punti per essere pronto quando saranno disponibili!
               </p>
             </div>
           </motion.section>
@@ -87,7 +87,7 @@ export const PremiPage: React.FC = () => {
         >
           <Gift className="w-6 h-6 text-party-300 mx-auto mb-1" />
           <h1 className="text-lg font-display font-bold mb-0.5">Premi</h1>
-          <p className="text-gray-400 text-[10px]">Cosa puoi vincere al 30diCiaccioGame!</p>
+          <p className="text-gray-400 text-[10px]">Cosa puoi vincere al DC-30!</p>
         </motion.div>
 
         {/* Points Overview - Snello */}

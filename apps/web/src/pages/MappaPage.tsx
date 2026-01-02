@@ -161,7 +161,7 @@ export const MappaPage: React.FC = () => {
           const res = await fetch(url, { 
             headers: { 
               'Accept': 'application/json',
-              'User-Agent': '30diCiaccioGame/1.0'
+              'User-Agent': 'DC-30/1.0'
             } 
           });
           if (!res.ok) continue;

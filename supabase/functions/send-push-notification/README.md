@@ -6,7 +6,7 @@ Edge Function per inviare notifiche push agli utenti.
 
 ```bash
 # Assicurati di essere nella root del progetto
-cd /Users/andrearitondale/PROJECTS/30diCiaccioGame
+cd /Users/andrearitondale/PROJECTS/DC-30
 
 # Se non hai ancora linkato il progetto
 supabase link --project-ref smqoyszeqikjrhwgclrr

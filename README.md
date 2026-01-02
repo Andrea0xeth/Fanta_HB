@@ -1,11 +1,11 @@
-# 🎉 30diCiaccioGame
+# 🎉 DC-30
 
 Una Progressive Web App (PWA) per il 30° compleanno di Di Ciaccio! Un gioco a squadre con quest giornaliere, verifiche peer-to-peer e premi epici.
 
 ## 📦 Struttura Monorepo
 
 ```
-30diCiaccioGame/
+DC-30/
 ├── apps/
 │   └── web/                 # Frontend React + Vite + PWA
 │       ├── src/
@@ -38,7 +38,7 @@ Una Progressive Web App (PWA) per il 30° compleanno di Di Ciaccio! Un gioco a s
 ```bash
 # Clona il repository
 git clone <repo-url>
-cd 30diCiaccioGame
+cd DC-30
 
 # Installa dipendenze
 pnpm install
@@ -179,7 +179,7 @@ MIT - Buon 30° compleanno Di Ciaccio! 🎂
 
 ---
 
-Made with ❤️ per il 30diCiaccioGame
+Made with ❤️ per il DC-30
 
 
 

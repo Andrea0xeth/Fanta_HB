@@ -1,6 +1,6 @@
 # 📱 Setup Notifiche Push
 
-Questo documento descrive come configurare e utilizzare il sistema di notifiche push per 30diCiaccioGame.
+Questo documento descrive come configurare e utilizzare il sistema di notifiche push per DC-30.
 
 ## 🎯 Funzionalità Implementate
 

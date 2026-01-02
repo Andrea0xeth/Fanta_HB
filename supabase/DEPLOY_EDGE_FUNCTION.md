@@ -29,7 +29,7 @@ Questo aprirà il browser per autenticarti.
 
 **2. Link progetto:**
 ```bash
-cd /Users/andrearitondale/PROJECTS/30diCiaccioGame
+cd /Users/andrearitondale/PROJECTS/DC-30
 npx supabase link --project-ref smqoyszeqikjrhwgclrr
 ```
 

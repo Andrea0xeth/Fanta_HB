@@ -12,7 +12,7 @@ npm install -g supabase
 
 ```bash
 supabase login
-cd /Users/andrearitondale/PROJECTS/30diCiaccioGame
+cd /Users/andrearitondale/PROJECTS/DC-30
 supabase link --project-ref smqoyszeqikjrhwgclrr
 ```
 

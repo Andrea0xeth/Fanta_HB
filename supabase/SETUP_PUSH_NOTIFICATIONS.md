@@ -52,7 +52,7 @@ npm install -g supabase
 
 # 2. Login e linka progetto
 supabase login
-cd /Users/andrearitondale/PROJECTS/30diCiaccioGame
+cd /Users/andrearitondale/PROJECTS/DC-30
 supabase link --project-ref smqoyszeqikjrhwgclrr
 
 # 3. Deploy della funzione

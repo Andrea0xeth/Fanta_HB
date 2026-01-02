@@ -53,7 +53,7 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: '30diCiaccioGame',
+        name: 'DC-30',
         short_name: 'DC-30',
         description: 'Il gioco del 30° compleanno di Di Ciaccio!',
         theme_color: '#FF6B6B',
