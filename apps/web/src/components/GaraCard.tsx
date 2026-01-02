@@ -76,27 +76,27 @@ export const GaraCard: React.FC<GaraCardProps> = ({ gara, isAdmin, onAssegnaVinc
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-between mb-2 gap-2">
-          <div className={`flex-1 text-center py-2 rounded-xl ${
-            gara.vincitore_id === gara.squadra_a_id 
-              ? 'bg-green-500/10 border border-green-500/30' 
-              : 'bg-gray-800/30'
-          }`}>
-            <div className="text-2xl mb-0.5">{gara.squadra_a?.emoji}</div>
-            <div className="font-semibold text-xs truncate">{gara.squadra_a?.nome}</div>
-          </div>
-          
-          <div className="px-2 text-gray-500 font-bold text-xs">VS</div>
-          
-          <div className={`flex-1 text-center py-2 rounded-xl ${
-            gara.vincitore_id === gara.squadra_b_id 
-              ? 'bg-green-500/10 border border-green-500/30' 
-              : 'bg-gray-800/30'
-          }`}>
-            <div className="text-2xl mb-0.5">{gara.squadra_b?.emoji}</div>
-            <div className="font-semibold text-xs truncate">{gara.squadra_b?.nome}</div>
-          </div>
+      <div className="flex items-center justify-between mb-2 gap-2">
+        <div className={`flex-1 text-center py-2 rounded-xl ${
+          gara.vincitore_id === gara.squadra_a_id 
+            ? 'bg-green-500/10 border border-green-500/30' 
+            : 'bg-gray-800/30'
+        }`}>
+          <div className="text-2xl mb-0.5">{gara.squadra_a?.emoji}</div>
+          <div className="font-semibold text-xs truncate">{gara.squadra_a?.nome}</div>
         </div>
+        
+        <div className="px-2 text-gray-500 font-bold text-xs">VS</div>
+        
+        <div className={`flex-1 text-center py-2 rounded-xl ${
+          gara.vincitore_id === gara.squadra_b_id 
+            ? 'bg-green-500/10 border border-green-500/30' 
+            : 'bg-gray-800/30'
+        }`}>
+          <div className="text-2xl mb-0.5">{gara.squadra_b?.emoji}</div>
+          <div className="font-semibold text-xs truncate">{gara.squadra_b?.nome}</div>
+        </div>
+      </div>
       )}
 
       {/* Gara Name - Snello */}

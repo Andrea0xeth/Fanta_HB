@@ -47,6 +47,14 @@ export const SplashPage: React.FC = () => {
   const [emailLoginData, setEmailLoginData] = useState({ email: '', password: '' });
   const videoRef = useRef<HTMLVideoElement>(null);
   
+  // Redirect automatico se già autenticato
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && viewState === 'splash') {
+      // Se l'utente è già autenticato, reindirizza automaticamente alla home
+      navigate('/home', { replace: true });
+    }
+  }, [isLoading, isAuthenticated, navigate, viewState]);
+  
   // Genera tempi casuali per il flicker di ogni elemento neon
   const [flickerTimings] = useState(() => ({
     dc30: 2.5 + Math.random() * 1.5, // Tra 2.5s e 4s
@@ -76,11 +84,7 @@ export const SplashPage: React.FC = () => {
     }
   }, [viewState]);
 
-  // Redirect solo se già autenticato ALL'AVVIO (non dopo login/registrazione)
-  // Non fare redirect se stiamo mostrando il video post-benvenuto
-  // NOTA: con email+password Supabase mantiene la sessione, quindi l'app risulterà
-  // spesso "già autenticata" all'avvio. Per non nascondere la pagina di benvenuto,
-  // non facciamo redirect automatico: l'utente potrà premere "Continua".
+  // Redirect automatico se già autenticato (rimuove il prompt "Continua" / "Cambia account")
 
   // Gestisci il video quando cambia viewState
   useEffect(() => {
@@ -1119,32 +1123,9 @@ export const SplashPage: React.FC = () => {
       >
         <AnimatePresence mode="wait">
           {viewState === 'splash' ? (
-            isAuthenticated ? (
-              <motion.div
-                key="enter-auth"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.1 }}
-                className="space-y-3 w-full"
-              >
-                <motion.button
-                  onClick={() => navigate('/home', { replace: true })}
-                  className="btn-primary w-full flex items-center justify-center gap-2 text-base py-3 active:scale-95 transition-transform duration-75"
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Fingerprint size={20} />
-                  Continua
-                </motion.button>
-
-                <button
-                  onClick={() => setViewState('auth-choice')}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-gray-400 hover:text-gray-300 active:scale-95 transition-all duration-75 border border-gray-600/30 rounded-xl hover:border-gray-500/50"
-                >
-                  Cambia account / Accedi
-                </button>
-              </motion.div>
-            ) : (
+            // Se l'utente è autenticato, il redirect automatico lo porta alla home
+            // Non mostriamo più i bottoni "Continua" / "Cambia account"
+            !isAuthenticated ? (
               <motion.button
                 key="enter"
                 onClick={handleEnterGame}
@@ -1156,7 +1137,7 @@ export const SplashPage: React.FC = () => {
                 <Fingerprint size={20} />
                 Entra nel Game
               </motion.button>
-            )
+            ) : null
           ) : viewState === 'auth-choice' ? (
             <motion.div
               key="auth-choice"

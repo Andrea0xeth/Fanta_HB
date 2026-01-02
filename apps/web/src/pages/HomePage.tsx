@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy } from 'lucide-react';
+import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { QuestCard } from '../components/QuestCard';
 import { VerificaCard } from '../components/VerificaCard';
@@ -34,6 +34,8 @@ export const HomePage: React.FC = () => {
   const [showNotifiche, setShowNotifiche] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [showSpecialQuests, setShowSpecialQuests] = useState(false);
+  const [showDailyQuests, setShowDailyQuests] = useState(true); // Di default aperta
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const pendingVerifications = proveInVerifica.filter(
@@ -246,63 +248,135 @@ export const HomePage: React.FC = () => {
               
               return (
                 <>
-                  {/* Quest del Giorno */}
+                  {/* Quest del Giorno - Collassabile */}
                   {normalQuests.length > 0 && (
                     <section>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5">
-                          <CircusNeonDecorations variant="star" size="small" color="red" />
-                          <h2 className="font-display font-bold text-sm">Quest del Giorno</h2>
-                        </div>
-                        <span className="text-[10px] text-gray-400">{normalQuests.length} disponibili</span>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        {normalQuests.map((quest, index) => (
+                      <motion.button
+                        onClick={() => setShowDailyQuests(!showDailyQuests)}
+                        className="w-full text-left glass rounded-2xl p-3 mb-2 hover:bg-white/10 transition-all"
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-1.5 flex-1">
+                            <CircusNeonDecorations variant="star" size="small" color="red" />
+                            <h2 className="font-display font-bold text-sm">Quest del Giorno</h2>
+                            <span className="text-[10px] text-gray-400">({normalQuests.length} disponibili)</span>
+                          </div>
                           <motion.div
-                            key={quest.id}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
+                            animate={{ rotate: showDailyQuests ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex-shrink-0"
                           >
-                            <QuestCard 
-                              quest={quest} 
-                              onSubmit={submitProva}
-                              completed={quest.completed}
-                            />
+                            {showDailyQuests ? (
+                              <ChevronUp size={16} className="text-gray-400" />
+                            ) : (
+                              <ChevronDown size={16} className="text-gray-400" />
+                            )}
                           </motion.div>
-                        ))}
-                      </div>
+                        </div>
+                      </motion.button>
+
+                      {/* Sezione Quest del Giorno - Espandibile */}
+                      <AnimatePresence>
+                        {showDailyQuests && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="space-y-2">
+                              {normalQuests.map((quest, index) => (
+                                <motion.div
+                                  key={quest.id}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                >
+                                  <QuestCard 
+                                    quest={quest} 
+                                    onSubmit={submitProva}
+                                    completed={quest.completed}
+                                  />
+                                </motion.div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </section>
                   )}
 
-                  {/* Quest Speciali */}
+                  {/* Quest Speciali - Testo cliccabile per espandere */}
                   {specialQuests.length > 0 && (
                     <section>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5">
-                          <CircusNeonDecorations variant="star" size="small" color="red" />
-                          <h2 className="font-display font-bold text-sm">Sfide Speciali ⭐</h2>
-                        </div>
-                        <span className="text-[10px] text-gray-400">{specialQuests.length} disponibili</span>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        {specialQuests.map((quest, index) => (
+                      <motion.button
+                        onClick={() => setShowSpecialQuests(!showSpecialQuests)}
+                        className="w-full text-left glass rounded-2xl p-3 mb-2 hover:bg-white/10 transition-all"
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 flex-1">
+                            <span className="text-xl">⭐</span>
+                            <div>
+                              <h3 className="font-display font-bold text-sm text-gradient">Sfide Speciali</h3>
+                              <p className="text-[10px] text-gray-400 mt-0.5">
+                                Attive dal <span className="text-coral-500 font-semibold">08/01/2026 ore 15:20</span>
+                              </p>
+                            </div>
+                          </div>
                           <motion.div
-                            key={quest.id}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
+                            animate={{ rotate: showSpecialQuests ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex-shrink-0"
                           >
-                            <QuestCard 
-                              quest={quest} 
-                              onSubmit={submitProva}
-                              completed={quest.completed}
-                            />
+                            {showSpecialQuests ? (
+                              <ChevronUp size={16} className="text-gray-400" />
+                            ) : (
+                              <ChevronDown size={16} className="text-gray-400" />
+                            )}
                           </motion.div>
-                        ))}
-                      </div>
+                        </div>
+                      </motion.button>
+
+                      {/* Sezione Sfide Speciali - Espandibile */}
+                      <AnimatePresence>
+                        {showSpecialQuests && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="flex items-center justify-between mb-2 mt-2">
+                              <div className="flex items-center gap-1.5">
+                                <CircusNeonDecorations variant="star" size="small" color="red" />
+                                <h2 className="font-display font-bold text-sm">Sfide Speciali ⭐</h2>
+                                <span className="text-[10px] text-gray-400">({specialQuests.length} disponibili)</span>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              {specialQuests.map((quest, index) => (
+                                <motion.div
+                                  key={quest.id}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                >
+                                  <QuestCard 
+                                    quest={quest} 
+                                    onSubmit={submitProva}
+                                    completed={quest.completed}
+                                  />
+                                </motion.div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </section>
                   )}
                 </>
