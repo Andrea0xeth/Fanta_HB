@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, MapPin, Navigation, ExternalLink, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, Marker } from 'react-leaflet';
+import L from 'leaflet';
 
 type PoiCategory = 'Special' | 'Paesi' | 'Spiagge' | 'Attrazioni';
 
@@ -21,6 +22,8 @@ const POIS: Poi[] = [
     id: 'dc30-hotel',
     name: 'DC-30 Hotel',
     category: 'Special',
+    lat: 28.7300,
+    lng: -13.8600,
     address: 'Island Home Fuerteventura, C. Abubilla, 35660 Corralejo, Las Palmas, Spagna',
     note: 'Base 🏨',
   },
@@ -28,6 +31,8 @@ const POIS: Poi[] = [
     id: 'circociaccio-house',
     name: 'CIRCOCIACCIO HOUSE',
     category: 'Special',
+    lat: 28.6100,
+    lng: -13.9300,
     address: 'OÚM, Cl. Majanicho, 35, 35650 La Oliva, Las Palmas, Spagna',
     note: 'Casa 🏠',
   },
@@ -97,13 +102,47 @@ function openNativeMaps(poi: Poi) {
 export const MappaPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
+  const [highlightedPoiId, setHighlightedPoiId] = useState<string | null>(null);
   const [pois, setPois] = useState<Poi[]>(POIS);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const poiRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const listContainerRef = useRef<HTMLDivElement | null>(null);
 
   const grouped = useMemo(() => {
     const groups: Record<PoiCategory, Poi[]> = { Special: [], Paesi: [], Spiagge: [], Attrazioni: [] };
     pois.forEach((p) => groups[p.category].push(p));
     return groups;
   }, [pois]);
+
+  // Richiedi posizione utente
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationError('Geolocalizzazione non supportata dal browser');
+      return;
+    }
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setLocationError(null);
+      },
+      (error) => {
+        console.error('Errore geolocalizzazione:', error);
+        setLocationError('Impossibile ottenere la posizione');
+      },
+      options
+    );
+  }, []);
 
   // Geocode missing coords (best-effort) using OSM Nominatim.
   useEffect(() => {
@@ -115,13 +154,21 @@ export const MappaPage: React.FC = () => {
       try {
         const updates: Record<string, { lat: number; lng: number }> = {};
         for (const p of missing) {
-          const q = encodeURIComponent(p.address || p.name);
-          const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${q}`;
-          const res = await fetch(url, { headers: { Accept: 'application/json' } });
+          // Aggiungi "Fuerteventura" alla query per migliorare i risultati
+          const query = p.address ? `${p.address}, Fuerteventura` : `${p.name}, Fuerteventura`;
+          const q = encodeURIComponent(query);
+          const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${q}&countrycodes=es`;
+          const res = await fetch(url, { 
+            headers: { 
+              'Accept': 'application/json',
+              'User-Agent': '30diCiaccioGame/1.0'
+            } 
+          });
           if (!res.ok) continue;
           const data = (await res.json()) as Array<{ lat: string; lon: string }>;
           if (data?.[0]) {
             updates[p.id] = { lat: Number(data[0].lat), lng: Number(data[0].lon) };
+            console.log(`[Geocode] ${p.name}: ${data[0].lat}, ${data[0].lon}`);
           }
           // small delay to be polite
           await new Promise((r) => setTimeout(r, 250));
@@ -134,8 +181,8 @@ export const MappaPage: React.FC = () => {
             return u ? { ...p, lat: u.lat, lng: u.lng } : p;
           })
         );
-      } catch {
-        // ignore: best-effort
+      } catch (error) {
+        console.error('[Geocode] Errore:', error);
       }
     };
     run();
@@ -162,59 +209,144 @@ export const MappaPage: React.FC = () => {
           </div>
           <div className="w-8" />
         </div>
-        <p className="text-[10px] text-gray-400 mt-1">
-          Tocca un punto per aprirlo in Apple Maps / Google Maps / Waze.
-        </p>
+        <div className="flex items-center justify-between mt-1">
+          <p className="text-[10px] text-gray-400">
+            Tocca un punto per aprirlo in Apple Maps / Google Maps / Waze.
+          </p>
+          {userLocation && (
+            <div className="flex items-center gap-1.5 text-[10px] text-turquoise-400">
+              <div className="w-2 h-2 rounded-full bg-turquoise-400 animate-pulse"></div>
+              <span>Posizione attiva</span>
+            </div>
+          )}
+          {locationError && (
+            <p className="text-[10px] text-gray-500">
+              {locationError}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-4 py-3 pb-28 space-y-3">
-        {/* Stylized interactive map */}
-        <div className="rounded-2xl overflow-hidden border border-white/10 bg-black/20">
-          <MapContainer
-            center={[28.35, -14.0]}
-            zoom={9}
-            scrollWheelZoom
-            className="w-full h-[280px]"
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Sticky Map */}
+        <div className="flex-shrink-0 px-4 pt-3 pb-2">
+          <div className="rounded-2xl overflow-hidden border border-white/10 bg-black/20 sticky top-0 z-10">
+            <MapContainer
+              center={[28.35, -14.0]}
+              zoom={9}
+              scrollWheelZoom
+              className="w-full h-[280px]"
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              />
 
-            {pois
-              .filter((p) => p.lat !== undefined && p.lng !== undefined)
-              .map((p) => {
-                const isSpecial = p.category === 'Special';
-                const color = isSpecial ? '#FFE66D' : p.category === 'Spiagge' ? '#4ECDC4' : '#FF6B6B';
-                const fill = isSpecial ? '#FFE66D' : color;
-                return (
-                  <CircleMarker
-                    key={p.id}
-                    center={[p.lat as number, p.lng as number]}
-                    radius={isSpecial ? 10 : 7}
-                    pathOptions={{
-                      color,
-                      weight: 2,
-                      fillColor: fill,
-                      fillOpacity: 0.85,
-                    }}
-                    eventHandlers={{
-                      click: () => setSelectedPoi(p),
-                    }}
-                  >
-                    <Popup>
-                      <div className="text-sm font-semibold">{p.name}</div>
-                      {p.note && <div className="text-xs opacity-80">{p.note}</div>}
-                    </Popup>
-                  </CircleMarker>
-                );
-              })}
-          </MapContainer>
+              {/* User Location Marker */}
+              {userLocation && (
+                <Marker
+                  position={[userLocation.lat, userLocation.lng]}
+                  icon={L.divIcon({
+                    className: 'user-location-marker',
+                    html: `<div style="
+                      width: 20px;
+                      height: 20px;
+                      border-radius: 50%;
+                      background: #4ECDC4;
+                      border: 3px solid white;
+                      box-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+                    "></div>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10],
+                  })}
+                >
+                  <Popup>
+                    <div className="text-sm font-semibold">La tua posizione</div>
+                    <div className="text-xs text-gray-500">
+                      {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}
+                    </div>
+                  </Popup>
+                </Marker>
+              )}
+
+              {pois
+                .filter((p) => p.lat !== undefined && p.lng !== undefined)
+                .map((p) => {
+                  const isSpecial = p.category === 'Special';
+                  const isHighlighted = highlightedPoiId === p.id;
+                  const color = isSpecial ? '#FFE66D' : p.category === 'Spiagge' ? '#4ECDC4' : '#FF6B6B';
+                  const fill = isSpecial ? '#FFE66D' : color;
+                  return (
+                    <CircleMarker
+                      key={p.id}
+                      center={[p.lat as number, p.lng as number]}
+                      radius={isHighlighted ? (isSpecial ? 14 : 11) : (isSpecial ? 10 : 7)}
+                      pathOptions={{
+                        color: isHighlighted ? '#FF6B6B' : color,
+                        weight: isHighlighted ? 3 : 2,
+                        fillColor: isHighlighted ? '#FF6B6B' : fill,
+                        fillOpacity: isHighlighted ? 1 : 0.85,
+                      }}
+                      eventHandlers={{
+                        click: () => {
+                          // Solo evidenziazione, non aprire modale
+                          setHighlightedPoiId(p.id);
+                          // Scroll to the item in the list - usa doppio timeout per assicurarsi che il DOM sia aggiornato
+                          setTimeout(() => {
+                            const element = poiRefs.current[p.id];
+                            const container = listContainerRef.current;
+                            if (element && container) {
+                              // Trova tutti i parent fino al container per calcolare l'offset totale
+                              let offsetTop = 0;
+                              let current: HTMLElement | null = element;
+                              
+                              while (current && current !== container) {
+                                offsetTop += current.offsetTop;
+                                current = current.offsetParent as HTMLElement | null;
+                              }
+                              
+                              // Se offsetTop è 0, prova con un approccio alternativo
+                              if (offsetTop === 0) {
+                                const containerRect = container.getBoundingClientRect();
+                                const elementRect = element.getBoundingClientRect();
+                                offsetTop = elementRect.top - containerRect.top + container.scrollTop;
+                              }
+                              
+                              // Calcola la posizione di scroll per centrare l'elemento
+                              const containerHeight = container.clientHeight;
+                              const elementHeight = element.offsetHeight || element.clientHeight;
+                              const scrollPosition = offsetTop - (containerHeight / 2) + (elementHeight / 2);
+                              
+                              // Esegui lo scroll
+                              container.scrollTo({
+                                top: Math.max(0, scrollPosition),
+                                behavior: 'smooth'
+                              });
+                            }
+                          }, 300);
+                        },
+                      }}
+                    >
+                      <Popup>
+                        <div className="text-sm font-semibold">{p.name}</div>
+                        {p.note && <div className="text-xs opacity-80">{p.note}</div>}
+                      </Popup>
+                    </CircleMarker>
+                  );
+                })}
+            </MapContainer>
+          </div>
         </div>
 
-        {/* POIs */}
-        {(['Special', 'Paesi', 'Spiagge', 'Attrazioni'] as PoiCategory[]).map((cat) => (
+        {/* Scrollable POIs List */}
+        <div 
+          ref={listContainerRef}
+          className="flex-1 overflow-y-auto scrollbar-hide px-4 pb-28 space-y-3"
+        >
+
+          {/* POIs */}
+          {(['Special', 'Paesi', 'Spiagge', 'Attrazioni'] as PoiCategory[]).map((cat) => (
           <section key={cat}>
             <div className="flex items-center justify-between mb-2">
               <div className="text-sm font-semibold">{cat}</div>
@@ -224,8 +356,23 @@ export const MappaPage: React.FC = () => {
               {grouped[cat].map((p) => (
                 <button
                   key={p.id}
-                  onClick={() => setSelectedPoi(p)}
-                  className="w-full text-left border-l-2 border-gray-700/40 pl-3 py-2 hover:border-coral-500/40 transition-colors"
+                  ref={(el) => {
+                    poiRefs.current[p.id] = el;
+                  }}
+                  onClick={() => {
+                    setSelectedPoi(p);
+                    setHighlightedPoiId(p.id);
+                  }}
+                  className={`w-full text-left border-l-2 pl-3 py-2 transition-all ${
+                    highlightedPoiId === p.id
+                      ? 'border-coral-500 bg-coral-500/10 scale-[1.02]'
+                      : 'border-gray-700/40 hover:border-coral-500/40'
+                  }`}
+                  onMouseEnter={() => {
+                    if (highlightedPoiId !== p.id) {
+                      setHighlightedPoiId(null);
+                    }
+                  }}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
@@ -244,7 +391,8 @@ export const MappaPage: React.FC = () => {
               ))}
             </div>
           </section>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Open in… sheet */}

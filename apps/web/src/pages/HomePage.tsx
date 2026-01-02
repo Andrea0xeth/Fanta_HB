@@ -155,6 +155,32 @@ export const HomePage: React.FC = () => {
             </div>
           </motion.div>
         )}
+
+        {/* Mappa Banner - Invito a scoprire Fuerteventura */}
+        <motion.button
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          onClick={() => navigate('/mappa')}
+          className="w-full glass rounded-2xl p-3 mb-2 text-left hover:bg-white/10 transition-colors border border-white/5"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <Map size={18} className="text-gray-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-200 text-xs leading-tight mb-0.5">
+                Mappa di Fuerteventura
+              </h3>
+              <p className="text-gray-400 text-[10px] leading-tight">
+                Scopri i luoghi da visitare
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              <span className="text-gray-400 text-sm">→</span>
+            </div>
+          </div>
+        </motion.button>
       </div>
 
       {/* Content - Scrollable, snello */}
