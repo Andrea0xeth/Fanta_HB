@@ -8,6 +8,7 @@ import { PWAInstallPrompt } from '../components/PWAInstallPrompt';
 import { WebAuthnDebug } from '../components/WebAuthnDebug';
 import { CircusNeonDecorations } from '../components/CircusNeonDecorations';
 import type { RegistrationData, EmailPasswordRegistrationData } from '../types';
+import { getCachedVideoSrc } from '../lib/videoCache';
 
 type ViewState =
   | 'splash'
@@ -22,6 +23,9 @@ type ViewState =
   | 'loading';
 
 export const SplashPage: React.FC = () => {
+  const VIDEO_PRE_URL = '/videos/BenvenutoPreIscrizione.mp4';
+  const VIDEO_POST_URL = '/videos/BenvenutoPostiscrizione.mp4';
+
   const navigate = useNavigate();
   const {
     loginWithPasskey,
@@ -46,6 +50,8 @@ export const SplashPage: React.FC = () => {
   const [emailPassword, setEmailPassword] = useState('');
   const [emailLoginData, setEmailLoginData] = useState({ email: '', password: '' });
   const videoRef = useRef<HTMLVideoElement>(null);
+  const revokeVideoSrcRef = useRef<null | (() => void)>(null);
+  const [videoSrc, setVideoSrc] = useState<string>('');
   
   // Redirect automatico se già autenticato
   useEffect(() => {
@@ -169,6 +175,38 @@ export const SplashPage: React.FC = () => {
       cleanupFunctions.forEach(cleanup => cleanup());
     };
   }, [viewState]);
+
+  // Usa il video già in cache (se disponibile) così parte subito
+  useEffect(() => {
+    if (viewState !== 'video-pre' && viewState !== 'video-post') {
+      return;
+    }
+
+    const targetUrl = viewState === 'video-pre' ? VIDEO_PRE_URL : VIDEO_POST_URL;
+    let cancelled = false;
+
+    // Reset + cleanup eventuale blob precedente
+    revokeVideoSrcRef.current?.();
+    revokeVideoSrcRef.current = null;
+    setVideoSrc(targetUrl);
+
+    getCachedVideoSrc(targetUrl).then(({ src, revoke }) => {
+      if (cancelled) {
+        revoke?.();
+        return;
+      }
+      setVideoSrc(src);
+      revokeVideoSrcRef.current = revoke ?? null;
+      // Se il video è già montato, ricarica la sorgente
+      requestAnimationFrame(() => videoRef.current?.load());
+    });
+
+    return () => {
+      cancelled = true;
+      revokeVideoSrcRef.current?.();
+      revokeVideoSrcRef.current = null;
+    };
+  }, [viewState, VIDEO_PRE_URL, VIDEO_POST_URL]);
 
   const handleStartWelcomeVideo = () => {
     if (!videoRef.current) return;
@@ -401,7 +439,7 @@ export const SplashPage: React.FC = () => {
         >
           <video
             ref={videoRef}
-            src="/videos/BenvenutoPreIscrizione.mp4"
+            src={videoSrc || VIDEO_PRE_URL}
             autoPlay
             playsInline
             muted={false}
@@ -499,7 +537,7 @@ export const SplashPage: React.FC = () => {
         >
           <video
             ref={videoRef}
-            src="/videos/BenvenutoPostiscrizione.mp4"
+            src={videoSrc || VIDEO_POST_URL}
             autoPlay
             playsInline
             muted={false}
