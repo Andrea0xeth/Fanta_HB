@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
+import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy, ChevronDown, ChevronUp, Play } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { QuestCard } from '../components/QuestCard';
 import { VerificaCard } from '../components/VerificaCard';
@@ -36,7 +36,9 @@ export const HomePage: React.FC = () => {
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [showSpecialQuests, setShowSpecialQuests] = useState(false);
   const [showDailyQuests, setShowDailyQuests] = useState(true); // Di default aperta
+  const [showVideo, setShowVideo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const pendingVerifications = proveInVerifica.filter(
     p => p.stato === 'in_verifica' && p.user_id !== user?.id
@@ -199,6 +201,32 @@ export const HomePage: React.FC = () => {
               </h3>
               <p className="text-gray-400 text-[10px] leading-tight">
                 Scopri i luoghi da visitare
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              <span className="text-gray-400 text-sm">→</span>
+            </div>
+          </div>
+        </motion.button>
+
+        {/* Video Balletto Banner */}
+        <motion.button
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          onClick={() => setShowVideo(true)}
+          className="w-full glass rounded-2xl p-3 mb-2 text-left hover:bg-white/10 transition-colors border border-white/5"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <Play size={18} className="text-coral-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-200 text-xs leading-tight mb-0.5">
+                Guarda Ciaccio che balla
+              </h3>
+              <p className="text-gray-400 text-[10px] leading-tight">
+                Video esclusivo 🎬
               </p>
             </div>
             <div className="flex-shrink-0">
@@ -672,6 +700,65 @@ export const HomePage: React.FC = () => {
         isOpen={showNotifiche}
         onClose={() => setShowNotifiche(false)}
       />
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {showVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => {
+              setShowVideo(false);
+              if (videoRef.current) {
+                videoRef.current.pause();
+              }
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-2xl glass-strong rounded-3xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/10">
+                <h2 className="font-display font-bold text-lg flex items-center gap-2">
+                  <Play className="text-coral-500" size={18} />
+                  Ciaccio che balla
+                </h2>
+                <button 
+                  onClick={() => {
+                    setShowVideo(false);
+                    if (videoRef.current) {
+                      videoRef.current.pause();
+                    }
+                  }}
+                  className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              {/* Video */}
+              <div className="relative w-full bg-black">
+                <video
+                  ref={videoRef}
+                  src="/videos/balletto.mp4"
+                  controls
+                  autoPlay
+                  className="w-full h-auto"
+                  playsInline
+                >
+                  Il tuo browser non supporta la riproduzione video.
+                </video>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
