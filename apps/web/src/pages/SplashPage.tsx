@@ -118,8 +118,10 @@ export const SplashPage: React.FC = () => {
     const video = videoRef.current;
     if (video) {
       // Set src synchronously so we can call play() inside the gesture
-      video.src = url;
-      video.load();
+      if (video.src !== new URL(url, window.location.origin).toString()) {
+        video.src = url;
+        // Don't call load(): on some browsers it cancels in-flight buffering and restarts.
+      }
       video.currentTime = 0;
       video.volume = 1;
       video.muted = false;
