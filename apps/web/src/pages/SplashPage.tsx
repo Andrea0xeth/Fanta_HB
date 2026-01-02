@@ -8,6 +8,7 @@ import { PWAInstallPrompt } from '../components/PWAInstallPrompt';
 import { WebAuthnDebug } from '../components/WebAuthnDebug';
 import { CircusNeonDecorations } from '../components/CircusNeonDecorations';
 import type { RegistrationData, EmailPasswordRegistrationData } from '../types';
+import { getCachedVideoSrc } from '../lib/videoCache';
 
 type ViewState =
   | 'splash'
@@ -22,6 +23,9 @@ type ViewState =
   | 'loading';
 
 export const SplashPage: React.FC = () => {
+  const VIDEO_PRE_URL = '/videos/BenvenutoPreIscrizione.mp4';
+  const VIDEO_POST_URL = '/videos/BenvenutoPostiscrizione.mp4';
+
   const navigate = useNavigate();
   const {
     loginWithPasskey,
@@ -46,6 +50,8 @@ export const SplashPage: React.FC = () => {
   const [emailPassword, setEmailPassword] = useState('');
   const [emailLoginData, setEmailLoginData] = useState({ email: '', password: '' });
   const videoRef = useRef<HTMLVideoElement>(null);
+  const revokeVideoSrcRef = useRef<null | (() => void)>(null);
+  const [videoSrc, setVideoSrc] = useState<string>('');
   
   // Redirect automatico se già autenticato
   useEffect(() => {
@@ -170,6 +176,38 @@ export const SplashPage: React.FC = () => {
     };
   }, [viewState]);
 
+  // Usa il video già in cache (se disponibile) così parte subito
+  useEffect(() => {
+    if (viewState !== 'video-pre' && viewState !== 'video-post') {
+      return;
+    }
+
+    const targetUrl = viewState === 'video-pre' ? VIDEO_PRE_URL : VIDEO_POST_URL;
+    let cancelled = false;
+
+    // Reset + cleanup eventuale blob precedente
+    revokeVideoSrcRef.current?.();
+    revokeVideoSrcRef.current = null;
+    setVideoSrc(targetUrl);
+
+    getCachedVideoSrc(targetUrl).then(({ src, revoke }) => {
+      if (cancelled) {
+        revoke?.();
+        return;
+      }
+      setVideoSrc(src);
+      revokeVideoSrcRef.current = revoke ?? null;
+      // Se il video è già montato, ricarica la sorgente
+      requestAnimationFrame(() => videoRef.current?.load());
+    });
+
+    return () => {
+      cancelled = true;
+      revokeVideoSrcRef.current?.();
+      revokeVideoSrcRef.current = null;
+    };
+  }, [viewState, VIDEO_PRE_URL, VIDEO_POST_URL]);
+
   const handleStartWelcomeVideo = () => {
     if (!videoRef.current) return;
     videoRef.current.muted = false;
@@ -268,6 +306,8 @@ export const SplashPage: React.FC = () => {
   // Handle register choice - show pre-registration video then form
   const handleRegister = () => {
     setShowContinueButton(false); // Reset continue button state
+    // Reset email flag per passkey registration
+    setRegistrationData(prev => ({ ...prev, email: undefined }));
     setViewState('video-pre');
     // Il video partirà automaticamente grazie all'useEffect
   };
@@ -279,7 +319,14 @@ export const SplashPage: React.FC = () => {
   
   const handleContinueFromPreVideo = () => {
     setShowContinueButton(false);
-    setViewState('auth');
+    // Se siamo arrivati qui da "Registrati con Email", vai al form email
+    // Altrimenti vai al form passkey
+    if (registrationData.email === 'email-register-flag') {
+      setRegistrationData(prev => ({ ...prev, email: '' }));
+      setViewState('auth-email-register');
+    } else {
+      setViewState('auth');
+    }
   };
 
   // Handle registration with passkey (crea nuovo account)
@@ -365,7 +412,14 @@ export const SplashPage: React.FC = () => {
   const handleSkipVideo = () => {
     if (viewState === 'video-pre') {
       setShowContinueButton(false);
-      setViewState('auth');
+      // Se siamo arrivati qui da "Registrati con Email", vai al form email
+      // Altrimenti vai al form passkey
+      if (registrationData.email === 'email-register-flag') {
+        setRegistrationData(prev => ({ ...prev, email: '' }));
+        setViewState('auth-email-register');
+      } else {
+        setViewState('auth');
+      }
     } else if (viewState === 'video-post') {
       setShowPostContinueButton(false);
       navigate('/home', { replace: true });
@@ -401,7 +455,7 @@ export const SplashPage: React.FC = () => {
         >
           <video
             ref={videoRef}
-            src="/videos/BenvenutoPreIscrizione.mp4"
+            src={videoSrc || VIDEO_PRE_URL}
             autoPlay
             playsInline
             muted={false}
@@ -499,7 +553,7 @@ export const SplashPage: React.FC = () => {
         >
           <video
             ref={videoRef}
-            src="/videos/BenvenutoPostiscrizione.mp4"
+            src={videoSrc || VIDEO_POST_URL}
             autoPlay
             playsInline
             muted={false}
@@ -1206,7 +1260,12 @@ export const SplashPage: React.FC = () => {
               </button>
 
               <button
-                onClick={() => setViewState('auth-email-register')}
+                onClick={() => {
+                  // Imposta un flag per sapere che veniamo da email registration
+                  setRegistrationData(prev => ({ ...prev, email: 'email-register-flag' }));
+                  setShowContinueButton(false);
+                  setViewState('video-pre');
+                }}
                 disabled={authLoading}
                 className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all duration-75 border border-gray-600/30 rounded-xl hover:border-gray-500/50"
               >
