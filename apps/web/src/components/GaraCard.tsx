@@ -53,28 +53,51 @@ export const GaraCard: React.FC<GaraCardProps> = ({ gara, isAdmin, onAssegnaVinc
         <Swords className="text-gray-600" size={14} />
       </div>
 
-      {/* Team VS - Snello */}
-      <div className="flex items-center justify-between mb-2 gap-2">
-        <div className={`flex-1 text-center py-2 rounded-xl ${
-          gara.vincitore_id === gara.squadra_a_id 
-            ? 'bg-green-500/10 border border-green-500/30' 
-            : 'bg-gray-800/30'
-        }`}>
-          <div className="text-2xl mb-0.5">{gara.squadra_a?.emoji}</div>
-          <div className="font-semibold text-xs truncate">{gara.squadra_a?.nome}</div>
+      {/* Team VS - Snello - Supporta più squadre */}
+      {gara.squadre_partecipanti && gara.squadre_partecipanti.length > 2 ? (
+        <div className="mb-2">
+          <div className="text-center text-xs text-gray-400 mb-2">
+            {gara.squadre_partecipanti.length} squadre partecipanti
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {gara.squadre_partecipanti.map((squadra) => (
+              <div
+                key={squadra.id}
+                className={`text-center py-2 rounded-xl ${
+                  gara.vincitore_id === squadra.id
+                    ? 'bg-green-500/10 border border-green-500/30'
+                    : 'bg-gray-800/30'
+                }`}
+              >
+                <div className="text-xl mb-0.5">{squadra.emoji}</div>
+                <div className="font-semibold text-[10px] truncate">{squadra.nome}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        
-        <div className="px-2 text-gray-500 font-bold text-xs">VS</div>
-        
-        <div className={`flex-1 text-center py-2 rounded-xl ${
-          gara.vincitore_id === gara.squadra_b_id 
-            ? 'bg-green-500/10 border border-green-500/30' 
-            : 'bg-gray-800/30'
-        }`}>
-          <div className="text-2xl mb-0.5">{gara.squadra_b?.emoji}</div>
-          <div className="font-semibold text-xs truncate">{gara.squadra_b?.nome}</div>
+      ) : (
+        <div className="flex items-center justify-between mb-2 gap-2">
+          <div className={`flex-1 text-center py-2 rounded-xl ${
+            gara.vincitore_id === gara.squadra_a_id 
+              ? 'bg-green-500/10 border border-green-500/30' 
+              : 'bg-gray-800/30'
+          }`}>
+            <div className="text-2xl mb-0.5">{gara.squadra_a?.emoji}</div>
+            <div className="font-semibold text-xs truncate">{gara.squadra_a?.nome}</div>
+          </div>
+          
+          <div className="px-2 text-gray-500 font-bold text-xs">VS</div>
+          
+          <div className={`flex-1 text-center py-2 rounded-xl ${
+            gara.vincitore_id === gara.squadra_b_id 
+              ? 'bg-green-500/10 border border-green-500/30' 
+              : 'bg-gray-800/30'
+          }`}>
+            <div className="text-2xl mb-0.5">{gara.squadra_b?.emoji}</div>
+            <div className="font-semibold text-xs truncate">{gara.squadra_b?.nome}</div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Gara Name - Snello */}
       <h3 className="font-semibold text-gray-200 text-sm mb-1">

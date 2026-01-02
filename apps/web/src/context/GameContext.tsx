@@ -46,6 +46,7 @@ interface GameContextType {
     descrizione: string;
     squadra_a_id: string;
     squadra_b_id: string;
+    squadre_ids: string[]; // Tutte le squadre partecipanti
     punti_in_palio: number;
     orario: string;
     giorno: number;
@@ -362,8 +363,19 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         const squadraB = squadreWithMembers.find(s => s.id === g.squadra_b_id);
         const classifica = classificheMap.get(g.id) || undefined;
         
-        // Determina tutte le squadre partecipanti (per ora solo A e B, ma può essere esteso)
-        const squadrePartecipanti = [squadraA, squadraB].filter(Boolean) as Squadra[];
+        // Determina tutte le squadre partecipanti
+        // Se c'è una classifica, usa quella (può avere più di 2 squadre)
+        // Altrimenti usa solo A e B (gara 1v1)
+        let squadrePartecipanti: Squadra[] = [];
+        if (classifica && classifica.length > 0) {
+          // Usa le squadre dalla classifica
+          squadrePartecipanti = classifica
+            .map(c => squadreWithMembers.find(s => s.id === c.squadra_id))
+            .filter(Boolean) as Squadra[];
+        } else {
+          // Fallback a squadra A e B
+          squadrePartecipanti = [squadraA, squadraB].filter(Boolean) as Squadra[];
+        }
         
         return {
           id: g.id,
@@ -1343,6 +1355,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     descrizione: string;
     squadra_a_id: string;
     squadra_b_id: string;
+    squadre_ids: string[]; // Tutte le squadre partecipanti
     punti_in_palio: number;
     orario: string;
     giorno: number;
@@ -1356,11 +1369,14 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         nome: gara.nome,
         squadra_a_id: gara.squadra_a_id,
         squadra_b_id: gara.squadra_b_id,
+        squadre_ids: gara.squadre_ids,
         punti_in_palio: gara.punti_in_palio,
         orario: gara.orario,
         giorno: gara.giorno,
       });
 
+      // Salva le prime due squadre in squadra_a_id e squadra_b_id per retrocompatibilità
+      // Le altre squadre saranno gestite tramite classifiche_gare quando si assegna la classifica
       const { data, error } = await supabase
         .from('gare')
         .insert({
