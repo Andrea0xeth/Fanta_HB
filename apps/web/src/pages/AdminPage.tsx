@@ -46,6 +46,7 @@ export const AdminPage: React.FC = () => {
   const [showPushNotificationModal, setShowPushNotificationModal] = useState(false);
   const [isSubmittingBonus, setIsSubmittingBonus] = useState(false);
   const [maintenanceResult, setMaintenanceResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [maintenanceSearch, setMaintenanceSearch] = useState('');
   const [showCreaSquadra, setShowCreaSquadra] = useState(false);
@@ -274,6 +275,21 @@ export const AdminPage: React.FC = () => {
           >
             <Check size={20} />
             <span className="font-semibold">Bonus assegnato con successo!</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Generic Success Message Toast */}
+      <AnimatePresence>
+        {successMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-20 left-4 right-4 z-50 bg-green-500 text-white px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg"
+          >
+            <Check size={20} />
+            <span className="font-semibold">{successMessage}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -636,6 +652,8 @@ export const AdminPage: React.FC = () => {
                               if (!ok) return;
                               try {
                                 await eliminaSquadra(squadra.id);
+                                setSuccessMessage(`Squadra "${squadra.nome}" eliminata con successo!`);
+                                setTimeout(() => setSuccessMessage(null), 3000);
                               } catch (error: any) {
                                 alert(`Errore: ${error.message || 'Impossibile eliminare la squadra'}`);
                               }
@@ -808,14 +826,31 @@ export const AdminPage: React.FC = () => {
                         setIsSubmittingPremio(true);
                         setPremioError(null);
                         try {
+                          const posizioneNum = premioTipo === 'squadra' ? parseInt(premioPosizione) : undefined;
+                          const puntiNum = premioTipo !== 'squadra' ? parseInt(premioPunti) : null;
+                          
+                          if (premioTipo === 'squadra' && (isNaN(posizioneNum!) || posizioneNum! <= 0)) {
+                            setPremioError('Posizione classifica deve essere un numero maggiore di 0');
+                            setIsSubmittingPremio(false);
+                            return;
+                          }
+                          if (premioTipo !== 'squadra' && (isNaN(puntiNum!) || puntiNum! <= 0)) {
+                            setPremioError('Punti richiesti deve essere un numero maggiore di 0');
+                            setIsSubmittingPremio(false);
+                            return;
+                          }
+
                           await creaPremio({
                             titolo: premioTitolo.trim(),
                             descrizione: premioDescrizione.trim() || undefined,
                             immagine: premioImmagine || '🎁',
                             tipo: premioTipo,
-                            punti_richiesti: premioTipo === 'squadra' ? null : parseInt(premioPunti),
-                            posizione_classifica: premioTipo === 'squadra' ? parseInt(premioPosizione) : undefined,
+                            punti_richiesti: puntiNum,
+                            posizione_classifica: posizioneNum,
                           });
+                          setSuccessMessage(`Premio "${premioTitolo.trim()}" creato con successo!`);
+                          setTimeout(() => setSuccessMessage(null), 3000);
+                          // Chiudi il form e resetta i campi
                           setShowCreaPremio(false);
                           setPremioTitolo('');
                           setPremioDescrizione('');
@@ -823,7 +858,11 @@ export const AdminPage: React.FC = () => {
                           setPremioTipo('singolo');
                           setPremioPunti('');
                           setPremioPosizione('');
+                          setPremioError(null);
+                          // Refresh esplicito dei dati
+                          await refreshData();
                         } catch (error: any) {
+                          console.error('[AdminPage] Errore creazione premio:', error);
                           setPremioError(error.message || 'Errore durante la creazione');
                         } finally {
                           setIsSubmittingPremio(false);
@@ -1393,12 +1432,15 @@ export const AdminPage: React.FC = () => {
                           colore: squadraColore,
                           userIds: Array.from(selectedUsersForSquadra),
                         });
+                        setSuccessMessage(`Squadra "${squadraNome.trim()}" creata con successo!`);
+                        setTimeout(() => setSuccessMessage(null), 3000);
                         setShowCreaSquadra(false);
                         setSquadraNome('');
                         setSquadraEmoji('');
                         setSquadraColore('#FF6B6B');
                         setSelectedUsersForSquadra(new Set());
                         setSearchUsersForSquadra('');
+                        setSquadraError(null);
                       } catch (error: any) {
                         setSquadraError(error.message || 'Errore durante la creazione');
                       } finally {
@@ -1687,6 +1729,8 @@ export const AdminPage: React.FC = () => {
                             await cambiaSquadraUtente(userId, null);
                           }
 
+                          setSuccessMessage(`Squadra "${squadraNome.trim()}" modificata con successo!`);
+                          setTimeout(() => setSuccessMessage(null), 3000);
                           setShowModificaSquadra(false);
                           setSquadraDaModificare(null);
                           setSquadraNome('');
@@ -1694,6 +1738,7 @@ export const AdminPage: React.FC = () => {
                           setSquadraColore('#FF6B6B');
                           setEditingSquadraMembers(new Set());
                           setSearchEditingMembers('');
+                          setSquadraError(null);
                         } catch (error: any) {
                           setSquadraError(error.message || 'Errore durante la modifica');
                         } finally {

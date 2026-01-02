@@ -524,11 +524,14 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         .from('premi')
         .select('*')
         .order('tipo', { ascending: true })
-        .order('punti_richiesti', { ascending: true });
+        .order('posizione_classifica', { ascending: true, nullsFirst: false })
+        .order('punti_richiesti', { ascending: true, nullsFirst: false });
 
       if (premiError) {
         console.error('Errore caricamento premi:', premiError);
+        setPremi([]);
       } else {
+        console.log('[LoadData] Premi caricati:', premiData?.length || 0);
         const premiList = (premiData || []).map((p: any) => ({
           id: p.id,
           titolo: p.titolo,
@@ -538,6 +541,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
           punti_richiesti: p.punti_richiesti ?? undefined,
           posizione_classifica: p.posizione_classifica ?? undefined,
         }));
+        console.log('[LoadData] Premi mappati:', premiList.length);
         setPremi(premiList);
       }
     } catch (error) {
@@ -1897,23 +1901,48 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       setIsLoading(true);
       console.log('[Crea Premio] Creazione premio:', premio);
 
-      const { error } = await supabase
+      // Prepara i dati per l'insert
+      const insertData: any = {
+        titolo: premio.titolo,
+        descrizione: premio.descrizione || null,
+        immagine: premio.immagine,
+        tipo: premio.tipo,
+      };
+
+      if (premio.tipo === 'squadra') {
+        // Per premi di squadra: punti_richiesti = null, posizione_classifica = numero
+        insertData.punti_richiesti = null;
+        if (premio.posizione_classifica && premio.posizione_classifica > 0) {
+          insertData.posizione_classifica = premio.posizione_classifica;
+        } else {
+          throw new Error('Posizione classifica deve essere un numero maggiore di 0 per i premi di squadra');
+        }
+      } else {
+        // Per altri premi: posizione_classifica = null, punti_richiesti = numero
+        insertData.posizione_classifica = null;
+        if (premio.punti_richiesti && premio.punti_richiesti > 0) {
+          insertData.punti_richiesti = premio.punti_richiesti;
+        } else {
+          throw new Error('Punti richiesti deve essere un numero maggiore di 0');
+        }
+      }
+
+      console.log('[Crea Premio] Dati insert:', insertData);
+
+      const { data: newPremio, error } = await supabase
         .from('premi')
-        .insert({
-          titolo: premio.titolo,
-          descrizione: premio.descrizione || null,
-          immagine: premio.immagine,
-          tipo: premio.tipo,
-          punti_richiesti: premio.tipo === 'squadra' ? null : premio.punti_richiesti,
-          posizione_classifica: premio.posizione_classifica || null,
-        } as any);
+        .insert(insertData)
+        .select()
+        .single();
 
       if (error) {
         console.error('[Crea Premio] Errore:', error);
         throw new Error(`Errore durante la creazione del premio: ${error.message}`);
       }
 
-      console.log('[Crea Premio] ✅ Premio creato');
+      console.log('[Crea Premio] ✅ Premio creato:', newPremio);
+      
+      // Ricarica i dati per aggiornare la lista
       await loadData();
     } catch (error) {
       console.error('[Crea Premio] ❌ Errore completo:', error);
