@@ -26,6 +26,12 @@ const difficultyLabels = {
 export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed }) => {
   const MIN_VOTES_FOR_VALIDATION = 10;
   const POSITIVE_THRESHOLD_PERCENT = 66;
+  
+  // Data/ora di attivazione per le sfide speciali: 08/01/2026 ore 15:20
+  const SPECIAL_QUESTS_ACTIVATION_DATE = new Date('2026-01-08T15:20:00');
+  
+  // Controlla se la quest speciale è ancora bloccata
+  const isSpecialQuestLocked = quest.is_special && new Date() < SPECIAL_QUESTS_ACTIVATION_DATE;
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedType, setSelectedType] = useState<'foto' | 'video' | 'testo' | null>(null);
@@ -266,7 +272,11 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
   return (
     <motion.div 
       layout
-      className="border-l-2 border-gray-700/50 pl-3 py-2 hover:border-coral-500/50 transition-colors"
+      className={`border-l-2 pl-3 py-2 transition-colors ${
+        isSpecialQuestLocked 
+          ? 'border-gray-800/50 opacity-60' 
+          : 'border-gray-700/50 hover:border-coral-500/50'
+      }`}
     >
       {/* Header - Snello */}
       <div 
@@ -283,10 +293,16 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
           </div>
           <div className="flex items-center gap-2 text-[10px] text-gray-400">
             <span className="text-party-300 font-semibold">{quest.punti}pts</span>
-            <span className="flex items-center gap-0.5">
-              <Clock size={10} />
-              {timeRemaining()}
-            </span>
+            {!isSpecialQuestLocked ? (
+              <span className="flex items-center gap-0.5">
+                <Clock size={10} />
+                {timeRemaining()}
+              </span>
+            ) : (
+              <span className="text-coral-500 font-semibold">
+                Disponibile dal 08/01/2026 ore 15:20
+              </span>
+            )}
           </div>
         </div>
         <ChevronRight 
@@ -308,6 +324,15 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
           >
             <div className="pt-2 mt-2 border-t border-gray-700/30">
               <p className="text-xs text-gray-300 mb-3 leading-relaxed">{quest.descrizione}</p>
+
+              {/* Messaggio di blocco per quest speciali */}
+              {isSpecialQuestLocked && (
+                <div className="mb-3 px-3 py-2 rounded-xl border border-coral-500/30 bg-coral-500/10">
+                  <p className="text-[11px] text-coral-400 leading-snug text-center">
+                    ⏰ Questa sfida speciale sarà disponibile dal <span className="font-semibold text-coral-300">08/01/2026 alle ore 15:20</span>
+                  </p>
+                </div>
+              )}
 
               {/* Nota sistema votazione */}
               <div className="mb-3 px-3 py-2 rounded-xl border border-white/10 bg-white/5">
@@ -410,6 +435,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                 type="file"
                 accept={selectedType === 'foto' ? 'image/*' : selectedType === 'video' ? 'video/*' : ''}
                 onChange={handleFileSelect}
+                disabled={isSpecialQuestLocked}
                 className="hidden"
               />
 
@@ -445,9 +471,10 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
               {selectedType === 'testo' && (
                 <textarea
                   value={proofText}
-                  onChange={(e) => setProofText(e.target.value)}
+                  onChange={(e) => !isSpecialQuestLocked && setProofText(e.target.value)}
                   placeholder="Descrivi la tua prova..."
-                  className="input mb-3 min-h-[80px] resize-none text-sm"
+                  disabled={isSpecialQuestLocked}
+                  className="input mb-3 min-h-[80px] resize-none text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               )}
 
@@ -474,6 +501,7 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                 <button
                   onClick={handleProofSubmit}
                   disabled={
+                    isSpecialQuestLocked ||
                     isUploading || 
                     success ||
                     !selectedType || 

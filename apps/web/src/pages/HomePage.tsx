@@ -206,28 +206,138 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
         </motion.button>
+
+        {/* Info per utenti senza squadra */}
+        {!mySquadra && hasStarted && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="glass rounded-2xl p-4 mb-2 border border-white/10"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <Trophy size={18} className="text-party-300" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-200 text-xs mb-2">
+                  Sistema di Sfide
+                </h3>
+                <div className="space-y-1.5 text-[10px] text-gray-400 leading-relaxed">
+                  <p>
+                    <span className="font-semibold text-party-300">Sfide giornaliere:</span> casuali e uniche per ogni giocatore
+                  </p>
+                  <p>
+                    <span className="font-semibold text-coral-500">Sfide speciali:</span> uguali per tutti, punti assegnati l'ultimo giorno
+                  </p>
+                  <p>
+                    <span className="font-semibold text-turquoise-400">Sfide di squadra:</span> disponibili quando sarai assegnato a una squadra
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {/* Content - Scrollable, snello */}
       <div className="flex-1 px-4 py-3 pb-28 space-y-3">
         {!hasStarted ? (
-          /* Countdown Section - Mostra solo se l'evento non è iniziato */
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-8"
-          >
-            <div className="mb-6">
-              <Flame size={48} className="text-coral-500 mx-auto mb-4" />
-              <h2 className="font-display font-bold text-xl mb-2">DC-30</h2>
-              <p className="text-gray-400 text-sm mb-6">
-                Tre giorni di sfide epiche, quest impossibili e gare all'ultimo respiro ti attendono! 
-                Completa le missioni, vinci le gare e scala la classifica per diventare il campione assoluto. 
-                L'avventura sta per iniziare... 🔥
-              </p>
-            </div>
-            <Countdown targetDate={eventDate} />
-          </motion.section>
+          <>
+            {/* Countdown Section - Mostra solo se l'evento non è iniziato */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-8"
+            >
+              <div className="mb-6">
+                <Flame size={48} className="text-coral-500 mx-auto mb-4" />
+                <h2 className="font-display font-bold text-xl mb-2">DC-30</h2>
+                <p className="text-gray-400 text-sm mb-6">
+                  Tre giorni di sfide epiche, quest impossibili e gare all'ultimo respiro ti attendono! 
+                  Completa le missioni, vinci le gare e scala la classifica per diventare il campione assoluto. 
+                  L'avventura sta per iniziare... 🔥
+                </p>
+              </div>
+              <Countdown targetDate={eventDate} />
+            </motion.section>
+
+            {/* Sfide Speciali - Collassata durante il countdown */}
+            {(() => {
+              const specialQuests = quests.filter(q => q.is_special);
+              
+              return specialQuests.length > 0 ? (
+                <section className="mt-6">
+                  <motion.button
+                    onClick={() => setShowSpecialQuests(!showSpecialQuests)}
+                    className="w-full text-left glass rounded-2xl p-3 mb-2 hover:bg-white/10 transition-all"
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 flex-1">
+                        <span className="text-xl">⭐</span>
+                        <div>
+                          <h3 className="font-display font-bold text-sm text-gradient">Sfide Speciali</h3>
+                          <p className="text-[10px] text-gray-400 mt-0.5">
+                            Attive dal <span className="text-coral-500 font-semibold">08/01/2026 ore 15:20</span>
+                          </p>
+                        </div>
+                      </div>
+                      <motion.div
+                        animate={{ rotate: showSpecialQuests ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex-shrink-0"
+                      >
+                        {showSpecialQuests ? (
+                          <ChevronUp size={16} className="text-gray-400" />
+                        ) : (
+                          <ChevronDown size={16} className="text-gray-400" />
+                        )}
+                      </motion.div>
+                    </div>
+                  </motion.button>
+
+                  {/* Sezione Sfide Speciali - Espandibile */}
+                  <AnimatePresence>
+                    {showSpecialQuests && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="flex items-center justify-between mb-2 mt-2">
+                          <div className="flex items-center gap-1.5">
+                            <CircusNeonDecorations variant="star" size="small" color="red" />
+                            <h2 className="font-display font-bold text-sm">Sfide Speciali ⭐</h2>
+                            <span className="text-[10px] text-gray-400">({specialQuests.length} disponibili)</span>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          {specialQuests.map((quest, index) => (
+                            <motion.div
+                              key={quest.id}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.05 }}
+                            >
+                              <QuestCard 
+                                quest={quest} 
+                                onSubmit={submitProva}
+                                completed={quest.completed}
+                              />
+                            </motion.div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </section>
+              ) : null;
+            })()}
+          </>
         ) : (
           <>
             {/* Next Gara Section */}
