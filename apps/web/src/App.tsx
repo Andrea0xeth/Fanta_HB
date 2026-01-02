@@ -9,8 +9,6 @@ import { LeaderboardPage } from './pages/LeaderboardPage';
 import { PremiPage } from './pages/PremiPage';
 import { AdminPage } from './pages/AdminPage';
 import { MappaPage } from './pages/MappaPage';
-import { prefetchAppVideos } from './lib/videoCache';
-import { useEffect } from 'react';
 
 // Protected Route wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -61,27 +59,11 @@ function AppRoutes() {
   );
 }
 
-function VideoPrefetcher() {
-  useEffect(() => {
-    // Precarica i video immediatamente all'avvio dell'app
-    console.log('📥 Precaricamento video in corso...');
-    prefetchAppVideos()
-      .then(() => {
-        console.log('✅ Video precaricati con successo');
-      })
-      .catch((err) => {
-        console.warn('⚠️ Errore precaricamento video:', err);
-      });
-  }, []);
-  return null;
-}
-
 function App() {
   return (
     <GameProvider>
       <Router>
         <AppRoutes />
-        <VideoPrefetcher />
         <UpdateNotification />
       </Router>
     </GameProvider>

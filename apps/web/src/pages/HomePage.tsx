@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy, ChevronDown, ChevronUp, Play } from 'lucide-react';
 import { useGame } from '../context/GameContext';

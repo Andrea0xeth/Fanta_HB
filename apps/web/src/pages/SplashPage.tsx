@@ -11,14 +11,12 @@ import type { RegistrationData, EmailPasswordRegistrationData } from '../types';
 
 type ViewState =
   | 'splash'
-  | 'video-pre'
   | 'auth'
   | 'auth-choice'
   | 'auth-register-method'
   | 'auth-login-method'
   | 'auth-email-login'
   | 'auth-email-register'
-  | 'video-post'
   | 'loading';
 
 export const SplashPage: React.FC = () => {
@@ -50,6 +48,9 @@ export const SplashPage: React.FC = () => {
   const [emailLoginData, setEmailLoginData] = useState({ email: '', password: '' });
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string>(VIDEO_PRE_URL);
+  const [activeVideoKind, setActiveVideoKind] = useState<null | 'pre' | 'post' | 'balletto'>(null);
+  const videoStartAttemptedRef = useRef(false);
   
   // Redirect automatico se già autenticato
   useEffect(() => {
@@ -90,88 +91,63 @@ export const SplashPage: React.FC = () => {
 
   // Redirect automatico se già autenticato (rimuove il prompt "Continua" / "Cambia account")
 
-  // Gestisci il video quando cambia viewState - APPROCCIO SEMPLIFICATO
-  useEffect(() => {
-    if (viewState !== 'video-pre' && viewState !== 'video-post') {
-      setIsVideoLoading(false);
-      return;
-    }
+  // NOTE: We DO NOT attempt to autoplay videos from useEffect anymore.
+  // For reliable playback with audio, we start playback inside the user's click handler.
 
-    if (!videoRef.current) return;
-
-    const video = videoRef.current;
-    let hasStarted = false;
-
-    // Reset
+  const closeVideoOverlay = () => {
     setShowWelcomePlayOverlay(false);
-    setIsVideoLoading(true);
-    video.currentTime = 0;
-    video.volume = 1;
-    video.muted = false;
-
-    // Funzione per avviare il video
-    const startVideo = async () => {
-      if (!videoRef.current || hasStarted) return;
-      hasStarted = true;
-
-      try {
-        await videoRef.current.play();
-        console.log('✅ Video avviato');
-        setShowWelcomePlayOverlay(false);
-        setIsVideoLoading(false);
-      } catch (error) {
-        console.error('❌ Autoplay bloccato:', error);
-        hasStarted = false;
-        setIsVideoLoading(false);
-        setShowWelcomePlayOverlay(true);
-      }
-    };
-
-    // Gestori eventi semplici
-    const handleCanPlay = () => {
-      setIsVideoLoading(false);
-      if (video.paused && !hasStarted) {
-        startVideo();
-      }
-    };
-
-    const handleLoadedData = () => {
-      if (video.paused && !hasStarted) {
-        startVideo();
-      }
-    };
-
-    video.addEventListener('canplay', handleCanPlay, { once: true });
-    video.addEventListener('loadeddata', handleLoadedData, { once: true });
-    video.addEventListener('waiting', () => setIsVideoLoading(true));
-    video.addEventListener('playing', () => setIsVideoLoading(false));
-
-    // Forza reload
-    video.load();
-
-    // Se già pronto, avvia subito
-    if (video.readyState >= 3 && !hasStarted) {
-      startVideo();
+    setIsVideoLoading(false);
+    setActiveVideoKind(null);
+    setShowContinueButton(false);
+    setShowPostContinueButton(false);
+    videoStartAttemptedRef.current = false;
+    if (videoRef.current) {
+      videoRef.current.pause();
+      // don't clear src aggressively; some browsers glitch on rapid src resets
     }
+  };
 
-    return () => {
-      video.removeEventListener('canplay', handleCanPlay);
-      video.removeEventListener('loadeddata', handleLoadedData);
-    };
-  }, [viewState]);
+  const openVideoOverlay = (kind: 'pre' | 'post' | 'balletto', url: string) => {
+    setActiveVideoKind(kind);
+    setActiveVideoUrl(url);
+    setIsVideoLoading(true);
+    setShowWelcomePlayOverlay(false);
+    videoStartAttemptedRef.current = false;
 
-  const handleStartWelcomeVideo = async () => {
-    if (!videoRef.current) return;
+    // Ensure the <video> element exists (it's always mounted below)
+    const video = videoRef.current;
+    if (video) {
+      // Set src synchronously so we can call play() inside the gesture
+      video.src = url;
+      video.load();
+      video.currentTime = 0;
+      video.volume = 1;
+      video.muted = false;
+    }
+  };
+
+  const startVideoFromGesture = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (videoStartAttemptedRef.current) return;
+    videoStartAttemptedRef.current = true;
+
     try {
-      videoRef.current.muted = false;
-      videoRef.current.volume = 1;
-      await videoRef.current.play();
+      await video.play();
       setShowWelcomePlayOverlay(false);
-      console.log('✅ Video avviato manualmente');
-    } catch (error) {
-      console.error('❌ Errore avvio manuale:', error);
+      setIsVideoLoading(false);
+    } catch (err) {
+      // If this fails even on a gesture, show the overlay anyway.
+      // User can tap again; some browsers require two gestures when audio device is locked.
+      console.error('❌ play() failed:', err);
+      videoStartAttemptedRef.current = false;
+      setIsVideoLoading(false);
       setShowWelcomePlayOverlay(true);
     }
+  };
+
+  const handleStartWelcomeVideo = async () => {
+    await startVideoFromGesture();
   };
 
   // Handle "Entra nel Game" click - show choice between login and register
@@ -189,8 +165,9 @@ export const SplashPage: React.FC = () => {
       // DOPO il login riuscito, mostra immediatamente il video post-login
       setAuthLoading(false);
       
-      // Cambia immediatamente lo stato per mostrare il video
-      setViewState('video-post');
+      // Post video: apri overlay (il play con audio richiede tap utente)
+      openVideoOverlay('post', VIDEO_POST_URL);
+      setShowWelcomePlayOverlay(true);
       
       // Il video partirà automaticamente grazie all'useEffect che monitora viewState
       // e grazie all'attributo autoPlay sul video element
@@ -223,7 +200,8 @@ export const SplashPage: React.FC = () => {
         password: emailLoginData.password,
       });
       setAuthLoading(false);
-      setViewState('video-post');
+      openVideoOverlay('post', VIDEO_POST_URL);
+      setShowWelcomePlayOverlay(true);
     } catch (error) {
       console.error('Email login failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Errore durante il login';
@@ -253,7 +231,8 @@ export const SplashPage: React.FC = () => {
       };
       await registerWithEmailPassword(payload);
       setAuthLoading(false);
-      setViewState('video-post');
+      openVideoOverlay('post', VIDEO_POST_URL);
+      setShowWelcomePlayOverlay(true);
     } catch (error) {
       console.error('Email registration failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Errore durante la registrazione';
@@ -267,17 +246,17 @@ export const SplashPage: React.FC = () => {
     setShowContinueButton(false); // Reset continue button state
     // Reset email flag per passkey registration
     setRegistrationData(prev => ({ ...prev, email: undefined }));
-    setViewState('video-pre');
-    // Il video partirà automaticamente grazie all'useEffect
+    openVideoOverlay('pre', VIDEO_PRE_URL);
+    // Start immediately from the gesture (required for audio)
+    startVideoFromGesture();
   };
 
   // When pre-registration video ends, show continue button
-  const handlePreVideoEnd = () => {
-    setShowContinueButton(true);
-  };
+  // NOTE: handled by the video overlay's onEnded handler
   
   const handleContinueFromPreVideo = () => {
     setShowContinueButton(false);
+    closeVideoOverlay();
     // Se siamo arrivati qui da "Registrati con Email", vai al form email
     // Altrimenti vai al form passkey
     if (registrationData.email === 'email-register-flag') {
@@ -307,7 +286,8 @@ export const SplashPage: React.FC = () => {
       setAuthLoading(false);
       
       // Cambia immediatamente lo stato per mostrare il video
-      setViewState('video-post');
+      openVideoOverlay('post', VIDEO_POST_URL);
+      setShowWelcomePlayOverlay(true);
       
       // Il video partirà automaticamente grazie all'useEffect che monitora viewState
       // e grazie all'attributo autoPlay sul video element
@@ -358,31 +338,174 @@ export const SplashPage: React.FC = () => {
   };
 
   // When post-registration video ends, show continue button
-  const handlePostVideoEnd = () => {
-    setShowPostContinueButton(true);
-  };
+  // NOTE: handled by the video overlay's onEnded handler
   
   const handleContinueFromPostVideo = () => {
     setShowPostContinueButton(false);
+    closeVideoOverlay();
     navigate('/home', { replace: true });
   };
 
-  // Skip video handler
+  // Skip / close video handler (overlay-based)
   const handleSkipVideo = () => {
-    if (viewState === 'video-pre') {
+    if (activeVideoKind === 'pre') {
       setShowContinueButton(false);
-      // Se siamo arrivati qui da "Registrati con Email", vai al form email
-      // Altrimenti vai al form passkey
+      closeVideoOverlay();
       if (registrationData.email === 'email-register-flag') {
-        setRegistrationData(prev => ({ ...prev, email: '' }));
+        setRegistrationData((prev) => ({ ...prev, email: '' }));
         setViewState('auth-email-register');
       } else {
         setViewState('auth');
       }
-    } else if (viewState === 'video-post') {
-      setShowPostContinueButton(false);
-      navigate('/home', { replace: true });
+      return;
     }
+
+    if (activeVideoKind === 'post') {
+      setShowPostContinueButton(false);
+      closeVideoOverlay();
+      navigate('/home', { replace: true });
+      return;
+    }
+
+    if (activeVideoKind === 'balletto') {
+      closeVideoOverlay();
+    }
+  };
+
+  const renderVideoOverlay = () => {
+    const isOpen = activeVideoKind !== null;
+    const isPre = activeVideoKind === 'pre';
+    const isPost = activeVideoKind === 'post';
+
+    return (
+      <div
+        className={[
+          'fixed inset-0 z-[9999] flex items-end justify-center p-4',
+          isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0',
+        ].join(' ')}
+        aria-hidden={!isOpen}
+      >
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-black/85" onClick={handleSkipVideo} />
+
+        {/* Modal */}
+        <motion.div
+          initial={false}
+          animate={isOpen ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.98 }}
+          transition={{ duration: 0.2 }}
+          className="relative z-10 w-[85%] max-w-md aspect-[9/16] bg-gray-900 rounded-2xl border-2 border-white/20 overflow-hidden shadow-2xl"
+          style={{ marginTop: '-10vh' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Loader */}
+          {isOpen && isVideoLoading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="w-16 h-16 border-4 border-coral-500 border-t-transparent rounded-full mb-4"
+              />
+              <p className="text-white text-sm font-semibold">Caricamento video...</p>
+            </div>
+          )}
+
+          {/* Video element is ALWAYS mounted so we can call play() in click handlers */}
+          <video
+            ref={videoRef}
+            src={activeVideoUrl}
+            playsInline
+            muted={false}
+            preload="auto"
+            className="w-full h-full object-cover"
+            onCanPlay={() => {
+              setIsVideoLoading(false);
+            }}
+            onPlay={() => {
+              setIsVideoLoading(false);
+              setShowWelcomePlayOverlay(false);
+            }}
+            onWaiting={() => setIsVideoLoading(true)}
+            onStalled={() => setIsVideoLoading(true)}
+            onError={() => {
+              setIsVideoLoading(false);
+              setShowWelcomePlayOverlay(true);
+            }}
+            onEnded={() => {
+              if (isPre) setShowContinueButton(true);
+              if (isPost) setShowPostContinueButton(true);
+              if (activeVideoKind === 'balletto') closeVideoOverlay();
+            }}
+          />
+
+          {/* Overlay play */}
+          <AnimatePresence>
+            {isOpen && showWelcomePlayOverlay && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={handleStartWelcomeVideo}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 z-30"
+              >
+                <div className="px-4 py-3 rounded-2xl glass-strong border border-white/20 text-white/90 text-sm font-semibold">
+                  Tocca per riprodurre
+                </div>
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          {/* Skip */}
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isOpen ? 1 : 0 }}
+            transition={{ delay: 0.3 }}
+            onClick={handleSkipVideo}
+            className="absolute top-4 right-4 px-3 py-1.5 glass rounded-full text-xs text-white/70 hover:bg-white/20 transition-colors z-30"
+          >
+            Salta
+          </motion.button>
+
+          {/* Continue buttons */}
+          <AnimatePresence>
+            {isOpen && isPre && showContinueButton && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="absolute bottom-4 left-0 right-0 flex justify-center px-4 z-30"
+              >
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleContinueFromPreVideo}
+                  className="btn-primary px-6 py-3 rounded-2xl font-semibold text-white shadow-xl active:scale-95 transition-transform duration-75"
+                >
+                  CONTINUA
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {isOpen && isPost && showPostContinueButton && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="absolute bottom-4 left-0 right-0 flex justify-center px-4 z-30"
+              >
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleContinueFromPostVideo}
+                  className="btn-primary px-6 py-3 rounded-2xl font-semibold text-white shadow-xl active:scale-95 transition-transform duration-75"
+                >
+                  CONTINUA
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
+    );
   };
 
   if (isLoading && viewState === 'splash') {
@@ -397,223 +520,7 @@ export const SplashPage: React.FC = () => {
     );
   }
 
-  // Video Pre-Iscrizione
-  if (viewState === 'video-pre') {
-    return (
-      <div className="h-screen bg-dark flex items-center justify-center relative overflow-hidden">
-        {/* Overlay scuro */}
-        <div className="absolute inset-0 bg-black/80 z-40" />
-        
-        {/* Modale con video verticale - più in alto e centrato */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-          className="relative z-50 w-[85%] max-w-md aspect-[9/16] bg-gray-900 rounded-2xl border-2 border-white/20 overflow-hidden shadow-2xl"
-          style={{ marginTop: '-10vh' }}
-        >
-          {/* Loader durante il caricamento */}
-          {isVideoLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="w-16 h-16 border-4 border-coral-500 border-t-transparent rounded-full mb-4"
-              />
-              <p className="text-white text-sm font-semibold">Caricamento video...</p>
-            </div>
-          )}
-
-          <video
-            ref={videoRef}
-            src={VIDEO_PRE_URL}
-            autoPlay
-            playsInline
-            muted={false}
-            preload="auto"
-            onEnded={handlePreVideoEnd}
-            onPlay={() => {
-              console.log('✅ Video in riproduzione (con audio)');
-              setShowWelcomePlayOverlay(false);
-              setIsVideoLoading(false);
-            }}
-            onError={(e) => {
-              console.error('❌ Errore video:', e);
-              setIsVideoLoading(false);
-              setShowWelcomePlayOverlay(true);
-            }}
-            onWaiting={() => {
-              console.log('⏳ Video in attesa di buffer...');
-              setIsVideoLoading(true);
-            }}
-            onStalled={() => {
-              console.warn('⚠️ Video stalled');
-              setIsVideoLoading(true);
-            }}
-            className="w-full h-full object-cover"
-          />
-
-          {/* Overlay play (quando autoplay con audio viene bloccato) */}
-          <AnimatePresence>
-            {showWelcomePlayOverlay && (
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={handleStartWelcomeVideo}
-                className="absolute inset-0 flex items-center justify-center bg-black/40 z-10"
-              >
-                <div className="px-4 py-3 rounded-2xl glass-strong border border-white/20 text-white/90 text-sm font-semibold">
-                  Tocca per riprodurre
-                </div>
-              </motion.button>
-            )}
-          </AnimatePresence>
-          
-          {/* Skip button */}
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2 }}
-            onClick={handleSkipVideo}
-            className="absolute top-4 right-4 px-3 py-1.5 glass rounded-full text-xs text-white/70 hover:bg-white/20 transition-colors z-10"
-          >
-            Salta
-          </motion.button>
-          
-          {/* Continue button - appare alla fine del video */}
-          <AnimatePresence>
-            {showContinueButton && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="absolute bottom-4 left-0 right-0 flex justify-center px-4 z-10"
-              >
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleContinueFromPreVideo}
-                  className="btn-primary px-6 py-3 rounded-2xl font-semibold text-white shadow-xl active:scale-95 transition-transform duration-75"
-                  transition={{ duration: 0.1 }}
-                >
-                  CONTINUA
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // Video Post-Iscrizione
-  if (viewState === 'video-post') {
-    return (
-      <div className="h-screen bg-dark flex items-center justify-center relative overflow-hidden">
-        {/* Overlay scuro */}
-        <div className="absolute inset-0 bg-black/80 z-40" />
-        
-        {/* Modale con video verticale - più in alto e centrato */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-          className="relative z-50 w-[85%] max-w-md aspect-[9/16] bg-gray-900 rounded-2xl border-2 border-white/20 overflow-hidden shadow-2xl"
-          style={{ marginTop: '-10vh' }}
-        >
-          {/* Loader durante il caricamento */}
-          {isVideoLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="w-16 h-16 border-4 border-coral-500 border-t-transparent rounded-full mb-4"
-              />
-              <p className="text-white text-sm font-semibold">Caricamento video...</p>
-            </div>
-          )}
-
-          <video
-            ref={videoRef}
-            src={VIDEO_POST_URL}
-            autoPlay
-            playsInline
-            muted={false}
-            preload="auto"
-            onEnded={handlePostVideoEnd}
-            onPlay={() => {
-              console.log('✅ Video post in riproduzione (con audio)');
-              setShowWelcomePlayOverlay(false);
-              setIsVideoLoading(false);
-            }}
-            onError={(e) => {
-              console.error('❌ Errore video post:', e);
-              setIsVideoLoading(false);
-              setShowWelcomePlayOverlay(true);
-            }}
-            onWaiting={() => {
-              console.log('⏳ Video post in attesa di buffer...');
-              setIsVideoLoading(true);
-            }}
-            onStalled={() => {
-              console.warn('⚠️ Video post stalled');
-              setIsVideoLoading(true);
-            }}
-            className="w-full h-full object-cover"
-          />
-
-          {/* Overlay play (quando autoplay con audio viene bloccato) */}
-          <AnimatePresence>
-            {showWelcomePlayOverlay && (
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={handleStartWelcomeVideo}
-                className="absolute inset-0 flex items-center justify-center bg-black/40 z-10"
-              >
-                <div className="px-4 py-3 rounded-2xl glass-strong border border-white/20 text-white/90 text-sm font-semibold">
-                  Tocca per riprodurre
-                </div>
-              </motion.button>
-            )}
-          </AnimatePresence>
-          
-          {/* Skip button */}
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2 }}
-            onClick={handleSkipVideo}
-            className="absolute top-4 right-4 px-3 py-1.5 glass rounded-full text-xs text-white/70 hover:bg-white/20 transition-colors z-10"
-          >
-            Salta
-          </motion.button>
-          
-          {/* Continue button - appare alla fine del video */}
-          <AnimatePresence>
-            {showPostContinueButton && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="absolute bottom-4 left-0 right-0 flex justify-center px-4 z-10"
-              >
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleContinueFromPostVideo}
-                  className="btn-primary px-6 py-3 rounded-2xl font-semibold text-white shadow-xl active:scale-95 transition-transform duration-75"
-                  transition={{ duration: 0.1 }}
-                >
-                  CONTINUA
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      </div>
-    );
-  }
+  // NOTE: video-pre/video-post pages are replaced by an always-mounted overlay (see bottom).
 
   // Se siamo nel form di registrazione, mostra solo il form senza countdown e titolo
   if (viewState === 'auth') {
@@ -765,6 +672,7 @@ export const SplashPage: React.FC = () => {
             </div>
           )}
         </motion.div>
+        {renderVideoOverlay()}
       </div>
     );
   }
@@ -827,6 +735,7 @@ export const SplashPage: React.FC = () => {
             Indietro
           </button>
         </motion.div>
+        {renderVideoOverlay()}
       </div>
     );
   }
@@ -979,6 +888,7 @@ export const SplashPage: React.FC = () => {
             Indietro
           </button>
         </motion.div>
+        {renderVideoOverlay()}
       </div>
     );
   }
@@ -1248,7 +1158,9 @@ export const SplashPage: React.FC = () => {
                   // Imposta un flag per sapere che veniamo da email registration
                   setRegistrationData(prev => ({ ...prev, email: 'email-register-flag' }));
                   setShowContinueButton(false);
-                  setViewState('video-pre');
+                  openVideoOverlay('pre', VIDEO_PRE_URL);
+                  // Start immediately from the gesture (required for audio)
+                  startVideoFromGesture();
                 }}
                 disabled={authLoading}
                 className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-gray-300 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all duration-75 border border-gray-600/30 rounded-xl hover:border-gray-500/50"
@@ -1337,6 +1249,8 @@ export const SplashPage: React.FC = () => {
       >
         DC-30 Fuerteventura - 🎂 © 2026
       </motion.p>
+
+      {renderVideoOverlay()}
     </div>
   );
 };
