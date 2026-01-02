@@ -52,6 +52,7 @@ export const SplashPage: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const revokeVideoSrcRef = useRef<null | (() => void)>(null);
   const [videoSrc, setVideoSrc] = useState<string>('');
+  const [isVideoReady, setIsVideoReady] = useState(false);
   
   // Redirect automatico se già autenticato
   useEffect(() => {
@@ -92,128 +93,45 @@ export const SplashPage: React.FC = () => {
 
   // Redirect automatico se già autenticato (rimuove il prompt "Continua" / "Cambia account")
 
-  // Gestisci il video quando cambia viewState
+  // Carica il videoSrc e prepara il video quando cambia viewState
   useEffect(() => {
     if (viewState !== 'video-pre' && viewState !== 'video-post') {
-      return;
-    }
-
-    setShowWelcomePlayOverlay(false);
-
-    let cleanupFunctions: (() => void)[] = [];
-    let hasStarted = false;
-
-    // Aspetta che il video sia montato nel DOM
-    const timeoutId = setTimeout(() => {
-      if (!videoRef.current) {
-        console.warn('Video ref non disponibile');
-        return;
-      }
-
-      const video = videoRef.current;
-      
-      // Reset video
-      video.currentTime = 0;
-      video.volume = 1;
-      // Audio sempre attivo
-      video.muted = false;
-      
-      // Funzione per far partire il video con audio
-      const startVideo = async () => {
-        if (!videoRef.current || hasStarted) return;
-        hasStarted = true;
-        
-        try {
-          // Prova a far partire con audio
-          const playPromise = videoRef.current.play();
-          if (playPromise !== undefined) {
-            await playPromise;
-            console.log('✅ Video avviato con successo (con audio)');
-            setShowWelcomePlayOverlay(false);
-          }
-        } catch (error) {
-          console.error('❌ Error playing video:', error);
-          hasStarted = false;
-          // Autoplay bloccato: mostriamo overlay "tocca per riprodurre"
-          setShowWelcomePlayOverlay(true);
-        }
-      };
-      
-      // Forza il caricamento del video
-      video.load();
-      
-      // Gestori eventi per quando il video è pronto
-      const handleCanPlay = () => {
-        if (videoRef.current && videoRef.current.paused && !hasStarted) {
-          startVideo();
-        }
-      };
-      
-      const handleLoadedData = () => {
-        if (videoRef.current && videoRef.current.paused && !hasStarted) {
-          startVideo();
-        }
-      };
-
-      const handleLoadedMetadata = () => {
-        if (videoRef.current && videoRef.current.paused && !hasStarted) {
-          startVideo();
-        }
-      };
-      
-      // Aggiungi listener multipli per essere sicuri
-      video.addEventListener('canplay', handleCanPlay, { once: true });
-      video.addEventListener('canplaythrough', handleCanPlay, { once: true });
-      video.addEventListener('loadeddata', handleLoadedData, { once: true });
-      video.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
-      
-      // Salva cleanup functions
-      cleanupFunctions.push(() => {
-        if (videoRef.current) {
-          videoRef.current.removeEventListener('canplay', handleCanPlay);
-          videoRef.current.removeEventListener('canplaythrough', handleCanPlay);
-          videoRef.current.removeEventListener('loadeddata', handleLoadedData);
-          videoRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
-        }
-      });
-      
-      // Prova a far partire immediatamente se già caricato
-      if (video.readyState >= 2 && !hasStarted) {
-        startVideo();
-      }
-    }, 200);
-    
-    return () => {
-      clearTimeout(timeoutId);
-      cleanupFunctions.forEach(cleanup => cleanup());
-      hasStarted = false;
-    };
-  }, [viewState]);
-
-  // Usa il video già in cache (se disponibile) così parte subito
-  useEffect(() => {
-    if (viewState !== 'video-pre' && viewState !== 'video-post') {
+      setIsVideoReady(false);
       return;
     }
 
     const targetUrl = viewState === 'video-pre' ? VIDEO_PRE_URL : VIDEO_POST_URL;
     let cancelled = false;
 
-    // Reset + cleanup eventuale blob precedente
+    // Reset stato
+    setShowWelcomePlayOverlay(false);
+    setIsVideoReady(false);
+    
+    // Cleanup blob precedente
     revokeVideoSrcRef.current?.();
     revokeVideoSrcRef.current = null;
+    
+    // Imposta URL iniziale (fallback diretto)
     setVideoSrc(targetUrl);
 
-    getCachedVideoSrc(targetUrl).then(({ src, revoke }) => {
-      if (cancelled) {
-        revoke?.();
-        return;
-      }
-      setVideoSrc(src);
-      revokeVideoSrcRef.current = revoke ?? null;
-      // Se il video è già montato, ricarica la sorgente
-      requestAnimationFrame(() => videoRef.current?.load());
-    });
+    // Prova a caricare dalla cache, altrimenti usa URL diretto
+    getCachedVideoSrc(targetUrl)
+      .then(({ src, revoke }) => {
+        if (cancelled) {
+          revoke?.();
+          return;
+        }
+        setVideoSrc(src);
+        revokeVideoSrcRef.current = revoke ?? null;
+        setIsVideoReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          // Se la cache fallisce, usa URL diretto
+          setVideoSrc(targetUrl);
+          setIsVideoReady(true);
+        }
+      });
 
     return () => {
       cancelled = true;
@@ -221,6 +139,81 @@ export const SplashPage: React.FC = () => {
       revokeVideoSrcRef.current = null;
     };
   }, [viewState, VIDEO_PRE_URL, VIDEO_POST_URL]);
+
+  // Gestisci il play del video quando è pronto
+  useEffect(() => {
+    if (!isVideoReady || !videoRef.current) return;
+    if (viewState !== 'video-pre' && viewState !== 'video-post') return;
+
+    const video = videoRef.current;
+    let hasStarted = false;
+    let cleanupFunctions: (() => void)[] = [];
+
+    // Reset video
+    video.currentTime = 0;
+    video.volume = 1;
+    video.muted = false;
+
+    // Funzione per avviare il video
+    const startVideo = async () => {
+      if (!videoRef.current || hasStarted) return;
+      hasStarted = true;
+
+      try {
+        await videoRef.current.play();
+        console.log('✅ Video avviato con successo');
+        setShowWelcomePlayOverlay(false);
+      } catch (error) {
+        console.error('❌ Autoplay bloccato:', error);
+        hasStarted = false;
+        setShowWelcomePlayOverlay(true);
+      }
+    };
+
+    // Gestori eventi
+    const handleCanPlay = () => {
+      if (videoRef.current && videoRef.current.paused && !hasStarted) {
+        startVideo();
+      }
+    };
+
+    const handleCanPlayThrough = () => {
+      if (videoRef.current && videoRef.current.paused && !hasStarted) {
+        startVideo();
+      }
+    };
+
+    const handleLoadedData = () => {
+      if (videoRef.current && videoRef.current.paused && !hasStarted) {
+        startVideo();
+      }
+    };
+
+    // Aggiungi listener
+    video.addEventListener('canplay', handleCanPlay, { once: true });
+    video.addEventListener('canplaythrough', handleCanPlayThrough, { once: true });
+    video.addEventListener('loadeddata', handleLoadedData, { once: true });
+
+    cleanupFunctions.push(() => {
+      if (videoRef.current) {
+        videoRef.current.removeEventListener('canplay', handleCanPlay);
+        videoRef.current.removeEventListener('canplaythrough', handleCanPlayThrough);
+        videoRef.current.removeEventListener('loadeddata', handleLoadedData);
+      }
+    });
+
+    // Forza il caricamento
+    video.load();
+
+    // Se già pronto, avvia subito
+    if (video.readyState >= 3) {
+      startVideo();
+    }
+
+    return () => {
+      cleanupFunctions.forEach(cleanup => cleanup());
+    };
+  }, [isVideoReady, viewState]);
 
   const handleStartWelcomeVideo = async () => {
     if (!videoRef.current) return;
@@ -484,10 +477,17 @@ export const SplashPage: React.FC = () => {
             onEnded={handlePreVideoEnd}
             onPlay={() => {
               console.log('✅ Video in riproduzione (con audio)');
+              setShowWelcomePlayOverlay(false);
             }}
             onError={(e) => {
               console.error('❌ Errore video:', e);
               setShowWelcomePlayOverlay(true);
+            }}
+            onWaiting={() => {
+              console.log('⏳ Video in attesa di buffer...');
+            }}
+            onStalled={() => {
+              console.warn('⚠️ Video stalled');
             }}
             className="w-full h-full object-cover"
           />
@@ -570,10 +570,17 @@ export const SplashPage: React.FC = () => {
             onEnded={handlePostVideoEnd}
             onPlay={() => {
               console.log('✅ Video post in riproduzione (con audio)');
+              setShowWelcomePlayOverlay(false);
             }}
             onError={(e) => {
               console.error('❌ Errore video post:', e);
               setShowWelcomePlayOverlay(true);
+            }}
+            onWaiting={() => {
+              console.log('⏳ Video post in attesa di buffer...');
+            }}
+            onStalled={() => {
+              console.warn('⚠️ Video post stalled');
             }}
             className="w-full h-full object-cover"
           />
