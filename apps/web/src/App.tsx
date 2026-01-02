@@ -63,7 +63,15 @@ function AppRoutes() {
 
 function VideoPrefetcher() {
   useEffect(() => {
-    prefetchAppVideos().catch(() => {});
+    // Precarica i video immediatamente all'avvio dell'app
+    console.log('📥 Precaricamento video in corso...');
+    prefetchAppVideos()
+      .then(() => {
+        console.log('✅ Video precaricati con successo');
+      })
+      .catch((err) => {
+        console.warn('⚠️ Errore precaricamento video:', err);
+      });
   }, []);
   return null;
 }

@@ -18,14 +18,19 @@ async function fetchAndCache(url: string): Promise<void> {
   const absoluteUrl = toAbsoluteUrl(url);
   const cache = await caches.open(CACHE_NAME);
   const existing = await cache.match(absoluteUrl);
-  if (existing) return;
+  if (existing) {
+    console.log(`✅ Video già in cache: ${url}`);
+    return;
+  }
 
+  console.log(`📥 Scaricamento video: ${url}`);
   const res = await fetch(absoluteUrl, { cache: 'reload' });
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} ${res.statusText}`);
   }
 
   await cache.put(absoluteUrl, res.clone());
+  console.log(`✅ Video salvato in cache: ${url}`);
 }
 
 /**

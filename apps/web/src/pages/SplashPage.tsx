@@ -53,6 +53,8 @@ export const SplashPage: React.FC = () => {
   const revokeVideoSrcRef = useRef<null | (() => void)>(null);
   const [videoSrc, setVideoSrc] = useState<string>('');
   const [isVideoReady, setIsVideoReady] = useState(false);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [videoLoadProgress, setVideoLoadProgress] = useState(0);
   
   // Redirect automatico se già autenticato
   useEffect(() => {
@@ -97,6 +99,7 @@ export const SplashPage: React.FC = () => {
   useEffect(() => {
     if (viewState !== 'video-pre' && viewState !== 'video-post') {
       setIsVideoReady(false);
+      setIsVideoLoading(false);
       return;
     }
 
@@ -106,6 +109,8 @@ export const SplashPage: React.FC = () => {
     // Reset stato
     setShowWelcomePlayOverlay(false);
     setIsVideoReady(false);
+    setIsVideoLoading(true);
+    setVideoLoadProgress(0);
     
     // Cleanup blob precedente
     revokeVideoSrcRef.current?.();
@@ -163,21 +168,37 @@ export const SplashPage: React.FC = () => {
         await videoRef.current.play();
         console.log('✅ Video avviato con successo');
         setShowWelcomePlayOverlay(false);
+        setIsVideoLoading(false);
       } catch (error) {
         console.error('❌ Autoplay bloccato:', error);
         hasStarted = false;
+        setIsVideoLoading(false);
         setShowWelcomePlayOverlay(true);
+      }
+    };
+
+    // Gestore progresso caricamento
+    const handleProgress = () => {
+      if (videoRef.current && videoRef.current.buffered.length > 0) {
+        const buffered = videoRef.current.buffered.end(0);
+        const duration = videoRef.current.duration;
+        if (duration > 0) {
+          const progress = (buffered / duration) * 100;
+          setVideoLoadProgress(progress);
+        }
       }
     };
 
     // Gestori eventi
     const handleCanPlay = () => {
+      setIsVideoLoading(false);
       if (videoRef.current && videoRef.current.paused && !hasStarted) {
         startVideo();
       }
     };
 
     const handleCanPlayThrough = () => {
+      setIsVideoLoading(false);
       if (videoRef.current && videoRef.current.paused && !hasStarted) {
         startVideo();
       }
@@ -193,12 +214,16 @@ export const SplashPage: React.FC = () => {
     video.addEventListener('canplay', handleCanPlay, { once: true });
     video.addEventListener('canplaythrough', handleCanPlayThrough, { once: true });
     video.addEventListener('loadeddata', handleLoadedData, { once: true });
+    video.addEventListener('progress', handleProgress);
+    video.addEventListener('waiting', () => setIsVideoLoading(true));
+    video.addEventListener('playing', () => setIsVideoLoading(false));
 
     cleanupFunctions.push(() => {
       if (videoRef.current) {
         videoRef.current.removeEventListener('canplay', handleCanPlay);
         videoRef.current.removeEventListener('canplaythrough', handleCanPlayThrough);
         videoRef.current.removeEventListener('loadeddata', handleLoadedData);
+        videoRef.current.removeEventListener('progress', handleProgress);
       }
     });
 
@@ -207,6 +232,7 @@ export const SplashPage: React.FC = () => {
 
     // Se già pronto, avvia subito
     if (video.readyState >= 3) {
+      setIsVideoLoading(false);
       startVideo();
     }
 
@@ -467,6 +493,28 @@ export const SplashPage: React.FC = () => {
           className="relative z-50 w-[85%] max-w-md aspect-[9/16] bg-gray-900 rounded-2xl border-2 border-white/20 overflow-hidden shadow-2xl"
           style={{ marginTop: '-10vh' }}
         >
+          {/* Loader durante il caricamento */}
+          {isVideoLoading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="w-16 h-16 border-4 border-coral-500 border-t-transparent rounded-full mb-4"
+              />
+              <p className="text-white text-sm font-semibold">Caricamento video...</p>
+              {videoLoadProgress > 0 && (
+                <div className="w-48 h-1 bg-gray-700 rounded-full mt-3 overflow-hidden">
+                  <motion.div
+                    className="h-full bg-coral-500"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${videoLoadProgress}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           <video
             ref={videoRef}
             src={videoSrc || VIDEO_PRE_URL}
@@ -478,16 +526,20 @@ export const SplashPage: React.FC = () => {
             onPlay={() => {
               console.log('✅ Video in riproduzione (con audio)');
               setShowWelcomePlayOverlay(false);
+              setIsVideoLoading(false);
             }}
             onError={(e) => {
               console.error('❌ Errore video:', e);
+              setIsVideoLoading(false);
               setShowWelcomePlayOverlay(true);
             }}
             onWaiting={() => {
               console.log('⏳ Video in attesa di buffer...');
+              setIsVideoLoading(true);
             }}
             onStalled={() => {
               console.warn('⚠️ Video stalled');
+              setIsVideoLoading(true);
             }}
             className="w-full h-full object-cover"
           />
@@ -560,6 +612,28 @@ export const SplashPage: React.FC = () => {
           className="relative z-50 w-[85%] max-w-md aspect-[9/16] bg-gray-900 rounded-2xl border-2 border-white/20 overflow-hidden shadow-2xl"
           style={{ marginTop: '-10vh' }}
         >
+          {/* Loader durante il caricamento */}
+          {isVideoLoading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 z-20">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="w-16 h-16 border-4 border-coral-500 border-t-transparent rounded-full mb-4"
+              />
+              <p className="text-white text-sm font-semibold">Caricamento video...</p>
+              {videoLoadProgress > 0 && (
+                <div className="w-48 h-1 bg-gray-700 rounded-full mt-3 overflow-hidden">
+                  <motion.div
+                    className="h-full bg-coral-500"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${videoLoadProgress}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           <video
             ref={videoRef}
             src={videoSrc || VIDEO_POST_URL}
@@ -571,16 +645,20 @@ export const SplashPage: React.FC = () => {
             onPlay={() => {
               console.log('✅ Video post in riproduzione (con audio)');
               setShowWelcomePlayOverlay(false);
+              setIsVideoLoading(false);
             }}
             onError={(e) => {
               console.error('❌ Errore video post:', e);
+              setIsVideoLoading(false);
               setShowWelcomePlayOverlay(true);
             }}
             onWaiting={() => {
               console.log('⏳ Video post in attesa di buffer...');
+              setIsVideoLoading(true);
             }}
             onStalled={() => {
               console.warn('⚠️ Video post stalled');
+              setIsVideoLoading(true);
             }}
             className="w-full h-full object-cover"
           />
