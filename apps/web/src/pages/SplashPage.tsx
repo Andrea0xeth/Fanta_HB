@@ -647,11 +647,11 @@ export const SplashPage: React.FC = () => {
               >
                 {avatarPreview ? (
                   <>
-                    <img
-                      src={avatarPreview}
-                      alt="Preview"
+                  <img
+                    src={avatarPreview}
+                    alt="Preview"
                       className="w-16 h-16 rounded-2xl bg-black/30 object-contain"
-                    />
+                  />
                     <div className="text-left">
                       <div className="text-xs text-gray-200 font-semibold">Foto caricata</div>
                       <div className="text-[10px] text-gray-400">Clicca per cambiarla</div>
@@ -876,11 +876,11 @@ export const SplashPage: React.FC = () => {
               >
                 {avatarPreview ? (
                   <>
-                    <img
-                      src={avatarPreview}
-                      alt="Preview"
+                  <img
+                    src={avatarPreview}
+                    alt="Preview"
                       className="w-16 h-16 rounded-2xl bg-black/30 object-contain"
-                    />
+                  />
                     <div className="text-left">
                       <div className="text-xs text-gray-200 font-semibold">Foto caricata</div>
                       <div className="text-[10px] text-gray-400">Clicca per cambiarla</div>

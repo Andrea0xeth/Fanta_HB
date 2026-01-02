@@ -62,6 +62,7 @@ export interface Quest {
   tipo_prova: ProofType[];
   emoji: string;
   scadenza: string;
+  is_special?: boolean; // Quest speciali sempre disponibili
   completed?: boolean; // Indica se la quest è stata inviata/completata
   // Stato prova dell'utente (per mostrare progress voti/validazione nella UI)
   prova?: {
@@ -133,6 +134,7 @@ export interface Premio {
   immagine: string;
   tipo: 'squadra' | 'singolo' | 'giornaliero' | 'speciale';
   punti_richiesti?: number;
+  posizione_classifica?: number; // Solo per premi di tipo 'squadra'
 }
 
 // Vote types

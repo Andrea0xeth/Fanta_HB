@@ -7,11 +7,10 @@ import { Avatar } from '../components/Avatar';
 import { SendPushNotificationModal } from '../components/SendPushNotificationModal';
 import { ClassificaGaraModal } from '../components/ClassificaGaraModal';
 import { CreaGaraModal } from '../components/CreaGaraModal';
-import { processPushNotificationQueue } from '../lib/pushNotifications';
 import { adminMaintenance } from '../lib/adminMaintenance';
 import type { Gara } from '../types';
 
-type TabType = 'gare' | 'bonus' | 'squadre' | 'manutenzione';
+type TabType = 'gare' | 'bonus' | 'squadre' | 'manutenzione' | 'quest-speciali' | 'premi';
 
 export const AdminPage: React.FC = () => {
   const { 
@@ -29,6 +28,11 @@ export const AdminPage: React.FC = () => {
     modificaSquadra,
     eliminaSquadra,
     cambiaSquadraUtente,
+    assegnaPuntiQuestSpeciale,
+    quests,
+    premi,
+    creaPremio,
+    eliminaPremio,
   } = useGame();
 
   const [activeTab, setActiveTab] = useState<TabType>('gare');
@@ -41,9 +45,6 @@ export const AdminPage: React.FC = () => {
   const [showCreaGara, setShowCreaGara] = useState(false);
   const [showPushNotificationModal, setShowPushNotificationModal] = useState(false);
   const [isSubmittingBonus, setIsSubmittingBonus] = useState(false);
-  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
-  const [hasProcessedQueue, setHasProcessedQueue] = useState(false);
-  const [queueProcessResult, setQueueProcessResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [maintenanceResult, setMaintenanceResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [maintenanceSearch, setMaintenanceSearch] = useState('');
@@ -59,6 +60,15 @@ export const AdminPage: React.FC = () => {
   const [squadraDaModificare, setSquadraDaModificare] = useState<string | null>(null);
   const [editingSquadraMembers, setEditingSquadraMembers] = useState<Set<string>>(new Set());
   const [searchEditingMembers, setSearchEditingMembers] = useState('');
+  const [showCreaPremio, setShowCreaPremio] = useState(false);
+  const [premioTitolo, setPremioTitolo] = useState('');
+  const [premioDescrizione, setPremioDescrizione] = useState('');
+  const [premioImmagine, setPremioImmagine] = useState('🎁');
+  const [premioTipo, setPremioTipo] = useState<'squadra' | 'singolo' | 'giornaliero' | 'speciale'>('singolo');
+  const [premioPunti, setPremioPunti] = useState('');
+  const [premioPosizione, setPremioPosizione] = useState('');
+  const [isSubmittingPremio, setIsSubmittingPremio] = useState(false);
+  const [premioError, setPremioError] = useState<string | null>(null);
 
   // Listener per aprire il modal classifica
   useEffect(() => {
@@ -149,40 +159,6 @@ export const AdminPage: React.FC = () => {
     }
   };
 
-  const handleProcessQueue = async () => {
-    if (isProcessingQueue || hasProcessedQueue) return;
-    
-    setIsProcessingQueue(true);
-    setQueueProcessResult(null);
-    
-    try {
-      const result = await processPushNotificationQueue();
-      
-      if (result.success) {
-        setQueueProcessResult({
-          type: 'success',
-          message: result.message || 'Coda processata con successo!',
-        });
-      } else {
-        setQueueProcessResult({
-          type: 'error',
-          message: result.message || 'Errore durante il processamento della coda',
-        });
-      }
-      
-      // Rimuovi il messaggio dopo 5 secondi
-      setTimeout(() => setQueueProcessResult(null), 5000);
-    } catch (error: any) {
-      setQueueProcessResult({
-        type: 'error',
-        message: error.message || 'Errore durante il processamento della coda',
-      });
-      setTimeout(() => setQueueProcessResult(null), 5000);
-    } finally {
-      setIsProcessingQueue(false);
-      setHasProcessedQueue(true);
-    }
-  };
 
   const motivoOptions = [
     'MVP della gara',
@@ -205,83 +181,84 @@ export const AdminPage: React.FC = () => {
           <Crown className="w-6 h-6 text-party-300 mx-auto mb-1.5" />
           <h1 className="text-lg font-display font-bold mb-0.5">Admin Panel</h1>
           <p className="text-gray-400 text-[10px]">Gestisci il 30diCiaccioGame</p>
-          <div className="mt-3 flex items-center gap-2 justify-center flex-wrap">
+          <div className="mt-3 flex items-center justify-center">
             <button
               onClick={() => setShowPushNotificationModal(true)}
-              className="btn-primary flex items-center gap-1.5 text-xs py-2 px-3"
+              className="btn-primary flex items-center gap-1.5 text-xs py-2 px-4"
             >
               <Bell size={14} />
               Notifica Push
             </button>
-            <button
-              onClick={handleProcessQueue}
-              disabled={isProcessingQueue || hasProcessedQueue}
-              className="btn-secondary flex items-center gap-1.5 text-xs py-2 px-3 disabled:opacity-50"
-            >
-              {isProcessingQueue ? (
-                <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    className="w-3 h-3 border-2 border-white border-t-transparent rounded-full"
-                  />
-                  Processando...
-                </>
-              ) : (
-                <>
-                  <RefreshCw size={14} />
-                  Processa Coda
-                </>
-              )}
-            </button>
           </div>
         </motion.div>
 
-        {/* Tab Switcher - Snello */}
-        <div className="bg-gray-800/30 rounded-xl p-0.5 flex gap-0.5">
+        {/* Tab Switcher - Migliorato */}
+        <div className="bg-gray-800/40 backdrop-blur-sm rounded-2xl p-1 flex gap-1 overflow-x-auto">
           <button
             onClick={() => setActiveTab('gare')}
-            className={`flex-1 py-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
+            className={`flex-shrink-0 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 ${
               activeTab === 'gare' 
-                ? 'bg-coral-500 text-white' 
-                : 'text-gray-400'
+                ? 'bg-gradient-to-r from-coral-500 to-coral-600 text-white shadow-lg shadow-coral-500/30 scale-105' 
+                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/50'
             }`}
           >
-            <Swords size={12} />
-            Gare
+            <Swords size={14} />
+            <span>Gare</span>
           </button>
           <button
             onClick={() => setActiveTab('bonus')}
-            className={`flex-1 py-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
+            className={`flex-shrink-0 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 ${
               activeTab === 'bonus' 
-                ? 'bg-coral-500 text-white' 
-                : 'text-gray-400'
+                ? 'bg-gradient-to-r from-party-300 to-party-400 text-white shadow-lg shadow-party-300/30 scale-105' 
+                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/50'
             }`}
           >
-            <Gift size={12} />
-            Bonus
+            <Gift size={14} />
+            <span>Bonus</span>
           </button>
           <button
             onClick={() => setActiveTab('squadre')}
-            className={`flex-1 py-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
+            className={`flex-shrink-0 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 ${
               activeTab === 'squadre' 
-                ? 'bg-coral-500 text-white' 
-                : 'text-gray-400'
+                ? 'bg-gradient-to-r from-turquoise-400 to-turquoise-500 text-white shadow-lg shadow-turquoise-400/30 scale-105' 
+                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/50'
             }`}
           >
-            <Users size={12} />
-            Squadre
+            <Users size={14} />
+            <span>Squadre</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('quest-speciali')}
+            className={`flex-shrink-0 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 ${
+              activeTab === 'quest-speciali' 
+                ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white shadow-lg shadow-yellow-500/30 scale-105' 
+                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/50'
+            }`}
+          >
+            <Trophy size={14} />
+            <span>Quest ⭐</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('premi')}
+            className={`flex-shrink-0 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 ${
+              activeTab === 'premi'
+                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30 scale-105'
+                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/50'
+            }`}
+          >
+            <Gift size={14} />
+            <span>Premi</span>
           </button>
           <button
             onClick={() => setActiveTab('manutenzione')}
-            className={`flex-1 py-1.5 rounded-lg font-semibold text-xs flex items-center justify-center gap-1 transition-all ${
+            className={`flex-shrink-0 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 ${
               activeTab === 'manutenzione'
-                ? 'bg-coral-500 text-white'
-                : 'text-gray-400'
+                ? 'bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-lg shadow-gray-500/30 scale-105'
+                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/50'
             }`}
           >
-            <RefreshCw size={12} />
-            Manut.
+            <RefreshCw size={14} />
+            <span>Manut.</span>
           </button>
         </div>
       </div>
@@ -297,27 +274,6 @@ export const AdminPage: React.FC = () => {
           >
             <Check size={20} />
             <span className="font-semibold">Bonus assegnato con successo!</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Queue Process Result Toast */}
-      <AnimatePresence>
-        {queueProcessResult && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className={`fixed top-20 left-4 right-4 z-50 ${
-              queueProcessResult.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-            } text-white px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg`}
-          >
-            {queueProcessResult.type === 'success' ? (
-              <Check size={20} />
-            ) : (
-              <X size={20} />
-            )}
-            <span className="font-semibold">{queueProcessResult.message}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -696,7 +652,347 @@ export const AdminPage: React.FC = () => {
             </motion.div>
           )}
 
-          {/* MANUTENZIONE TAB */}
+          {/* PREMI TAB */}
+          {activeTab === 'premi' && (
+            <motion.div
+              key="premi"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-3 pt-3"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Gift size={14} className="text-party-300" />
+                  <h2 className="font-display font-bold text-sm">Gestione Premi</h2>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowCreaPremio(true);
+                    setPremioTitolo('');
+                    setPremioDescrizione('');
+                    setPremioImmagine('🎁');
+                    setPremioTipo('singolo');
+                    setPremioPunti('');
+                    setPremioError(null);
+                  }}
+                  className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
+                >
+                  <Plus size={12} />
+                  Nuovo
+                </button>
+              </div>
+
+              {/* Form Crea Premio */}
+              {showCreaPremio && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="border-l-2 border-party-300/50 pl-2 py-2 space-y-2"
+                >
+                  <div>
+                    <label className="block text-xs text-gray-300 mb-1 font-semibold">Titolo</label>
+                    <input
+                      type="text"
+                      value={premioTitolo}
+                      onChange={(e) => setPremioTitolo(e.target.value)}
+                      placeholder="Es: iPhone 15"
+                      className="input text-sm py-1.5 w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-300 mb-1 font-semibold">Descrizione</label>
+                    <textarea
+                      value={premioDescrizione}
+                      onChange={(e) => setPremioDescrizione(e.target.value)}
+                      placeholder="Descrizione del premio..."
+                      className="input text-sm py-1.5 w-full min-h-[60px]"
+                      rows={2}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-300 mb-1 font-semibold">Emoji/Immagine</label>
+                      <input
+                        type="text"
+                        value={premioImmagine}
+                        onChange={(e) => setPremioImmagine(e.target.value)}
+                        placeholder="🎁"
+                        className="input text-2xl text-center py-1.5 w-full"
+                        maxLength={2}
+                      />
+                    </div>
+                    {premioTipo !== 'squadra' && (
+                      <div className="flex-1">
+                        <label className="block text-xs text-gray-300 mb-1 font-semibold">Punti Richiesti</label>
+                        <input
+                          type="number"
+                          value={premioPunti}
+                          onChange={(e) => setPremioPunti(e.target.value)}
+                          placeholder="300"
+                          className="input text-sm py-1.5 w-full"
+                          min="1"
+                        />
+                      </div>
+                    )}
+                    {premioTipo === 'squadra' && (
+                      <div className="flex-1">
+                        <label className="block text-xs text-gray-300 mb-1 font-semibold">Posizione Classifica</label>
+                        <input
+                          type="number"
+                          value={premioPosizione}
+                          onChange={(e) => setPremioPosizione(e.target.value)}
+                          placeholder="1 (per 1° posto)"
+                          className="input text-sm py-1.5 w-full"
+                          min="1"
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1">
+                          Posizione in classifica (1 = 1° posto, 2 = 2° posto, ecc.)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-300 mb-1 font-semibold">Tipo</label>
+                    <div className="flex gap-1.5">
+                      {(['squadra', 'singolo', 'giornaliero', 'speciale'] as const).map((tipo) => (
+                        <button
+                          key={tipo}
+                          onClick={() => setPremioTipo(tipo)}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            premioTipo === tipo
+                              ? 'bg-coral-500 text-white'
+                              : 'bg-gray-800/30 text-gray-400'
+                          }`}
+                        >
+                          {tipo === 'squadra' ? 'Squadra' : tipo === 'singolo' ? 'Singolo' : tipo === 'giornaliero' ? 'Giornaliero' : 'Speciale'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {premioError && (
+                    <div className="bg-red-500/20 border border-red-500/40 rounded-lg p-2">
+                      <p className="text-xs text-red-400">{premioError}</p>
+                    </div>
+                  )}
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={() => {
+                        setShowCreaPremio(false);
+                        setPremioTitolo('');
+                        setPremioDescrizione('');
+                        setPremioImmagine('🎁');
+                        setPremioTipo('singolo');
+                        setPremioPunti('');
+                        setPremioError(null);
+                      }}
+                      className="btn-ghost flex-1 py-2 text-xs"
+                    >
+                      <X size={14} className="inline mr-1" />
+                      Annulla
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!premioTitolo.trim()) {
+                          setPremioError('Titolo è obbligatorio');
+                          return;
+                        }
+                        if (premioTipo === 'squadra' && !premioPosizione) {
+                          setPremioError('Posizione classifica è obbligatoria per i premi di squadra');
+                          return;
+                        }
+                        if (premioTipo !== 'squadra' && !premioPunti) {
+                          setPremioError('Punti richiesti sono obbligatori per questo tipo di premio');
+                          return;
+                        }
+                        setIsSubmittingPremio(true);
+                        setPremioError(null);
+                        try {
+                          await creaPremio({
+                            titolo: premioTitolo.trim(),
+                            descrizione: premioDescrizione.trim() || undefined,
+                            immagine: premioImmagine || '🎁',
+                            tipo: premioTipo,
+                            punti_richiesti: premioTipo === 'squadra' ? null : parseInt(premioPunti),
+                            posizione_classifica: premioTipo === 'squadra' ? parseInt(premioPosizione) : undefined,
+                          });
+                          setShowCreaPremio(false);
+                          setPremioTitolo('');
+                          setPremioDescrizione('');
+                          setPremioImmagine('🎁');
+                          setPremioTipo('singolo');
+                          setPremioPunti('');
+                          setPremioPosizione('');
+                        } catch (error: any) {
+                          setPremioError(error.message || 'Errore durante la creazione');
+                        } finally {
+                          setIsSubmittingPremio(false);
+                        }
+                      }}
+                      disabled={isSubmittingPremio || !premioTitolo.trim() || (premioTipo === 'squadra' ? !premioPosizione : !premioPunti)}
+                      className="btn-primary flex-1 disabled:opacity-50 flex items-center justify-center py-2 text-xs"
+                    >
+                      {isSubmittingPremio ? (
+                        <>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                            className="w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-1.5"
+                          />
+                          Creazione...
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={14} className="inline mr-1" />
+                          Crea Premio
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Lista Premi */}
+              <div className="space-y-2">
+                {premi.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400 text-xs">
+                    <Gift size={32} className="mx-auto mb-2 opacity-50" />
+                    <p>Nessun premio creato</p>
+                  </div>
+                ) : (
+                  premi.map((premio) => (
+                    <motion.div
+                      key={premio.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="border-l-2 border-gray-700/30 pl-2 py-1.5"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">{premio.immagine}</span>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-sm truncate">{premio.titolo}</h3>
+                          <p className="text-[10px] text-gray-400 line-clamp-1">{premio.descrizione}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-gray-500">{premio.tipo}</span>
+                            <span className="text-[10px] text-gray-400">•</span>
+                            {premio.tipo === 'squadra' && premio.posizione_classifica ? (
+                              <span className="text-[10px] text-gray-400">{premio.posizione_classifica}° posto</span>
+                            ) : (
+                              <span className="text-[10px] text-gray-400">{premio.punti_richiesti || 0} pts</span>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            const ok = window.confirm(`Eliminare il premio "${premio.titolo}"?`);
+                            if (!ok) return;
+                            try {
+                              await eliminaPremio(premio.id);
+                            } catch (error: any) {
+                              alert(`Errore: ${error.message || 'Impossibile eliminare il premio'}`);
+                            }
+                          }}
+                          className="btn-ghost text-[10px] py-1 px-2 text-red-400 border border-red-500/40"
+                        >
+                          Elimina
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* QUEST SPECIALI TAB */}
+          {activeTab === 'quest-speciali' && (
+            <motion.div
+              key="quest-speciali"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-3 pt-3"
+            >
+              <div className="flex items-center gap-1.5 mb-2">
+                <Trophy size={14} className="text-party-300" />
+                <h2 className="font-display font-bold text-sm">Quest Speciali Validate</h2>
+              </div>
+
+              {(() => {
+                // Filtra le prove validate delle quest speciali
+                const specialQuestsIds = quests.filter(q => q.is_special).map(q => q.id);
+                const validatedSpecialProofs = proveInVerifica.filter(
+                  p => p.stato === 'validata' && specialQuestsIds.includes(p.quest_id)
+                );
+
+                if (validatedSpecialProofs.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-gray-400 text-xs">
+                      <Trophy size={32} className="mx-auto mb-2 opacity-50" />
+                      <p>Nessuna quest speciale validata</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-2">
+                    {validatedSpecialProofs.map((prova) => {
+                      const quest = quests.find(q => q.id === prova.quest_id);
+                      const user = leaderboardSingoli.find(u => u.id === prova.user_id);
+                      const percentuale = prova.voti_totali > 0 
+                        ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
+                        : 0;
+
+                      return (
+                        <motion.div
+                          key={prova.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="glass rounded-xl p-3 border border-party-300/20"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-lg">{quest?.emoji || '⭐'}</span>
+                                <h3 className="font-semibold text-sm truncate">{quest?.titolo || 'Quest Speciale'}</h3>
+                              </div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Avatar user={user || { id: prova.user_id, nickname: 'Utente', punti_personali: 0, is_admin: false, created_at: '', squadra_id: null }} size="sm" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-xs">{user?.nickname || 'Utente sconosciuto'}</p>
+                                  <p className="text-[10px] text-gray-400">{prova.voti_positivi}/{prova.voti_totali} voti positivi ({percentuale}%)</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs">
+                                <span className="text-party-300 font-bold">{quest?.punti || 0} punti</span>
+                                <span className="text-gray-400">•</span>
+                                <span className="text-gray-400">Validata</span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm(`Assegnare ${quest?.punti || 0} punti a ${user?.nickname || 'questo utente'}?`)) return;
+                                try {
+                                  await assegnaPuntiQuestSpeciale(prova.id);
+                                  alert('Punti assegnati con successo!');
+                                } catch (error: any) {
+                                  alert(`Errore: ${error.message}`);
+                                }
+                              }}
+                              className="btn-primary text-xs py-1.5 px-3 flex-shrink-0"
+                            >
+                              Assegna Punti
+                            </button>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </motion.div>
+          )}
+
           {activeTab === 'manutenzione' && (
             <motion.div
               key="manutenzione"

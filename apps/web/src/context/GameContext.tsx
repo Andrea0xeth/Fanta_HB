@@ -8,9 +8,11 @@ import type {
   Gara,
   GameState,
   Notifica,
+  Premio,
   RegistrationData,
   EmailPasswordCredentials,
   EmailPasswordRegistrationData,
+  QuestDifficulty,
 } from '../types';
 import type { Database } from '../lib/database.types';
 import { registerPasskey, authenticateWithPasskey } from '../lib/webauthn';
@@ -29,6 +31,7 @@ interface GameContextType {
   proveInVerifica: ProvaQuest[];
   gameState: GameState;
   notifiche: Notifica[];
+  premi: Premio[];
   
   // Actions
   login: (registrationData: RegistrationData) => Promise<void>;
@@ -54,12 +57,17 @@ interface GameContextType {
   aggiungiBonus: (userId: string, punti: number, motivo: string) => Promise<void>;
   refreshData: () => Promise<void>;
   updateAvatar: (file: File) => Promise<void>;
+  assegnaPuntiQuestSpeciale: (provaId: string) => Promise<void>; // Admin only
   
   // Squadre management (admin only)
   creaSquadra: (squadra: { nome: string; emoji: string; colore: string; userIds?: string[] }) => Promise<void>;
   modificaSquadra: (squadraId: string, updates: { nome?: string; emoji?: string; colore?: string }) => Promise<void>;
   eliminaSquadra: (squadraId: string) => Promise<void>;
   cambiaSquadraUtente: (userId: string, nuovaSquadraId: string | null) => Promise<void>;
+  
+  // Premi management (admin only)
+  creaPremio: (premio: { titolo: string; descrizione?: string; immagine: string; tipo: 'squadra' | 'singolo' | 'giornaliero' | 'speciale'; punti_richiesti: number | null; posizione_classifica?: number }) => Promise<void>;
+  eliminaPremio: (premioId: string) => Promise<void>;
   
   // Computed
   mySquadra: Squadra | null;
@@ -90,6 +98,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   const [gare, setGare] = useState<Gara[]>([]);
   const [proveInVerifica, setProveInVerifica] = useState<ProvaQuest[]>([]);
   const [notifiche, setNotifiche] = useState<Notifica[]>([]);
+  const [premi, setPremi] = useState<Premio[]>([]);
   const [gameState, setGameState] = useState<GameState>({
     giorno_corrente: 0,
     evento_iniziato: false,
@@ -291,10 +300,34 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
             tipo_prova: q.tipo_prova as ('foto' | 'video' | 'testo')[],
             emoji: q.emoji,
             scadenza: q.scadenza || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            is_special: q.is_special || false,
             completed: q.completed || false, // Indica se la quest è stata inviata
           }));
 
-          setQuests(await attachUserProofsToQuests(questsList));
+          // Carica anche le quest speciali (sempre disponibili)
+          const { data: specialQuestsData } = await supabase
+            .from('quest')
+            .select('*')
+            .eq('is_special', true)
+            .eq('attiva', true)
+            .order('punti', { ascending: false });
+
+          const specialQuests: Quest[] = (specialQuestsData || []).map((q: Database['public']['Tables']['quest']['Row'] & { is_special?: boolean }) => ({
+            id: q.id,
+            giorno: 0, // Quest speciali hanno giorno 0
+            titolo: q.titolo,
+            descrizione: q.descrizione || '',
+            punti: q.punti,
+            difficolta: q.difficolta as QuestDifficulty,
+            tipo_prova: (q.tipo_prova || []) as ('foto' | 'video' | 'testo')[],
+            emoji: q.emoji || '🎯',
+            scadenza: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // Scadenza lontana per quest speciali
+            is_special: true,
+          }));
+
+          // Combina quest giornaliere e quest speciali
+          const allQuests = [...questsList, ...specialQuests];
+          setQuests(await attachUserProofsToQuests(allQuests));
         }
       } else {
         // Se non c'è utente, carica tutte le quest (per preview/admin)
@@ -484,6 +517,28 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         }));
 
         setNotifiche(notificheList);
+      }
+
+      // Carica premi
+      const { data: premiData, error: premiError } = await supabase
+        .from('premi')
+        .select('*')
+        .order('tipo', { ascending: true })
+        .order('punti_richiesti', { ascending: true });
+
+      if (premiError) {
+        console.error('Errore caricamento premi:', premiError);
+      } else {
+        const premiList = (premiData || []).map((p: any) => ({
+          id: p.id,
+          titolo: p.titolo,
+          descrizione: p.descrizione || '',
+          immagine: p.immagine,
+          tipo: p.tipo as 'squadra' | 'singolo' | 'giornaliero' | 'speciale',
+          punti_richiesti: p.punti_richiesti ?? undefined,
+          posizione_classifica: p.posizione_classifica ?? undefined,
+        }));
+        setPremi(premiList);
       }
     } catch (error) {
       console.error('Errore caricamento dati:', error);
@@ -1796,6 +1851,111 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     }
   };
 
+  const assegnaPuntiQuestSpeciale = async (provaId: string) => {
+    if (!user?.is_admin) {
+      throw new Error('Solo gli admin possono assegnare punti alle quest speciali');
+    }
+
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase non configurato');
+    }
+
+    try {
+      setIsLoading(true);
+      console.log('[Assegna Punti Quest Speciale] Assegnazione punti per prova:', provaId);
+
+      const { error } = await supabase.rpc('assegna_punti_quest_speciale', {
+        p_prova_id: provaId,
+        p_admin_id: user.id,
+      } as any);
+
+      if (error) {
+        console.error('[Assegna Punti Quest Speciale] Errore:', error);
+        throw new Error(`Errore durante l'assegnazione punti: ${error.message}`);
+      }
+
+      console.log('[Assegna Punti Quest Speciale] ✅ Punti assegnati');
+      await loadData();
+    } catch (error) {
+      console.error('[Assegna Punti Quest Speciale] ❌ Errore completo:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const creaPremio = async (premio: { titolo: string; descrizione?: string; immagine: string; tipo: 'squadra' | 'singolo' | 'giornaliero' | 'speciale'; punti_richiesti: number | null; posizione_classifica?: number }) => {
+    if (!user?.is_admin) {
+      throw new Error('Solo gli admin possono creare premi');
+    }
+
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase non configurato');
+    }
+
+    try {
+      setIsLoading(true);
+      console.log('[Crea Premio] Creazione premio:', premio);
+
+      const { error } = await supabase
+        .from('premi')
+        .insert({
+          titolo: premio.titolo,
+          descrizione: premio.descrizione || null,
+          immagine: premio.immagine,
+          tipo: premio.tipo,
+          punti_richiesti: premio.tipo === 'squadra' ? null : premio.punti_richiesti,
+          posizione_classifica: premio.posizione_classifica || null,
+        } as any);
+
+      if (error) {
+        console.error('[Crea Premio] Errore:', error);
+        throw new Error(`Errore durante la creazione del premio: ${error.message}`);
+      }
+
+      console.log('[Crea Premio] ✅ Premio creato');
+      await loadData();
+    } catch (error) {
+      console.error('[Crea Premio] ❌ Errore completo:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const eliminaPremio = async (premioId: string) => {
+    if (!user?.is_admin) {
+      throw new Error('Solo gli admin possono eliminare premi');
+    }
+
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase non configurato');
+    }
+
+    try {
+      setIsLoading(true);
+      console.log('[Elimina Premio] Eliminazione premio:', premioId);
+
+      const { error } = await supabase
+        .from('premi')
+        .delete()
+        .eq('id', premioId);
+
+      if (error) {
+        console.error('[Elimina Premio] Errore:', error);
+        throw new Error(`Errore durante l'eliminazione del premio: ${error.message}`);
+      }
+
+      console.log('[Elimina Premio] ✅ Premio eliminato');
+      await loadData();
+    } catch (error) {
+      console.error('[Elimina Premio] ❌ Errore completo:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Computed values
   const mySquadra = user?.squadra_id 
     ? squadre.find(s => s.id === user.squadra_id) || null 
@@ -1824,6 +1984,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     proveInVerifica,
     gameState,
     notifiche,
+    premi,
     login,
     loginWithPasskey,
     loginWithEmailPassword,
@@ -1842,6 +2003,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     modificaSquadra,
     eliminaSquadra,
     cambiaSquadraUtente,
+    assegnaPuntiQuestSpeciale,
+    creaPremio,
+    eliminaPremio,
     mySquadra,
     leaderboardSquadre,
     leaderboardSingoli,

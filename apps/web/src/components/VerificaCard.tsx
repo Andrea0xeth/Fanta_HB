@@ -124,7 +124,7 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
                   >
                     {/* Carichiamo solo metadata per evitare download aggressivi prima del click */}
                     <video
-                      src={prova.contenuto}
+                      src={prova.contenuto} 
                       preload="metadata"
                       playsInline
                       muted
@@ -136,10 +136,10 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
                     </div>
                     <div className="absolute bottom-2 left-2 right-2 text-center text-[10px] text-white/70">
                       Tocca per riprodurre
-                    </div>
+                  </div>
                   </button>
                 ) : (
-                  <video
+                  <video 
                     src={prova.contenuto}
                     controls
                     autoPlay

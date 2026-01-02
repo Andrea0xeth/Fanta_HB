@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Users, User, Crown, Flame } from 'lucide-react';
+import { Trophy, Users, User, Crown, Flame, Award } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { Avatar } from '../components/Avatar';
 import { UserProfileModal } from '../components/UserProfileModal';
@@ -83,24 +83,28 @@ export const LeaderboardPage: React.FC = () => {
               exit={{ opacity: 0, x: 20 }}
               className="space-y-2"
             >
-              {/* Top 3 Podium - Snello */}
-              <div className="flex items-end justify-center gap-2 py-3 mb-3">
+              {/* Top 3 Podium - Migliorato */}
+              <div className="flex items-end justify-center gap-2 py-4 mb-4">
                 {/* 2nd Place */}
                 {leaderboardSquadre[1] && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="text-center"
+                    className="text-center flex-1 max-w-[80px]"
                   >
-                    <div className="text-2xl mb-1">{leaderboardSquadre[1].emoji}</div>
-                    <div className="w-12 h-12 bg-gray-800/50 rounded-t-xl flex items-end justify-center pb-1">
-                      <span className="text-sm font-bold text-gray-300">2</span>
+                    <div className="text-3xl mb-1.5">{leaderboardSquadre[1].emoji}</div>
+                    <div className="w-full h-16 bg-gradient-to-t from-gray-400/30 to-gray-400/10 rounded-t-xl flex items-end justify-center pb-2 border border-gray-400/20">
+                      <span className="text-base font-bold text-gray-300">2</span>
                     </div>
-                    <p className="text-xs font-semibold mt-1 truncate max-w-[60px]">
+                    <p className="text-xs font-bold mt-2 truncate">
                       {leaderboardSquadre[1].nome}
                     </p>
-                    <p className="text-[10px] text-turquoise-400 font-semibold">{leaderboardSquadre[1].punti_squadra} pts</p>
+                    <p className="text-[10px] text-turquoise-400 font-semibold mt-0.5">{leaderboardSquadre[1].punti_squadra} pts</p>
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      <Users size={10} className="text-gray-500" />
+                      <span className="text-[9px] text-gray-500">{leaderboardSquadre[1].membri.length}</span>
+                    </div>
                   </motion.div>
                 )}
 
@@ -109,17 +113,21 @@ export const LeaderboardPage: React.FC = () => {
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center"
+                    className="text-center flex-1 max-w-[90px]"
                   >
-                    <Crown className="w-4 h-4 text-party-300 mx-auto mb-0.5" />
-                    <div className="text-3xl mb-1">{leaderboardSquadre[0].emoji}</div>
-                    <div className="w-14 h-16 bg-gradient-to-t from-party-300/50 to-party-300/20 rounded-t-xl flex items-end justify-center pb-1.5">
-                      <span className="text-lg font-bold text-party-300">1</span>
+                    <Crown className="w-5 h-5 text-party-300 mx-auto mb-1" />
+                    <div className="text-4xl mb-2">{leaderboardSquadre[0].emoji}</div>
+                    <div className="w-full h-20 bg-gradient-to-t from-party-300/60 to-party-300/20 rounded-t-xl flex items-end justify-center pb-2.5 border-2 border-party-300/40 shadow-lg shadow-party-300/20">
+                      <span className="text-xl font-bold text-party-300">1</span>
                     </div>
-                    <p className="text-xs font-semibold mt-1 truncate max-w-[70px]">
+                    <p className="text-sm font-bold mt-2 truncate bg-gradient-to-r from-party-300 to-party-400 bg-clip-text text-transparent">
                       {leaderboardSquadre[0].nome}
                     </p>
-                    <p className="text-[10px] text-turquoise-400 font-semibold">{leaderboardSquadre[0].punti_squadra} pts</p>
+                    <p className="text-xs text-turquoise-400 font-bold mt-0.5">{leaderboardSquadre[0].punti_squadra} pts</p>
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      <Users size={10} className="text-party-300" />
+                      <span className="text-[9px] text-party-300 font-semibold">{leaderboardSquadre[0].membri.length}</span>
+                    </div>
                   </motion.div>
                 )}
 
@@ -129,47 +137,76 @@ export const LeaderboardPage: React.FC = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="text-center"
+                    className="text-center flex-1 max-w-[80px]"
                   >
-                    <div className="text-2xl mb-1">{leaderboardSquadre[2].emoji}</div>
-                    <div className="w-12 h-10 bg-orange-500/30 rounded-t-xl flex items-end justify-center pb-1">
+                    <div className="text-3xl mb-1.5">{leaderboardSquadre[2].emoji}</div>
+                    <div className="w-full h-12 bg-gradient-to-t from-orange-500/30 to-orange-500/10 rounded-t-xl flex items-end justify-center pb-1.5 border border-orange-500/20">
                       <span className="text-sm font-bold text-orange-400">3</span>
                     </div>
-                    <p className="text-xs font-semibold mt-1 truncate max-w-[60px]">
+                    <p className="text-xs font-bold mt-2 truncate">
                       {leaderboardSquadre[2].nome}
                     </p>
-                    <p className="text-[10px] text-turquoise-400 font-semibold">{leaderboardSquadre[2].punti_squadra} pts</p>
+                    <p className="text-[10px] text-turquoise-400 font-semibold mt-0.5">{leaderboardSquadre[2].punti_squadra} pts</p>
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      <Users size={10} className="text-gray-500" />
+                      <span className="text-[9px] text-gray-500">{leaderboardSquadre[2].membri.length}</span>
+                    </div>
                   </motion.div>
                 )}
               </div>
 
-              {/* Rest of leaderboard - Snello */}
-              <div className="space-y-1.5">
-                {leaderboardSquadre.slice(3).map((squadra, index) => (
-                  <motion.div
-                    key={squadra.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + index * 0.05 }}
-                    className={`flex items-center gap-2 py-1.5 border-l-2 ${
-                      squadra.id === mySquadra?.id ? 'border-coral-500/50 pl-2' : 'border-gray-700/30 pl-2'
-                    }`}
-                  >
-                    <PositionBadge position={index + 4} />
-                    <span className="text-xl">{squadra.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <span className="font-semibold text-sm truncate">{squadra.nome}</span>
-                      {squadra.id === mySquadra?.id && (
-                        <span className="badge-coral ml-1.5 text-[10px] px-1.5 py-0.5">Tu</span>
-                      )}
-                    </div>
-                    <div className="text-right min-w-[50px]">
-                      <span className="font-bold text-turquoise-400 text-sm">{squadra.punti_squadra}</span>
-                      <span className="text-gray-400 text-[10px] ml-0.5">pts</span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+              {/* Rest of leaderboard - Migliorato */}
+              {leaderboardSquadre.length > 3 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 mb-2 px-1">
+                    <Award size={12} className="text-gray-500" />
+                    <span className="text-xs text-gray-500 font-semibold">Altre Squadre</span>
+                  </div>
+                  {leaderboardSquadre.slice(3).map((squadra, index) => {
+                    const position = index + 4;
+                    const isMySquadra = squadra.id === mySquadra?.id;
+                    return (
+                      <motion.div
+                        key={squadra.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 + index * 0.05 }}
+                        className={`flex items-center gap-2 py-2.5 px-3 rounded-xl border-l-2 transition-all ${
+                          isMySquadra 
+                            ? 'border-coral-500/50 bg-coral-500/5 pl-3 shadow-sm' 
+                            : 'border-gray-700/30 bg-gray-800/20 hover:bg-gray-800/30 pl-3'
+                        }`}
+                      >
+                        <PositionBadge position={position} />
+                        <div 
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
+                          style={{ backgroundColor: `${squadra.colore}20` }}
+                        >
+                          {squadra.emoji}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-sm truncate">{squadra.nome}</span>
+                            {isMySquadra && (
+                              <span className="badge-coral flex-shrink-0 text-[10px] px-1.5 py-0.5">La Tua Squadra</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <div className="flex items-center gap-1">
+                              <Users size={10} className="text-gray-500" />
+                              <span className="text-[10px] text-gray-500">{squadra.membri.length} membri</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right min-w-[60px] flex-shrink-0">
+                          <span className="font-bold text-turquoise-400 text-base block">{squadra.punti_squadra}</span>
+                          <span className="text-gray-400 text-[10px]">pts</span>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
           ) : (
             <motion.div

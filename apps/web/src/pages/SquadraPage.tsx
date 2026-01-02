@@ -38,8 +38,29 @@ export const SquadraPage: React.FC = () => {
   
   // Get team's upcoming/active games
   const teamGare = gare.filter(
-    g => g.squadra_a_id === mySquadra?.id || g.squadra_b_id === mySquadra?.id
+    g => {
+      // Controlla se la squadra partecipa alla gara
+      // Per gare multisquadra, controlla squadre_partecipanti
+      if (g.squadre_partecipanti && g.squadre_partecipanti.length > 0) {
+        return g.squadre_partecipanti.some(s => s.id === mySquadra?.id);
+      }
+      // Per gare 1v1, controlla squadra_a_id e squadra_b_id
+      return g.squadra_a_id === mySquadra?.id || g.squadra_b_id === mySquadra?.id;
+    }
   );
+
+  // Calcola gare vinte: considera sia vincitore_id (gare 1v1) che classifica (gare multisquadra)
+  const gareVinte = useMemo(() => {
+    return teamGare.filter(g => {
+      // Per gare con classifica (multisquadra), la squadra vincitrice è quella con posizione 1
+      if (g.classifica && g.classifica.length > 0) {
+        const primaPosizione = g.classifica.find(c => c.posizione === 1);
+        return primaPosizione?.squadra_id === mySquadra?.id;
+      }
+      // Per gare 1v1, usa vincitore_id
+      return g.vincitore_id === mySquadra?.id;
+    }).length;
+  }, [teamGare, mySquadra?.id]);
 
   // Se l'utente non ha una squadra, mostra countdown e messaggio di attesa
   if (!mySquadra) {
@@ -165,7 +186,7 @@ export const SquadraPage: React.FC = () => {
             </div>
           <div className="text-center">
               <div className="text-lg font-bold text-turquoise-400">
-                {teamGare.filter(g => g.vincitore_id === mySquadra.id).length}
+                {gareVinte}
               </div>
             <div className="text-[10px] text-gray-400">Gare Vinte</div>
             </div>
@@ -300,7 +321,7 @@ export const SquadraPage: React.FC = () => {
         isOpen={showSquadraModal}
         squadra={mySquadra}
         posizione={myPosition}
-        gareVinte={teamGare.filter((g) => g.vincitore_id === mySquadra.id).length}
+        gareVinte={gareVinte}
         members={teamMembers.map((m) => ({ id: m.id, nickname: m.nickname, punti: m.punti, avatar: (m as any).avatar }))}
         onClose={() => setShowSquadraModal(false)}
         onSelectMember={(id) => {

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Calendar, Flame, CheckCircle2, Map, X, Camera, Loader2 } from 'lucide-react';
+import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { QuestCard } from '../components/QuestCard';
 import { VerificaCard } from '../components/VerificaCard';
@@ -25,7 +25,8 @@ export const HomePage: React.FC = () => {
     submitProva,
     votaProva,
     logout,
-    updateAvatar
+    updateAvatar,
+    leaderboardSquadre
   } = useGame();
   
   const [showVerifica, setShowVerifica] = useState(false);
@@ -66,8 +67,8 @@ export const HomePage: React.FC = () => {
               <Avatar user={user} size="sm" />
             </motion.button>
             <div>
-              <h1 className="font-display font-bold text-sm text-gradient leading-tight">30diCiaccioGame</h1>
-              <p className="text-[10px] text-gray-400 leading-tight">Ciao, {user?.nickname || 'Giocatore'}!</p>
+              <h1 className="font-display font-bold text-sm text-gradient leading-tight">{user?.nickname || 'Giocatore'}</h1>
+              <p className="text-[10px] text-gray-400 leading-tight">30diCiaccioGame</p>
             </div>
           </div>
           
@@ -113,51 +114,70 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Day Banner - Snello */}
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="gradient-party rounded-2xl p-3 mb-2"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Calendar className="text-white" size={16} />
-              <div>
-                <h2 className="font-bold text-white text-xs leading-tight">GIORNO {gameState.giorno_corrente} DI 3</h2>
-                <p className="text-white/80 text-[10px] leading-tight">Tema: Caos Totale! 🎉</p>
+        {/* Team Status - Bannerino Migliorato */}
+        {mySquadra && (() => {
+          const myPosition = leaderboardSquadre.findIndex(s => s.id === mySquadra.id) + 1;
+          const positionEmoji = myPosition === 1 ? '🥇' : myPosition === 2 ? '🥈' : myPosition === 3 ? '🥉' : '🏆';
+          return (
+            <motion.button
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              onClick={() => navigate('/squadra')}
+              className="w-full glass rounded-2xl p-3 mb-2 text-left hover:bg-white/10 transition-all border border-white/10 relative overflow-hidden group"
+              style={{ 
+                borderLeftColor: mySquadra.colore,
+                borderLeftWidth: '4px'
+              }}
+            >
+              {/* Background gradient basato sul colore squadra */}
+              <div 
+                className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity"
+                style={{ backgroundColor: mySquadra.colore }}
+              />
+              
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div 
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 shadow-lg"
+                    style={{ backgroundColor: `${mySquadra.colore}20` }}
+                  >
+                    {mySquadra.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <h3 className="font-bold text-sm leading-tight truncate">{mySquadra.nome}</h3>
+                      {myPosition <= 3 && (
+                        <span className="text-base flex-shrink-0">{positionEmoji}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <Users size={10} />
+                        {mySquadra.membri.length} membri
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Trophy size={10} />
+                        {myPosition}° posto
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0 ml-3">
+                  <div className="flex items-center gap-1 text-turquoise-400 font-bold text-lg leading-tight">
+                    <Flame size={14} />
+                    {mySquadra.punti_squadra}
+                  </div>
+                  <p className="text-[10px] text-gray-400 leading-tight">punti</p>
+                </div>
+                <div className="flex-shrink-0 ml-2">
+                  <span className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">→</span>
+                </div>
               </div>
-            </div>
-            <div className="text-right">
-              <div className="font-bold text-white text-lg leading-tight">{user?.punti_personali || 0}</div>
-              <div className="text-white/80 text-[10px] leading-tight">punti</div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Team Status - Snello senza card */}
-        {mySquadra && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="flex items-center justify-between py-2"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{mySquadra.emoji}</span>
-              <div>
-                <h3 className="font-semibold text-sm leading-tight">{mySquadra.nome}</h3>
-                <p className="text-[10px] text-gray-400 leading-tight">La tua squadra</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="flex items-center gap-1 text-party-300 font-bold text-sm leading-tight">
-                <Flame size={12} />
-                {mySquadra.punti_squadra}
-              </div>
-              <p className="text-[10px] text-gray-400 leading-tight">punti squadra</p>
-            </div>
-          </motion.div>
-        )}
+            </motion.button>
+          );
+        })()}
 
         {/* Mappa Banner - Invito a scoprire Fuerteventura */}
         <motion.button
@@ -220,32 +240,74 @@ export const HomePage: React.FC = () => {
             )}
 
             {/* Quest Section */}
-            <section>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1.5">
-                  <CircusNeonDecorations variant="star" size="small" color="red" />
-                  <h2 className="font-display font-bold text-sm">Quest del Giorno</h2>
-                </div>
-                <span className="text-[10px] text-gray-400">{quests.length} disponibili</span>
-              </div>
+            {(() => {
+              const normalQuests = quests.filter(q => !q.is_special);
+              const specialQuests = quests.filter(q => q.is_special);
               
-              <div className="space-y-2">
-                {quests.map((quest, index) => (
-                  <motion.div
-                    key={quest.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <QuestCard 
-                      quest={quest} 
-                      onSubmit={submitProva}
-                      completed={quest.completed}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            </section>
+              return (
+                <>
+                  {/* Quest del Giorno */}
+                  {normalQuests.length > 0 && (
+                    <section>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <CircusNeonDecorations variant="star" size="small" color="red" />
+                          <h2 className="font-display font-bold text-sm">Quest del Giorno</h2>
+                        </div>
+                        <span className="text-[10px] text-gray-400">{normalQuests.length} disponibili</span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {normalQuests.map((quest, index) => (
+                          <motion.div
+                            key={quest.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                          >
+                            <QuestCard 
+                              quest={quest} 
+                              onSubmit={submitProva}
+                              completed={quest.completed}
+                            />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* Quest Speciali */}
+                  {specialQuests.length > 0 && (
+                    <section>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <CircusNeonDecorations variant="star" size="small" color="red" />
+                          <h2 className="font-display font-bold text-sm">Sfide Speciali ⭐</h2>
+                        </div>
+                        <span className="text-[10px] text-gray-400">{specialQuests.length} disponibili</span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {specialQuests.map((quest, index) => (
+                          <motion.div
+                            key={quest.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                          >
+                            <QuestCard 
+                              quest={quest} 
+                              onSubmit={submitProva}
+                              completed={quest.completed}
+                            />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                </>
+              );
+            })()}
           </>
         )}
       </div>
