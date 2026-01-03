@@ -775,10 +775,15 @@ export const HomePage: React.FC = () => {
                 src={BALLETTO_URL}
                 controls
                 autoPlay
+                loop
+                preload="auto"
                 className="w-full h-full object-contain"
                 playsInline
-                onEnded={() => {
-                  setShowVideo(false);
+                onLoadedData={() => {
+                  // Assicura che il video sia pronto per loop fluido
+                  if (videoRef.current) {
+                    videoRef.current.currentTime = 0;
+                  }
                 }}
               >
                 Il tuo browser non supporta la riproduzione video.
