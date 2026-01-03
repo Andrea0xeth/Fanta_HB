@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy, ChevronDown, ChevronUp, Play } from 'lucide-react';
+import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy, ChevronDown, ChevronUp, Play, Calendar } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { QuestCard } from '../components/QuestCard';
 import { VerificaCard } from '../components/VerificaCard';
@@ -189,54 +189,74 @@ export const HomePage: React.FC = () => {
           );
         })()}
 
-        {/* Mappa Banner - Invito a scoprire Fuerteventura */}
-        <motion.button
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          onClick={() => navigate('/mappa')}
-          className="w-full glass rounded-2xl p-3 mb-2 text-left hover:bg-white/10 transition-colors border border-white/5"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              <Map size={18} className="text-gray-400" />
+        {/* Mappa e Video Balletto - Stessa riga */}
+        <div className="flex gap-2 mb-2">
+          {/* Mappa Banner - Invito a scoprire Fuerteventura */}
+          <motion.button
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            onClick={() => navigate('/mappa')}
+            className="flex-1 glass rounded-xl p-2.5 text-left hover:bg-white/10 transition-colors border border-white/5"
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex-shrink-0">
+                <Map size={16} className="text-gray-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-200 text-xs leading-tight">
+                  Fuerteventura Maps
+                </h3>
+                <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
+                  Scopri le Attrazioni
+                </p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-200 text-xs leading-tight mb-0.5">
-                Mappa di Fuerteventura
-              </h3>
-              <p className="text-gray-400 text-[10px] leading-tight">
-                Scopri i luoghi da visitare
-              </p>
-            </div>
-            <div className="flex-shrink-0">
-              <span className="text-gray-400 text-sm">→</span>
-            </div>
-          </div>
-        </motion.button>
+          </motion.button>
 
-        {/* Video Balletto Banner */}
+          {/* Video Balletto Banner */}
+          <motion.button
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            onClick={() => setShowVideo(true)}
+            className="flex-1 glass rounded-xl p-2.5 text-left hover:bg-white/10 transition-colors border border-white/5"
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex-shrink-0">
+                <Play size={16} className="text-coral-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-200 text-xs leading-tight">
+                  Guarda il CiaccioBallo
+                </h3>
+                <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
+                  Video esclusivo 🎬
+                </p>
+              </div>
+            </div>
+          </motion.button>
+        </div>
+
+        {/* Agenda 3 Giorni */}
         <motion.button
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          onClick={() => setShowVideo(true)}
-          className="w-full glass rounded-2xl p-3 mb-2 text-left hover:bg-white/10 transition-colors border border-white/5"
+          transition={{ delay: 0.3 }}
+          onClick={() => navigate('/agenda')}
+          className="w-full glass rounded-xl p-2.5 mb-2 text-left hover:bg-white/10 transition-colors border border-white/5"
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="flex-shrink-0">
-              <Play size={18} className="text-coral-500" />
+              <Calendar size={16} className="text-turquoise-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-200 text-xs leading-tight mb-0.5">
-                Guarda Ciaccio che balla
+              <h3 className="font-semibold text-gray-200 text-xs leading-tight">
+                Agenda per i 3/4 giorni
               </h3>
-              <p className="text-gray-400 text-[10px] leading-tight">
-                Video esclusivo 🎬
+              <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
+                Programma delle diverse attività programmate.
               </p>
-            </div>
-            <div className="flex-shrink-0">
-              <span className="text-gray-400 text-sm">→</span>
             </div>
           </div>
         </motion.button>
