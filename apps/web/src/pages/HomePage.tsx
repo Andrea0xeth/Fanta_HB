@@ -72,10 +72,14 @@ export const HomePage: React.FC = () => {
             >
               <Avatar user={user} size="sm" />
             </motion.button>
-            <div>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowProfile(true)}
+              className="text-left"
+            >
               <h1 className="font-display font-bold text-sm text-gradient leading-tight">{user?.nickname || 'Giocatore'}</h1>
               <p className="text-[10px] text-gray-400 leading-tight">DC-30</p>
-            </div>
+            </motion.button>
           </div>
           
           <div className="flex items-center gap-2">
