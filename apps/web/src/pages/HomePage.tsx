@@ -714,7 +714,7 @@ export const HomePage: React.FC = () => {
                 }}
                 className="w-full py-2.5 rounded-xl glass border border-red-500/30 text-red-400 font-semibold text-sm"
               >
-                Esci dal Game
+                Logout
               </button>
             </motion.div>
           </motion.div>

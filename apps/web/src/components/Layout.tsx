@@ -13,14 +13,26 @@ export const Layout: React.FC = () => {
   const [pullPx, setPullPx] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const pullStartYRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   const thresholds = useMemo(() => {
     const h = typeof window !== 'undefined' ? window.innerHeight : 800;
-    // "più dello schermo" è un gesto forte: usiamo una soglia robusta ma raggiungibile
-    const trigger = Math.min(220, Math.round(h * 0.22));
-    const max = Math.min(260, Math.round(h * 0.30));
+    // Soglia molto più bassa e resistenza elastica
+    const trigger = Math.min(80, Math.round(h * 0.10));
+    const max = Math.min(100, Math.round(h * 0.12));
     return { trigger, max };
   }, []);
+
+  // Funzione per calcolare la resistenza elastica
+  const calculateElasticPull = (dy: number): number => {
+    if (dy <= thresholds.trigger) {
+      return dy;
+    }
+    // Resistenza elastica dopo la soglia
+    const excess = dy - thresholds.trigger;
+    const resistance = 0.3; // 30% del movimento in eccesso
+    return thresholds.trigger + (excess * resistance);
+  };
 
   const findScrollableParent = (el: HTMLElement | null, stopAt: HTMLElement) => {
     let cur: HTMLElement | null = el;
@@ -46,10 +58,14 @@ export const Layout: React.FC = () => {
       {/* Floating circus decorations in background */}
       <FloatingCircusDecorations />
       
-      {/* Main content - scrollable, content passes under navbar */}
-      {/* Pull-to-refresh indicator */}
-      <div className="pointer-events-none absolute top-0 left-0 right-0 z-20 flex justify-center pt-safe">
-        {(isPulling || isRefreshing) && (
+      {/* Pull-to-refresh indicator - FUORI dal contenuto scrollabile, sopra l'header */}
+      {pullPx > 0 && (
+        <div 
+          className="fixed top-0 left-0 right-0 z-30 flex justify-center pt-safe pointer-events-none"
+          style={{ 
+            transform: `translateY(${Math.max(0, pullPx - 20)}px)`,
+          }}
+        >
           <div className="mt-2 px-3 py-2 rounded-2xl glass-strong border border-white/10 text-[11px] text-gray-200 flex items-center gap-2">
             <div
               className={`w-4 h-4 border-2 border-coral-500 border-t-transparent rounded-full ${
@@ -65,12 +81,18 @@ export const Layout: React.FC = () => {
                   : 'Trascina giù per aggiornare'}
             </span>
           </div>
-        )}
-      </div>
-
+        </div>
+      )}
+      
+      {/* Main content - scrollable, content passes under navbar */}
       <main
         ref={mainRef}
         className="flex-1 overflow-y-auto scrollbar-hide pb-20 relative z-10"
+        style={{
+          transform: pullPx > 0 ? `translateY(${pullPx}px)` : undefined,
+          transition: isRefreshing || !isPulling ? 'transform 0.15s ease-out' : 'none',
+          willChange: isPulling ? 'transform' : undefined, // Ottimizzazione performance
+        }}
         onTouchStart={(e) => {
           if (isRefreshing) return;
           const main = mainRef.current;
@@ -90,14 +112,33 @@ export const Layout: React.FC = () => {
         }}
         onTouchMove={(e) => {
           if (!isPulling || pullStartYRef.current == null) return;
-          const dy = e.touches[0].clientY - pullStartYRef.current;
-          if (dy <= 0) {
-            setPullPx(0);
-            return;
+          
+          // Cancella animazione frame precedente
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
           }
-          setPullPx(Math.min(thresholds.max, Math.round(dy)));
+          
+          // Usa requestAnimationFrame per fluidità
+          animationFrameRef.current = requestAnimationFrame(() => {
+            const dy = e.touches[0].clientY - (pullStartYRef.current || 0);
+            if (dy <= 0) {
+              setPullPx(0);
+              return;
+            }
+            
+            // Applica resistenza elastica
+            const elasticPull = calculateElasticPull(dy);
+            const clampedPull = Math.min(thresholds.max, Math.round(elasticPull));
+            setPullPx(clampedPull);
+          });
         }}
         onTouchEnd={async () => {
+          // Cancella animazione frame
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+          }
+          
           if (!isPulling) return;
           const shouldRefresh = pullPx >= thresholds.trigger;
           setIsPulling(false);
@@ -117,6 +158,10 @@ export const Layout: React.FC = () => {
           }
         }}
         onTouchCancel={() => {
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+            animationFrameRef.current = null;
+          }
           setIsPulling(false);
           pullStartYRef.current = null;
           setPullPx(0);
