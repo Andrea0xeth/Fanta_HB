@@ -727,14 +727,14 @@ export const HomePage: React.FC = () => {
         onClose={() => setShowNotifiche(false)}
       />
 
-      {/* Video Modal */}
+      {/* Video Modal - Fullscreen */}
       <AnimatePresence>
         {showVideo && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black z-50 flex flex-col"
             onClick={() => {
               setShowVideo(false);
               if (videoRef.current) {
@@ -742,46 +742,48 @@ export const HomePage: React.FC = () => {
               }
             }}
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-2xl glass-strong rounded-3xl overflow-hidden"
+            {/* Header minimale - solo pulsante close */}
+            <div className="absolute top-0 left-0 right-0 z-10 flex justify-end p-4">
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowVideo(false);
+                  if (videoRef.current) {
+                    videoRef.current.pause();
+                  }
+                }}
+                className="p-3 bg-black/60 backdrop-blur-md hover:bg-black/80 rounded-full transition-colors border border-white/20"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <X size={24} className="text-white" />
+              </motion.button>
+            </div>
+            
+            {/* Video a schermo intero */}
+            <div 
+              className="flex-1 flex items-center justify-center w-full h-full"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/10">
-                <h2 className="font-display font-bold text-lg flex items-center gap-2">
-                  <Play className="text-coral-500" size={18} />
-                  Ciaccio che balla
-                </h2>
-                <button 
-                  onClick={() => {
-                    setShowVideo(false);
-                    if (videoRef.current) {
-                      videoRef.current.pause();
-                    }
-                  }}
-                  className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              
-              {/* Video */}
-              <div className="relative w-full bg-black">
-                <video
-                  ref={videoRef}
-                  src={BALLETTO_URL}
-                  controls
-                  autoPlay
-                  className="w-full h-auto"
-                  playsInline
-                >
-                  Il tuo browser non supporta la riproduzione video.
-                </video>
-              </div>
-            </motion.div>
+              <motion.video
+                ref={videoRef}
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                src={BALLETTO_URL}
+                controls
+                autoPlay
+                className="w-full h-full object-contain"
+                playsInline
+                onEnded={() => {
+                  setShowVideo(false);
+                }}
+              >
+                Il tuo browser non supporta la riproduzione video.
+              </motion.video>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
