@@ -13,6 +13,17 @@ export const LeaderboardPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>(mySquadra ? 'squadre' : 'singoli');
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
 
+  // Filtra utenti nascosti dalla leaderboard pubblica
+  const HIDDEN_USERS = ['TOMMY ADMIN COS'];
+  const visibleLeaderboard = leaderboardSingoli.filter(u => {
+    if (!u.nickname) return true;
+    const nicknameUpper = u.nickname.toUpperCase().trim().replace(/\s+/g, ' ');
+    return !HIDDEN_USERS.some(hidden => {
+      const hiddenUpper = hidden.toUpperCase().trim().replace(/\s+/g, ' ');
+      return nicknameUpper === hiddenUpper;
+    });
+  });
+
   const PositionBadge: React.FC<{ position: number }> = ({ position }) => {
     const styles = {
       1: 'bg-gradient-to-br from-party-300 to-party-400 text-dark',
@@ -224,7 +235,7 @@ export const LeaderboardPage: React.FC = () => {
                 </p>
               </div>
 
-              {leaderboardSingoli.map((giocatore, index) => {
+              {visibleLeaderboard.map((giocatore, index) => {
                 const squadra = leaderboardSquadre.find(s => s.id === giocatore.squadra_id);
                 const puntiTotali = Math.round(
                   giocatore.punti_personali * 0.7 + (squadra?.punti_squadra || 0) * 0.3

@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Crown, Swords, Gift, Users, Search, Plus, Check, X, Trophy, Shuffle, Bell, RefreshCw } from 'lucide-react';
+import { Crown, Swords, Gift, Users, Search, Plus, Check, X, Trophy, Shuffle, Bell, RefreshCw, Download, FileText } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { GaraCard } from '../components/GaraCard';
 import { Avatar } from '../components/Avatar';
@@ -10,7 +10,7 @@ import { CreaGaraModal } from '../components/CreaGaraModal';
 import { adminMaintenance } from '../lib/adminMaintenance';
 import type { Gara } from '../types';
 
-type TabType = 'gare' | 'bonus' | 'squadre' | 'manutenzione' | 'quest-speciali' | 'premi';
+type TabType = 'gare' | 'bonus' | 'squadre' | 'manutenzione' | 'quest-speciali' | 'premi' | 'utenti';
 
 export const AdminPage: React.FC = () => {
   const { 
@@ -260,6 +260,17 @@ export const AdminPage: React.FC = () => {
           >
             <RefreshCw size={14} />
             <span>Manut.</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('utenti')}
+            className={`flex-shrink-0 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 ${
+              activeTab === 'utenti'
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105'
+                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/50'
+            }`}
+          >
+            <FileText size={14} />
+            <span>Utenti</span>
           </button>
         </div>
       </div>
@@ -1056,6 +1067,117 @@ export const AdminPage: React.FC = () => {
                   </div>
                 );
               })()}
+            </motion.div>
+          )}
+
+          {activeTab === 'utenti' && (
+            <motion.div
+              key="utenti"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-3 pt-3 pb-24"
+            >
+              <div className="glass rounded-2xl p-4 border border-white/10">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText size={18} className="text-blue-400" />
+                  <h3 className="font-semibold text-sm">Esporta Utenti Registrati</h3>
+                </div>
+                
+                <div className="mb-4">
+                  <p className="text-xs text-gray-400 mb-4">
+                    Esporta la lista completa degli utenti registrati in formato JSON o CSV.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <div className="text-xs text-gray-500">
+                      <strong className="text-gray-300">Totale utenti:</strong> {leaderboardSingoli.length}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      <strong className="text-gray-300">Admin:</strong> {leaderboardSingoli.filter(u => u.is_admin).length}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      <strong className="text-gray-300">Con squadra:</strong> {leaderboardSingoli.filter(u => u.squadra_id).length}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      // Esporta JSON
+                      const dataStr = JSON.stringify(leaderboardSingoli, null, 2);
+                      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                      const url = URL.createObjectURL(dataBlob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = `utenti-dc30-${new Date().toISOString().split('T')[0]}.json`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="w-full py-3 rounded-xl bg-blue-500/20 border border-blue-500/30 text-blue-400 font-semibold text-xs flex items-center justify-center gap-2 hover:bg-blue-500/30 transition-colors"
+                  >
+                    <Download size={16} />
+                    Esporta JSON
+                  </motion.button>
+                  
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      // Esporta CSV
+                      const headers = ['ID', 'Nickname', 'Nome', 'Cognome', 'Email', 'Telefono', 'Data Nascita', 'Squadra ID', 'Punti Personali', 'Is Admin', 'Created At'];
+                      const rows = leaderboardSingoli.map(u => [
+                        u.id,
+                        u.nickname || '',
+                        u.nome || '',
+                        u.cognome || '',
+                        u.email || '',
+                        u.telefono || '',
+                        u.data_nascita || '',
+                        u.squadra_id || '',
+                        u.punti_personali.toString(),
+                        u.is_admin ? 'true' : 'false',
+                        u.created_at
+                      ]);
+                      
+                      const csvContent = [
+                        headers.join(','),
+                        ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+                      ].join('\n');
+                      
+                      const dataBlob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                      const url = URL.createObjectURL(dataBlob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = `utenti-dc30-${new Date().toISOString().split('T')[0]}.csv`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="w-full py-3 rounded-xl bg-green-500/20 border border-green-500/30 text-green-400 font-semibold text-xs flex items-center justify-center gap-2 hover:bg-green-500/30 transition-colors"
+                  >
+                    <Download size={16} />
+                    Esporta CSV
+                  </motion.button>
+                </div>
+
+                {/* Preview dati */}
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <details className="cursor-pointer">
+                    <summary className="text-xs text-gray-400 hover:text-gray-300">
+                      Anteprima dati (primi 5 utenti)
+                    </summary>
+                    <div className="mt-2 p-3 rounded-xl bg-gray-900/50 border border-white/5 overflow-x-auto">
+                      <pre className="text-[10px] text-gray-400 font-mono">
+                        {JSON.stringify(leaderboardSingoli.slice(0, 5), null, 2)}
+                      </pre>
+                    </div>
+                  </details>
+                </div>
+              </div>
             </motion.div>
           )}
 

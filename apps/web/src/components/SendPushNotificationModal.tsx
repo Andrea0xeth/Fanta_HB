@@ -210,11 +210,17 @@ export const SendPushNotificationModal: React.FC<SendPushNotificationModalProps>
                 className="input w-full"
               >
                 <option value="">-- Seleziona utente --</option>
-                {leaderboardSingoli.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.nickname}
-                  </option>
-                ))}
+                {leaderboardSingoli
+                  .filter(u => {
+                    const HIDDEN_USERS = ['TOMMY ADMIN COS'];
+                    const nicknameUpper = u.nickname?.toUpperCase().trim() || '';
+                    return !HIDDEN_USERS.some(hidden => nicknameUpper === hidden.toUpperCase().trim());
+                  })
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.nickname}
+                    </option>
+                  ))}
               </select>
             </div>
           )}

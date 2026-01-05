@@ -46,6 +46,25 @@ export const Layout: React.FC = () => {
     return stopAt;
   };
 
+  // Verifica se l'elemento è dentro un modale
+  const isInsideModal = (el: HTMLElement | null): boolean => {
+    let cur: HTMLElement | null = el;
+    while (cur) {
+      const zIndex = window.getComputedStyle(cur).zIndex;
+      const zIndexNum = parseInt(zIndex, 10);
+      // I modali hanno generalmente z-index >= 50
+      if (!isNaN(zIndexNum) && zIndexNum >= 50) {
+        return true;
+      }
+      // Controlla anche le classi comuni dei modali
+      if (cur.classList.contains('fixed') && (cur.classList.contains('inset-0') || cur.classList.contains('z-50') || cur.classList.contains('z-[50]'))) {
+        return true;
+      }
+      cur = cur.parentElement;
+    }
+    return false;
+  };
+
   // Scroll to top when route changes
   useEffect(() => {
     if (mainRef.current) {
@@ -99,6 +118,12 @@ export const Layout: React.FC = () => {
           if (!main) return;
 
           const target = e.target as HTMLElement | null;
+          
+          // Disabilita pull-to-refresh se si tocca dentro un modale
+          if (isInsideModal(target)) {
+            return;
+          }
+
           const scrollParent = findScrollableParent(target, main);
 
           // Avvia solo se siamo davvero in cima (main e l'eventuale scroller interno)

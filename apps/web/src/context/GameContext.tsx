@@ -192,13 +192,25 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         .select('*');
 
       const users = usersData?.map(dbRowToUser) || [];
+      
+      // Filtra utenti da nascondere pubblicamente (es. TOMMY ADMIN COS)
+      const HIDDEN_USERS = ['TOMMY ADMIN COS'];
+      const publicUsers = users.filter(u => {
+        if (!u.nickname) return true;
+        const nicknameUpper = u.nickname.toUpperCase().trim().replace(/\s+/g, ' ');
+        return !HIDDEN_USERS.some(hidden => {
+          const hiddenUpper = hidden.toUpperCase().trim().replace(/\s+/g, ' ');
+          return nicknameUpper === hiddenUpper;
+        });
+      });
+      
       const squadreWithMembers = (squadreData || []).map((s: Database['public']['Tables']['squadre']['Row']) => {
-        const membri = users.filter(u => u.squadra_id === s.id);
+        const membri = publicUsers.filter(u => u.squadra_id === s.id);
         return dbRowToSquadra(s, membri);
       });
 
       setSquadre(squadreWithMembers);
-      setAllUsers(users); // Salva tutti gli utenti per la leaderboard singoli
+      setAllUsers(publicUsers); // Salva solo utenti pubblici per la leaderboard singoli
 
       // Carica quest del giorno corrente
       // Assicurati che il giorno sia sempre tra 1 e 3 (il constraint del database lo richiede)
@@ -2016,6 +2028,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   const leaderboardSquadre = [...squadre].sort((a, b) => b.punti_squadra - a.punti_squadra);
   
   // Calcola leaderboard singoli da tutti gli utenti (inclusi quelli senza squadra)
+  // Gli utenti nascosti sono già filtrati in allUsers
   const leaderboardSingoli = [...allUsers]
     .sort((a, b) => {
       // Calcola punti totali per ogni utente
