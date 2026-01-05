@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy, ChevronDown, ChevronUp, Play, Calendar } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { QuestCard } from '../components/QuestCard';
-import { VerificaCard } from '../components/VerificaCard';
 import { GaraCard } from '../components/GaraCard';
 import { CircusNeonDecorations } from '../components/CircusNeonDecorations';
 import { Avatar } from '../components/Avatar';
@@ -23,13 +22,11 @@ export const HomePage: React.FC = () => {
     gameState,
     notifiche,
     submitProva,
-    votaProva,
     logout,
     updateAvatar,
     leaderboardSquadre
   } = useGame();
   
-  const [showVerifica, setShowVerifica] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifiche, setShowNotifiche] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -107,20 +104,6 @@ export const HomePage: React.FC = () => {
             >
               <Map size={18} className="text-gray-400" />
             </motion.button>
-            
-            {/* Verifiche */}
-            {pendingVerificationsCount > 0 && (
-              <motion.button 
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowVerifica(true)}
-                className="relative p-1.5"
-              >
-                <CheckCircle2 size={18} className="text-gray-400" />
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-turquoise-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white">
-                  {pendingVerificationsCount}
-                </span>
-              </motion.button>
-            )}
           </div>
         </div>
 
@@ -238,28 +221,61 @@ export const HomePage: React.FC = () => {
           </motion.button>
         </div>
 
-        {/* Agenda 3 Giorni */}
-        <motion.button
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          onClick={() => navigate('/agenda')}
-          className="w-full glass rounded-xl p-2.5 mb-2 text-left hover:bg-white/10 transition-colors border border-white/5"
-        >
-          <div className="flex items-center gap-2">
-            <div className="flex-shrink-0">
-              <Calendar size={16} className="text-turquoise-400" />
+        {/* Agenda e Verifica - Stessa riga */}
+        <div className="flex gap-2 mb-2">
+          {/* Agenda 3 Giorni */}
+          <motion.button
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            onClick={() => navigate('/agenda')}
+            className="flex-1 glass rounded-xl p-2.5 text-left hover:bg-white/10 transition-colors border border-white/5"
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex-shrink-0">
+                <Calendar size={16} className="text-turquoise-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-200 text-xs leading-tight">
+                  Agenda
+                </h3>
+                <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
+                  Programma attività
+                </p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-200 text-xs leading-tight">
-                Agenda per i 3/4 giorni
-              </h3>
-              <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
-                Programma delle diverse attività programmate.
-              </p>
+          </motion.button>
+
+          {/* Verifica Quest */}
+          <motion.button
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            onClick={() => navigate('/verifica')}
+            className="flex-1 glass rounded-xl p-2.5 text-left hover:bg-white/10 transition-colors border border-white/5 relative"
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex-shrink-0">
+                <CheckCircle2 size={16} className="text-turquoise-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-200 text-xs leading-tight">
+                  Verifica Quest
+                </h3>
+                <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
+                  {pendingVerificationsCount > 0 
+                    ? `${pendingVerificationsCount} da verificare`
+                    : 'Nessuna nuova'}
+                </p>
+              </div>
             </div>
-          </div>
-        </motion.button>
+            {pendingVerificationsCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-turquoise-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white">
+                {pendingVerificationsCount > 9 ? '9+' : pendingVerificationsCount}
+              </span>
+            )}
+          </motion.button>
+        </div>
 
         {/* Info per utenti senza squadra */}
         {!mySquadra && hasStarted && (
@@ -550,64 +566,6 @@ export const HomePage: React.FC = () => {
         )}
       </div>
 
-      {/* Verifica Modal */}
-      <AnimatePresence>
-        {showVerifica && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 z-50 flex items-end"
-            onClick={() => setShowVerifica(false)}
-          >
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 25 }}
-              className="w-full max-h-[85vh] glass-strong rounded-t-3xl overflow-hidden flex flex-col mb-20"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header - Fixed */}
-              <div className="flex-shrink-0 flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/10">
-                <h2 className="font-display font-bold text-lg flex items-center gap-1.5">
-                  <CheckCircle2 className="text-turquoise-400" size={18} />
-                  Verifica Quest
-                </h2>
-                <button 
-                  onClick={() => setShowVerifica(false)}
-                  className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              
-              {/* Content - Scrollable */}
-              <div className="flex-1 overflow-y-auto scrollbar-hide px-4 py-4 pb-24">
-                {pendingVerifications.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <CheckCircle2 size={36} className="mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">Nessuna prova da verificare!</p>
-                    <p className="text-xs">Torna più tardi 😊</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {pendingVerifications.map((prova) => (
-                      <VerificaCard 
-                        key={prova.id} 
-                        prova={prova} 
-                        onVote={(id, valore) => {
-                          votaProva(id, valore);
-                        }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Profile Modal */}
       <AnimatePresence>
