@@ -4,6 +4,7 @@ import { Trophy, Users, User, Crown, Flame, Award } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { Avatar } from '../components/Avatar';
 import { UserProfileModal } from '../components/UserProfileModal';
+import { SquadraProfileModal } from '../components/SquadraProfileModal';
 
 type TabType = 'squadre' | 'singoli';
 
@@ -12,6 +13,7 @@ export const LeaderboardPage: React.FC = () => {
   // Se l'utente non ha una squadra, mostra solo la tab "singoli"
   const [activeTab, setActiveTab] = useState<TabType>(mySquadra ? 'squadre' : 'singoli');
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const [profileSquadraId, setProfileSquadraId] = useState<string | null>(null);
 
   // Filtra utenti nascosti dalla leaderboard pubblica
   const HIDDEN_USERS = ['TOMMY ADMIN COS'];
@@ -98,11 +100,12 @@ export const LeaderboardPage: React.FC = () => {
               <div className="flex items-end justify-center gap-2 py-4 mb-4">
                 {/* 2nd Place */}
                 {leaderboardSquadre[1] && (
-                  <motion.div
+                  <motion.button
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="text-center flex-1 max-w-[80px]"
+                    onClick={() => setProfileSquadraId(leaderboardSquadre[1].id)}
+                    className="text-center flex-1 max-w-[80px] hover:opacity-80 transition-opacity"
                   >
                     <div className="text-3xl mb-1.5">{leaderboardSquadre[1].emoji}</div>
                     <div className="w-full h-16 bg-gradient-to-t from-gray-400/30 to-gray-400/10 rounded-t-xl flex items-end justify-center pb-2 border border-gray-400/20">
@@ -116,15 +119,16 @@ export const LeaderboardPage: React.FC = () => {
                       <Users size={10} className="text-gray-500" />
                       <span className="text-[9px] text-gray-500">{leaderboardSquadre[1].membri.length}</span>
                     </div>
-                  </motion.div>
+                  </motion.button>
                 )}
 
                 {/* 1st Place */}
                 {leaderboardSquadre[0] && (
-                  <motion.div
+                  <motion.button
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center flex-1 max-w-[90px]"
+                    onClick={() => setProfileSquadraId(leaderboardSquadre[0].id)}
+                    className="text-center flex-1 max-w-[90px] hover:opacity-80 transition-opacity"
                   >
                     <Crown className="w-5 h-5 text-party-300 mx-auto mb-1" />
                     <div className="text-4xl mb-2">{leaderboardSquadre[0].emoji}</div>
@@ -139,16 +143,17 @@ export const LeaderboardPage: React.FC = () => {
                       <Users size={10} className="text-party-300" />
                       <span className="text-[9px] text-party-300 font-semibold">{leaderboardSquadre[0].membri.length}</span>
                     </div>
-                  </motion.div>
+                  </motion.button>
                 )}
 
                 {/* 3rd Place */}
                 {leaderboardSquadre[2] && (
-                  <motion.div
+                  <motion.button
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="text-center flex-1 max-w-[80px]"
+                    onClick={() => setProfileSquadraId(leaderboardSquadre[2].id)}
+                    className="text-center flex-1 max-w-[80px] hover:opacity-80 transition-opacity"
                   >
                     <div className="text-3xl mb-1.5">{leaderboardSquadre[2].emoji}</div>
                     <div className="w-full h-12 bg-gradient-to-t from-orange-500/30 to-orange-500/10 rounded-t-xl flex items-end justify-center pb-1.5 border border-orange-500/20">
@@ -162,7 +167,7 @@ export const LeaderboardPage: React.FC = () => {
                       <Users size={10} className="text-gray-500" />
                       <span className="text-[9px] text-gray-500">{leaderboardSquadre[2].membri.length}</span>
                     </div>
-                  </motion.div>
+                  </motion.button>
                 )}
               </div>
 
@@ -177,15 +182,16 @@ export const LeaderboardPage: React.FC = () => {
                     const position = index + 4;
                     const isMySquadra = squadra.id === mySquadra?.id;
                     return (
-                      <motion.div
+                      <motion.button
                         key={squadra.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3 + index * 0.05 }}
-                        className={`flex items-center gap-2 py-2.5 px-3 rounded-xl border-l-2 transition-all ${
+                        onClick={() => setProfileSquadraId(squadra.id)}
+                        className={`w-full text-left flex items-center gap-2 py-2.5 px-3 rounded-xl border-l-2 transition-all ${
                           isMySquadra 
-                            ? 'border-coral-500/50 bg-coral-500/5 pl-3 shadow-sm' 
-                            : 'border-gray-700/30 bg-gray-800/20 hover:bg-gray-800/30 pl-3'
+                            ? 'border-coral-500/50 bg-coral-500/5 pl-3 shadow-sm hover:bg-coral-500/10' 
+                            : 'border-gray-700/30 bg-gray-800/20 hover:bg-gray-800/40 pl-3'
                         }`}
                       >
                         <PositionBadge position={position} />
@@ -213,7 +219,7 @@ export const LeaderboardPage: React.FC = () => {
                           <span className="font-bold text-turquoise-400 text-base block">{squadra.punti_squadra}</span>
                           <span className="text-gray-400 text-[10px]">pts</span>
                         </div>
-                      </motion.div>
+                      </motion.button>
                     );
                   })}
                 </div>
@@ -298,6 +304,11 @@ export const LeaderboardPage: React.FC = () => {
         isOpen={Boolean(profileUserId)}
         userId={profileUserId}
         onClose={() => setProfileUserId(null)}
+      />
+      <SquadraProfileModal
+        isOpen={Boolean(profileSquadraId)}
+        squadraId={profileSquadraId}
+        onClose={() => setProfileSquadraId(null)}
       />
     </div>
   );

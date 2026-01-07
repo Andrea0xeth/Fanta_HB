@@ -164,3 +164,61 @@ export const uploadAvatar = async (
     throw error; // Rilancia l'errore per gestirlo nel contesto
   }
 };
+
+// Helper per upload foto chat squadra
+export const uploadChatPhoto = async (
+  file: File,
+  userId: string,
+  squadraId: string
+): Promise<string | null> => {
+  try {
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const fileName = `chat/${squadraId}/${userId}/${Date.now()}.${fileExt}`;
+    
+    console.log('[Upload Chat Photo] Inizio upload:', {
+      fileName,
+      fileSize: file.size,
+      fileType: file.type,
+      userId,
+      squadraId
+    });
+    
+    const { data, error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || 'image/jpeg',
+      });
+
+    if (error) {
+      console.error('[Upload Chat Photo] Errore upload:', error);
+      if (error.message?.includes('new row violates row-level security') || 
+          error.message?.includes('permission denied')) {
+        throw new Error('Permessi insufficienti per caricare la foto. Verifica le policy del bucket storage.');
+      }
+      throw new Error(`Errore upload: ${error.message || 'Errore sconosciuto'}`);
+    }
+
+    if (!data) {
+      throw new Error('Nessun dato restituito dall\'upload');
+    }
+
+    console.log('[Upload Chat Photo] Upload completato:', data.path);
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(data.path);
+
+    if (!urlData?.publicUrl) {
+      throw new Error('Impossibile ottenere l\'URL pubblico del file');
+    }
+
+    console.log('[Upload Chat Photo] URL pubblico:', urlData.publicUrl);
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('[Upload Chat Photo] Errore completo:', error);
+    throw error;
+  }
+};

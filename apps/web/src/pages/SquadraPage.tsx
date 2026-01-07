@@ -1,17 +1,19 @@
 import React, { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Users, Trophy, Flame, Crown, Swords, Info } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Users, Trophy, Flame, Crown, Swords, Info, MessageCircle } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { GaraCard } from '../components/GaraCard';
 import { Avatar } from '../components/Avatar';
 import { Countdown } from '../components/Countdown';
 import { SquadraModal } from '../components/SquadraModal';
 import { UserProfileModal } from '../components/UserProfileModal';
+import { SquadraChat } from '../components/SquadraChat';
 
 export const SquadraPage: React.FC = () => {
   const { user, mySquadra, gare, leaderboardSquadre, gameState } = useGame();
   const [showSquadraModal, setShowSquadraModal] = useState(false);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'membri' | 'chat'>('chat');
 
   // Usa i membri reali della squadra se disponibili, altrimenti mock
   const teamMembers = useMemo(() => {
@@ -127,133 +129,169 @@ export const SquadraPage: React.FC = () => {
 
   return (
     <div className="min-h-full bg-dark flex flex-col">
-      {/* Hero Header - Snello */}
+      {/* Hero Header - Minimizzato */}
       <div 
-        className="flex-shrink-0 border-b border-white/5 px-4 pt-safe pb-3"
+        className="flex-shrink-0 border-b border-white/5 px-3 pt-safe pb-1.5"
         style={{ 
-          background: `linear-gradient(135deg, ${mySquadra.colore}20 0%, transparent 100%)` 
+          background: `linear-gradient(135deg, ${mySquadra.colore}15 0%, transparent 100%)` 
         }}
       >
         <motion.div 
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center"
+          className="flex items-center justify-between"
         >
-          <div className="flex items-center justify-end">
-            <button
-              onClick={() => setShowSquadraModal(true)}
-              className="p-1.5 rounded-xl hover:bg-white/5 text-gray-300"
-              aria-label="Dettagli squadra"
-              title="Dettagli"
-            >
-              <Info size={16} />
-            </button>
-          </div>
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="text-3xl"
-            >
-              {mySquadra.emoji}
-            </motion.div>
-          </div>
-          <h1 className="text-lg font-display font-bold mb-2">{mySquadra.nome}</h1>
-          <div className="flex items-center justify-center gap-3">
-            <div className="flex items-center gap-1 text-gray-400 text-xs">
-              <Trophy size={12} />
-              <span>#{myPosition}</span>
-            </div>
-            <div className="flex items-center gap-1 text-party-300 font-bold text-sm">
-              <Flame size={12} />
-              <span>{mySquadra.punti_squadra} pts</span>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <span className="text-xl">{mySquadra.emoji}</span>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-sm font-display font-bold truncate">{mySquadra.nome}</h1>
+              <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                <span className="flex items-center gap-0.5">
+                  <Trophy size={10} />
+                  #{myPosition}
+                </span>
+                <span className="flex items-center gap-0.5 text-party-300 font-semibold">
+                  <Flame size={10} />
+                  {mySquadra.punti_squadra}
+                </span>
+              </div>
             </div>
           </div>
+          <button
+            onClick={() => setShowSquadraModal(true)}
+            className="p-1 rounded-lg hover:bg-white/5 text-gray-400 flex-shrink-0"
+            aria-label="Dettagli squadra"
+            title="Dettagli"
+          >
+            <Info size={14} />
+          </button>
         </motion.div>
       </div>
 
       {/* Content - Scrollable, snello */}
-      <div className="flex-1 px-4 py-3 pb-28 space-y-3">
-        {/* Team Stats - Snello senza card */}
+      <div className="flex-1 px-3 py-2 pb-28 space-y-2">
+        {/* Team Stats - Minimizzato */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-3 gap-2 py-2 border-b border-white/5"
+          className="flex items-center justify-around gap-1 py-1.5 border-b border-white/5"
         >
-          <div className="text-center">
-              <div className="text-lg font-bold text-coral-500">{teamMembers.length}</div>
-            <div className="text-[10px] text-gray-400">Membri</div>
-            </div>
-          <div className="text-center">
-              <div className="text-lg font-bold text-turquoise-400">
-                {gareVinte}
-              </div>
-            <div className="text-[10px] text-gray-400">Gare Vinte</div>
-            </div>
-          <div className="text-center">
-              <div className="text-lg font-bold text-party-300">
-                {Math.round(teamMembers.reduce((acc, m) => acc + m.punti, 0) / teamMembers.length)}
-            </div>
-            <div className="text-[10px] text-gray-400">Media Pts</div>
+          <div className="flex items-center gap-1 text-[10px]">
+            <span className="text-coral-500 font-bold">{teamMembers.length}</span>
+            <span className="text-gray-500">membri</span>
+          </div>
+          <div className="w-px h-4 bg-white/10" />
+          <div className="flex items-center gap-1 text-[10px]">
+            <span className="text-turquoise-400 font-bold">{gareVinte}</span>
+            <span className="text-gray-500">gare</span>
+          </div>
+          <div className="w-px h-4 bg-white/10" />
+          <div className="flex items-center gap-1 text-[10px]">
+            <span className="text-party-300 font-bold">
+              {Math.round(teamMembers.reduce((acc, m) => acc + m.punti, 0) / teamMembers.length)}
+            </span>
+            <span className="text-gray-500">media</span>
           </div>
         </motion.div>
 
-        {/* Team Members - Snello */}
+        {/* Tab Chat / Membri */}
         <section>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Users size={14} className="text-turquoise-400" />
-            <h2 className="font-display font-bold text-sm">Membri della Squadra</h2>
-          </div>
-          
-          <div className="space-y-1.5">
-            {teamMembers.map((member, index) => (
-              <motion.div
-                key={member.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className={`flex items-center gap-2 py-1.5 border-l-2 ${
-                  member.id === user?.id ? 'border-coral-500/50 pl-2' : 'border-gray-700/30 pl-2'
+          <div className="bg-gray-800/30 rounded-xl p-0.5 flex gap-0.5 mb-2">
+            <button
+              onClick={() => setActiveTab('membri')}
+              className={`flex-1 py-2 rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                activeTab === 'membri' 
+                  ? 'bg-turquoise-500 text-white' 
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              <Users size={14} />
+              Membri
+            </button>
+            {user && (
+              <button
+                onClick={() => setActiveTab('chat')}
+                className={`flex-1 py-2 rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                  activeTab === 'chat' 
+                    ? 'bg-turquoise-500 text-white' 
+                    : 'text-gray-400 hover:text-gray-300'
                 }`}
               >
-                <div className="w-5 text-center font-bold text-gray-500 text-[10px] flex-shrink-0">
-                  {index + 1}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setProfileUserId(member.id)}
-                  className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                  aria-label={`Apri profilo ${member.nickname}`}
-                >
-                  <Avatar
-                    user={{
-                      id: member.id,
-                      nickname: member.nickname,
-                      avatar: (member as any).avatar,
-                      punti_personali: member.punti,
-                      squadra_id: mySquadra.id,
-                      is_admin: false,
-                      created_at: '',
-                    }}
-                    size="sm"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-sm truncate">{member.nickname}</span>
-                      {member.isMVP && <Crown size={12} className="text-party-300 flex-shrink-0" />}
-                      {member.id === user?.id && (
-                        <span className="badge-coral flex-shrink-0 text-[10px] px-1.5 py-0.5">Tu</span>
-                      )}
-                    </div>
-                  </div>
-                </button>
-                <div className="text-right flex-shrink-0">
-                  <span className="font-bold text-turquoise-400 text-sm">{member.punti}</span>
-                  <span className="text-gray-400 text-[10px] ml-0.5">pts</span>
-                </div>
-              </motion.div>
-            ))}
+                <MessageCircle size={14} />
+                Chat
+              </button>
+            )}
           </div>
+
+          <AnimatePresence mode="wait">
+            {activeTab === 'membri' ? (
+              <motion.div
+                key="membri"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="space-y-1.5"
+              >
+                {teamMembers.map((member, index) => (
+                  <motion.div
+                    key={member.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className={`flex items-center gap-2 py-1.5 border-l-2 ${
+                      member.id === user?.id ? 'border-coral-500/50 pl-2' : 'border-gray-700/30 pl-2'
+                    }`}
+                  >
+                    <div className="w-5 text-center font-bold text-gray-500 text-[10px] flex-shrink-0">
+                      {index + 1}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setProfileUserId(member.id)}
+                      className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                      aria-label={`Apri profilo ${member.nickname}`}
+                    >
+                      <Avatar
+                        user={{
+                          id: member.id,
+                          nickname: member.nickname,
+                          avatar: (member as any).avatar,
+                          punti_personali: member.punti,
+                          squadra_id: mySquadra.id,
+                          is_admin: false,
+                          created_at: '',
+                        }}
+                        size="sm"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-sm truncate">{member.nickname}</span>
+                          {member.isMVP && <Crown size={12} className="text-party-300 flex-shrink-0" />}
+                          {member.id === user?.id && (
+                            <span className="badge-coral flex-shrink-0 text-[10px] px-1.5 py-0.5">Tu</span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                    <div className="text-right flex-shrink-0">
+                      <span className="font-bold text-turquoise-400 text-sm">{member.punti}</span>
+                      <span className="text-gray-400 text-[10px] ml-0.5">pts</span>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="chat"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="h-[calc(100vh-280px)] min-h-[500px]"
+              >
+                {user && <SquadraChat squadraId={mySquadra.id} currentUser={user} />}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </section>
 
         {/* Team Games - Snello */}
@@ -277,44 +315,6 @@ export const SquadraPage: React.FC = () => {
           )}
         </section>
 
-        {/* Leaderboard Preview - Snello */}
-        <section>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Trophy size={14} className="text-party-300" />
-            <h2 className="font-display font-bold text-sm">Classifica Squadre</h2>
-          </div>
-          
-          <div className="space-y-1.5">
-            {leaderboardSquadre.slice(0, 5).map((squadra, index) => (
-              <motion.div
-                key={squadra.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className={`flex items-center gap-2 py-1.5 border-l-2 ${
-                  squadra.id === mySquadra.id ? 'border-coral-500/50 pl-2' : 'border-gray-700/30 pl-2'
-                }`}
-              >
-                <div className={`w-6 h-6 rounded flex items-center justify-center font-bold text-[10px] flex-shrink-0 ${
-                  index === 0 ? 'bg-party-300/20 text-party-300' :
-                  index === 1 ? 'bg-gray-400/20 text-gray-400' :
-                  index === 2 ? 'bg-orange-500/20 text-orange-400' :
-                  'bg-gray-800/50 text-gray-400'
-                }`}>
-                  {index + 1}
-                </div>
-                <span className="text-xl">{squadra.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <span className="font-semibold text-sm truncate">{squadra.nome}</span>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <span className="font-bold text-turquoise-400 text-sm">{squadra.punti_squadra}</span>
-                  <span className="text-gray-400 text-[10px] ml-0.5">pts</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
       </div>
 
       <SquadraModal
