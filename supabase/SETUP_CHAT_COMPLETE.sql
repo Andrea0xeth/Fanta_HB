@@ -143,6 +143,47 @@ WHERE pubname = 'supabase_realtime'
   AND tablename = 'messaggi_chat';
 
 -- ============================================
+-- 9. CREA TABELLA REAZIONI CHAT
+-- ============================================
+CREATE TABLE IF NOT EXISTS reazioni_chat (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  messaggio_id UUID NOT NULL REFERENCES messaggi_chat(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  emoji TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  -- Un utente può avere solo una reazione per messaggio
+  UNIQUE(messaggio_id, user_id)
+);
+
+-- Indici per performance
+CREATE INDEX IF NOT EXISTS idx_reazioni_chat_messaggio ON reazioni_chat(messaggio_id);
+CREATE INDEX IF NOT EXISTS idx_reazioni_chat_user ON reazioni_chat(user_id);
+
+-- RLS per reazioni
+ALTER TABLE reazioni_chat ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Lettura reazioni" ON reazioni_chat;
+CREATE POLICY "Lettura reazioni" 
+ON reazioni_chat 
+FOR SELECT 
+USING (true);
+
+DROP POLICY IF EXISTS "Insert reazioni" ON reazioni_chat;
+CREATE POLICY "Insert reazioni" 
+ON reazioni_chat 
+FOR INSERT 
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Delete reazioni" ON reazioni_chat;
+CREATE POLICY "Delete reazioni" 
+ON reazioni_chat 
+FOR DELETE 
+USING (true);
+
+-- Abilita Realtime per reazioni
+ALTER PUBLICATION supabase_realtime ADD TABLE reazioni_chat;
+
+-- ============================================
 -- ✅ SETUP COMPLETATO!
 -- ============================================
 -- La chat è ora configurata e pronta all'uso.

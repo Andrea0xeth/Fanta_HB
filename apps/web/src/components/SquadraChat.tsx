@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, MessageCircle, Image, X, Trash2 } from 'lucide-react';
+import { Send, MessageCircle, Image, X, Trash2, Smile } from 'lucide-react';
 import { supabase, isSupabaseConfigured, uploadChatPhoto } from '../lib/supabase';
 import { Avatar } from './Avatar';
 import type { User } from '../types';
@@ -21,6 +21,16 @@ interface MessaggioChat {
   user?: UserLite;
 }
 
+interface ReazioneChat {
+  id: string;
+  messaggio_id: string;
+  user_id: string;
+  emoji: string;
+  created_at: string;
+}
+
+const EMOJI_LIST = ['👍', '❤️', '😂', '😮', '😢', '🔥', '🎉', '👏'];
+
 interface SquadraChatProps {
   squadraId: string;
   currentUser: User;
@@ -36,9 +46,12 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reazioni, setReazioni] = useState<Record<string, ReazioneChat[]>>({});
+  const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isInitialLoadRef = useRef(true);
   const prevMessagesCountRef = useRef(0);
 
@@ -85,6 +98,26 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
         );
 
         setMessaggi(messaggiConUser);
+        
+        // Carica reazioni per tutti i messaggi
+        const messaggiIds = messaggiConUser.map(m => m.id);
+        if (messaggiIds.length > 0) {
+          const { data: reazioniData } = await (supabase
+            .from('reazioni_chat') as any)
+            .select('*')
+            .in('messaggio_id', messaggiIds);
+          
+          if (reazioniData) {
+            const reazioniMap: Record<string, ReazioneChat[]> = {};
+            reazioniData.forEach((r: ReazioneChat) => {
+              if (!reazioniMap[r.messaggio_id]) {
+                reazioniMap[r.messaggio_id] = [];
+              }
+              reazioniMap[r.messaggio_id].push(r);
+            });
+            setReazioni(reazioniMap);
+          }
+        }
       } catch (e: any) {
         console.error('Errore caricamento messaggi:', e);
         setError(e?.message || 'Errore caricamento messaggi');
@@ -133,6 +166,50 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
           };
 
           setMessaggi((prev) => [...prev, nuovoMessaggio]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [squadraId]);
+
+  // Setup realtime subscription per reazioni
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !squadraId) return;
+
+    const channel = supabase
+      .channel(`squadra-chat-reazioni-${squadraId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reazioni_chat',
+        },
+        async (payload) => {
+          // Ricarica tutte le reazioni per il messaggio
+          const messaggioId = (payload.new as any)?.messaggio_id || (payload.old as any)?.messaggio_id;
+          if (messaggioId) {
+            const { data: reazioniData } = await (supabase
+              .from('reazioni_chat') as any)
+              .select('*')
+              .eq('messaggio_id', messaggioId);
+            
+            if (reazioniData) {
+              setReazioni(prev => ({
+                ...prev,
+                [messaggioId]: reazioniData
+              }));
+            } else {
+              setReazioni(prev => {
+                const newReazioni = { ...prev };
+                delete newReazioni[messaggioId];
+                return newReazioni;
+              });
+            }
+          }
         }
       )
       .subscribe();
@@ -196,6 +273,33 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handleReaction = async (messaggioId: string, emoji: string) => {
+    if (!isSupabaseConfigured()) return;
+
+    const existingReaction = reazioni[messaggioId]?.find(r => r.user_id === currentUser.id);
+    
+    if (existingReaction) {
+      if (existingReaction.emoji === emoji) {
+        // Rimuovi reazione se è la stessa
+        await (supabase.from('reazioni_chat') as any).delete().eq('id', existingReaction.id);
+      } else {
+        // Aggiorna reazione
+        await (supabase.from('reazioni_chat') as any)
+          .update({ emoji })
+          .eq('id', existingReaction.id);
+      }
+    } else {
+      // Aggiungi nuova reazione
+      await (supabase.from('reazioni_chat') as any).insert({
+        messaggio_id: messaggioId,
+        user_id: currentUser.id,
+        emoji
+      });
+    }
+    
+    setShowEmojiPicker(null);
   };
 
   const handleSend = async (e: React.FormEvent) => {
@@ -327,7 +431,7 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
                       size="sm"
                     />
                   )}
-                  <div className={`flex flex-col max-w-[75%] ${isMine ? 'items-end' : 'items-start'} group`}>
+                  <div className={`flex flex-col max-w-[75%] ${isMine ? 'items-end' : 'items-start'} group relative`}>
                     {msg.user && (
                       <span className={`text-[10px] mb-0.5 px-1 ${isMine ? 'text-turquoise-300' : 'text-turquoise-300'}`}>
                         {msg.user.nickname}
@@ -377,6 +481,65 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
                     <span className="text-[9px] text-turquoise-400/70 mt-0.5 px-1">
                       {formatTime(msg.created_at)}
                     </span>
+                    {/* Reazioni */}
+                    {reazioni[msg.id] && reazioni[msg.id].length > 0 && (
+                      <div className="flex items-center gap-1 mt-1 px-1 flex-wrap">
+                        {Object.entries(
+                          reazioni[msg.id].reduce((acc, r) => {
+                            if (!acc[r.emoji]) acc[r.emoji] = [];
+                            acc[r.emoji].push(r);
+                            return acc;
+                          }, {} as Record<string, ReazioneChat[]>)
+                        ).map(([emoji, reazioniEmoji]) => (
+                          <button
+                            key={emoji}
+                            onClick={() => handleReaction(msg.id, emoji)}
+                            className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] transition-colors ${
+                              reazioniEmoji.some(r => r.user_id === currentUser.id)
+                                ? 'bg-turquoise-500/30 border border-turquoise-500/50'
+                                : 'bg-gray-700/50 border border-gray-600/30 hover:bg-gray-700/70'
+                            }`}
+                          >
+                            <span>{emoji}</span>
+                            <span className="text-gray-300">{reazioniEmoji.length}</span>
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => setShowEmojiPicker(showEmojiPicker === msg.id ? null : msg.id)}
+                          className="px-1.5 py-0.5 rounded-full text-[11px] bg-gray-700/30 border border-gray-600/20 hover:bg-gray-700/50 transition-colors"
+                        >
+                          <Smile size={12} className="text-gray-400" />
+                        </button>
+                      </div>
+                    )}
+                    {(!reazioni[msg.id] || reazioni[msg.id].length === 0) && (
+                      <button
+                        onClick={() => setShowEmojiPicker(showEmojiPicker === msg.id ? null : msg.id)}
+                        className="mt-1 px-1.5 py-0.5 rounded-full text-[11px] bg-gray-700/30 border border-gray-600/20 hover:bg-gray-700/50 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Smile size={12} className="text-gray-400" />
+                      </button>
+                    )}
+                    {/* Emoji Picker */}
+                    {showEmojiPicker === msg.id && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="absolute z-10 bg-gray-800 border border-gray-700 rounded-xl p-2 shadow-lg flex gap-1"
+                        style={{ bottom: '100%', marginBottom: '4px' }}
+                      >
+                        {EMOJI_LIST.map(emoji => (
+                          <button
+                            key={emoji}
+                            onClick={() => handleReaction(msg.id, emoji)}
+                            className="text-xl hover:scale-125 transition-transform p-1"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
                   </div>
                 </motion.div>
               );
@@ -427,14 +590,21 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
           >
             <Image size={18} />
           </button>
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             value={nuovoMessaggio}
             onChange={(e) => setNuovoMessaggio(e.target.value)}
-            placeholder="Scrivi un messaggio..."
-            className="flex-1 input text-sm py-2 px-3 focus:border-turquoise-500/60 focus:shadow-[0_8px_24px_rgba(78,205,196,0.35),0_0_0_4px_rgba(78,205,196,0.15),0_0_0_1px_rgba(78,205,196,0.45)_inset]"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend(e as any);
+              }
+            }}
+            placeholder="Scrivi un messaggio... (Shift+Invio per inviare)"
+            className="flex-1 input text-sm py-2 px-3 focus:border-turquoise-500/60 focus:shadow-[0_8px_24px_rgba(78,205,196,0.35),0_0_0_4px_rgba(78,205,196,0.15),0_0_0_1px_rgba(78,205,196,0.45)_inset] resize-none min-h-[40px] max-h-[120px]"
             disabled={isSending || isUploadingPhoto}
             maxLength={500}
+            rows={1}
           />
           <button
             type="submit"

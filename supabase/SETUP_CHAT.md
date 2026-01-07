@@ -97,10 +97,12 @@ Dopo aver eseguito i passaggi, verifica che tutto funzioni:
 ## ✅ Checklist finale
 
 - [ ] Migrazione `00022_squadra_chat.sql` eseguita
+- [ ] Migrazione `00023_reazioni_chat.sql` eseguita (per le reazioni)
 - [ ] (Se necessario) `UPDATE_CHAT_WITH_PHOTOS.sql` eseguito
 - [ ] Storage policies configurate per `chat/`
-- [ ] Realtime abilitato per `messaggi_chat`
-- [ ] Tabella visibile nel Table Editor
+- [ ] Realtime abilitato per `messaggi_chat` e `reazioni_chat`
+- [ ] Tabelle visibili nel Table Editor
 - [ ] Test invio messaggio
 - [ ] Test upload foto
 - [ ] Test cancellazione messaggio
+- [ ] Test reazioni ai messaggi
