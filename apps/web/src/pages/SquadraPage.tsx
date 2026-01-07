@@ -22,19 +22,21 @@ export const SquadraPage: React.FC = () => {
           .map((m) => ({
             id: m.id,
             nickname: m.nickname,
+            nome: m.nome,
+            cognome: m.cognome,
             punti: m.punti_personali,
             isMVP: false,
             avatar: m.avatar || undefined,
           }))
           .sort((a, b) => b.punti - a.punti)
       : [
-          { id: '1', nickname: 'Pippo', punti: 85, isMVP: true },
-          { id: '2', nickname: 'Pluto', punti: 62, isMVP: false },
-          { id: '3', nickname: 'Paperino', punti: 54, isMVP: false },
-          { id: '4', nickname: 'Topolino', punti: 48, isMVP: false },
-          { id: user?.id || '5', nickname: user?.nickname || 'Tu', punti: user?.punti_personali || 0, isMVP: false },
+          { id: '1', nickname: 'Pippo', nome: undefined, cognome: undefined, punti: 85, isMVP: true },
+          { id: '2', nickname: 'Pluto', nome: undefined, cognome: undefined, punti: 62, isMVP: false },
+          { id: '3', nickname: 'Paperino', nome: undefined, cognome: undefined, punti: 54, isMVP: false },
+          { id: '4', nickname: 'Topolino', nome: undefined, cognome: undefined, punti: 48, isMVP: false },
+          { id: user?.id || '5', nickname: user?.nickname || 'Tu', nome: user?.nome, cognome: user?.cognome, punti: user?.punti_personali || 0, isMVP: false },
         ].sort((a, b) => b.punti - a.punti);
-  }, [mySquadra?.membri, user?.id, user?.nickname, user?.punti_personali]);
+  }, [mySquadra?.membri, user?.id, user?.nickname, user?.punti_personali, user?.nome, user?.cognome]);
 
   const myPosition = leaderboardSquadre.findIndex(s => s.id === mySquadra?.id) + 1;
   
@@ -271,6 +273,11 @@ export const SquadraPage: React.FC = () => {
                             <span className="badge-coral flex-shrink-0 text-[10px] px-1.5 py-0.5">Tu</span>
                           )}
                         </div>
+                        {(member.nome || member.cognome) && (
+                          <p className="text-[9px] text-gray-500 truncate mt-0.5">
+                            {[member.nome, member.cognome].filter(Boolean).join(' ')}
+                          </p>
+                        )}
                       </div>
                     </button>
                     <div className="text-right flex-shrink-0">
