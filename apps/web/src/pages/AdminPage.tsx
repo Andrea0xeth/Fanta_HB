@@ -1485,9 +1485,13 @@ export const AdminPage: React.FC = () => {
                   />
                   <div className="max-h-48 overflow-y-auto scrollbar-hide border border-white/10 rounded-lg p-2 space-y-1">
                     {leaderboardSingoli
-                      .filter(u => 
-                        u.nickname.toLowerCase().includes(searchUsersForSquadra.toLowerCase())
-                      )
+                      .filter(u => {
+                        const searchLower = searchUsersForSquadra.toLowerCase();
+                        const nicknameMatch = u.nickname?.toLowerCase().includes(searchLower) || false;
+                        const nomeMatch = u.nome?.toLowerCase().includes(searchLower) || false;
+                        const cognomeMatch = u.cognome?.toLowerCase().includes(searchLower) || false;
+                        return nicknameMatch || nomeMatch || cognomeMatch;
+                      })
                       .map((u) => {
                         const isSelected = selectedUsersForSquadra.has(u.id);
                         const hasSquadra = u.squadra_id !== null;
@@ -1517,7 +1521,12 @@ export const AdminPage: React.FC = () => {
                             />
                             <Avatar user={u} size="sm" />
                             <span className="text-xs flex-1">
-                              {u.nickname}
+                              <span className="font-semibold">{u.nickname}</span>
+                              {(u.nome || u.cognome) && (
+                                <span className="text-gray-400 ml-1">
+                                  ({[u.nome, u.cognome].filter(Boolean).join(' ')})
+                                </span>
+                              )}
                               {u.is_admin && (
                                 <span className="ml-1 text-[10px] text-party-300">(Admin)</span>
                               )}
@@ -1530,7 +1539,13 @@ export const AdminPage: React.FC = () => {
                           </label>
                         );
                       })}
-                    {leaderboardSingoli.filter(u => u.nickname.toLowerCase().includes(searchUsersForSquadra.toLowerCase())).length === 0 && (
+                    {leaderboardSingoli.filter(u => {
+                      const searchLower = searchUsersForSquadra.toLowerCase();
+                      const nicknameMatch = u.nickname?.toLowerCase().includes(searchLower) || false;
+                      const nomeMatch = u.nome?.toLowerCase().includes(searchLower) || false;
+                      const cognomeMatch = u.cognome?.toLowerCase().includes(searchLower) || false;
+                      return nicknameMatch || nomeMatch || cognomeMatch;
+                    }).length === 0 && (
                       <p className="text-xs text-gray-500 text-center py-4">Nessun utente trovato</p>
                     )}
                   </div>
@@ -1745,9 +1760,13 @@ export const AdminPage: React.FC = () => {
                     />
                     <div className="max-h-48 overflow-y-auto scrollbar-hide border border-white/10 rounded-lg p-2 space-y-1">
                       {leaderboardSingoli
-                        .filter(u => 
-                          u.nickname.toLowerCase().includes(searchEditingMembers.toLowerCase())
-                        )
+                        .filter(u => {
+                          const searchLower = searchEditingMembers.toLowerCase();
+                          const nicknameMatch = u.nickname?.toLowerCase().includes(searchLower) || false;
+                          const nomeMatch = u.nome?.toLowerCase().includes(searchLower) || false;
+                          const cognomeMatch = u.cognome?.toLowerCase().includes(searchLower) || false;
+                          return nicknameMatch || nomeMatch || cognomeMatch;
+                        })
                         .map((u) => {
                           const isSelected = editingSquadraMembers.has(u.id);
                           const isCurrentMember = squadra.membri.some(m => m.id === u.id);
@@ -1785,7 +1804,12 @@ export const AdminPage: React.FC = () => {
                               />
                               <Avatar user={u} size="sm" />
                               <span className="text-xs flex-1">
-                                {u.nickname}
+                                <span className="font-semibold">{u.nickname}</span>
+                                {(u.nome || u.cognome) && (
+                                  <span className="text-gray-400 ml-1">
+                                    ({[u.nome, u.cognome].filter(Boolean).join(' ')})
+                                  </span>
+                                )}
                                 {u.is_admin && (
                                   <span className="ml-1 text-[10px] text-party-300">(Admin)</span>
                                 )}
@@ -1810,7 +1834,13 @@ export const AdminPage: React.FC = () => {
                             </label>
                           );
                         })}
-                      {leaderboardSingoli.filter(u => u.nickname.toLowerCase().includes(searchEditingMembers.toLowerCase())).length === 0 && (
+                      {leaderboardSingoli.filter(u => {
+                        const searchLower = searchEditingMembers.toLowerCase();
+                        const nicknameMatch = u.nickname?.toLowerCase().includes(searchLower) || false;
+                        const nomeMatch = u.nome?.toLowerCase().includes(searchLower) || false;
+                        const cognomeMatch = u.cognome?.toLowerCase().includes(searchLower) || false;
+                        return nicknameMatch || nomeMatch || cognomeMatch;
+                      }).length === 0 && (
                         <p className="text-xs text-gray-500 text-center py-4">Nessun utente trovato</p>
                       )}
                     </div>

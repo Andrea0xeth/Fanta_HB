@@ -217,10 +217,10 @@ export const SendPushNotificationModal: React.FC<SendPushNotificationModalProps>
                     return !HIDDEN_USERS.some(hidden => nicknameUpper === hidden.toUpperCase().trim());
                   })
                   .map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.nickname}
-                    </option>
-                  ))}
+                  <option key={u.id} value={u.id}>
+                    {u.nickname}
+                  </option>
+                ))}
               </select>
             </div>
           )}

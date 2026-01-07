@@ -174,16 +174,16 @@ export const HomePage: React.FC = () => {
 
         {/* Mappa e Video Balletto - Stessa riga */}
         <div className="flex gap-2 mb-2">
-          {/* Mappa Banner - Invito a scoprire Fuerteventura */}
-          <motion.button
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            onClick={() => navigate('/mappa')}
+        {/* Mappa Banner - Invito a scoprire Fuerteventura */}
+        <motion.button
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          onClick={() => navigate('/mappa')}
             className="flex-1 glass rounded-xl p-2.5 text-left hover:bg-white/10 transition-colors border border-white/5"
-          >
+        >
             <div className="flex items-center gap-2">
-              <div className="flex-shrink-0">
+            <div className="flex-shrink-0">
                 <Map size={16} className="text-gray-400" />
               </div>
               <div className="flex-1 min-w-0">
@@ -208,14 +208,14 @@ export const HomePage: React.FC = () => {
             <div className="flex items-center gap-2">
               <div className="flex-shrink-0">
                 <Play size={16} className="text-coral-500" />
-              </div>
-              <div className="flex-1 min-w-0">
+            </div>
+            <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-gray-200 text-xs leading-tight">
                   Guarda il CiaccioBallo
-                </h3>
+              </h3>
                 <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
                   Video esclusivo 🎬
-                </p>
+              </p>
               </div>
             </div>
           </motion.button>
@@ -232,7 +232,7 @@ export const HomePage: React.FC = () => {
             className="flex-1 glass rounded-xl p-2.5 text-left hover:bg-white/10 transition-colors border border-white/5"
           >
             <div className="flex items-center gap-2">
-              <div className="flex-shrink-0">
+            <div className="flex-shrink-0">
                 <Calendar size={16} className="text-turquoise-400" />
               </div>
               <div className="flex-1 min-w-0">
@@ -242,9 +242,9 @@ export const HomePage: React.FC = () => {
                 <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
                   Programma attività
                 </p>
-              </div>
             </div>
-          </motion.button>
+          </div>
+        </motion.button>
 
           {/* Verifica Quest */}
           <motion.button

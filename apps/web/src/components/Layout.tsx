@@ -100,9 +100,9 @@ export const Layout: React.FC = () => {
                   : 'Trascina giù per aggiornare'}
             </span>
           </div>
-        </div>
-      )}
-      
+          </div>
+        )}
+
       {/* Main content - scrollable, content passes under navbar */}
       <main
         ref={mainRef}
@@ -146,10 +146,10 @@ export const Layout: React.FC = () => {
           // Usa requestAnimationFrame per fluidità
           animationFrameRef.current = requestAnimationFrame(() => {
             const dy = e.touches[0].clientY - (pullStartYRef.current || 0);
-            if (dy <= 0) {
-              setPullPx(0);
-              return;
-            }
+          if (dy <= 0) {
+            setPullPx(0);
+            return;
+          }
             
             // Applica resistenza elastica
             const elasticPull = calculateElasticPull(dy);
