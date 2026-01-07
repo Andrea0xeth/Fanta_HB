@@ -61,6 +61,8 @@ export const AdminPage: React.FC = () => {
   const [squadraDaModificare, setSquadraDaModificare] = useState<string | null>(null);
   const [editingSquadraMembers, setEditingSquadraMembers] = useState<Set<string>>(new Set());
   const [searchEditingMembers, setSearchEditingMembers] = useState('');
+  const [showOnlyMembers, setShowOnlyMembers] = useState(false);
+  const [changingSquadraForUser, setChangingSquadraForUser] = useState<string | null>(null);
   const [showCreaPremio, setShowCreaPremio] = useState(false);
   const [premioTitolo, setPremioTitolo] = useState('');
   const [premioDescrizione, setPremioDescrizione] = useState('');
@@ -647,6 +649,7 @@ export const AdminPage: React.FC = () => {
                               // Inizializza con i membri attuali già selezionati
                               setEditingSquadraMembers(new Set(squadra.membri.map(m => m.id)));
                               setSearchEditingMembers('');
+                              setShowOnlyMembers(false);
                               setSquadraError(null);
                               setShowModificaSquadra(true);
                             }}
@@ -677,6 +680,75 @@ export const AdminPage: React.FC = () => {
                     </>
                   </motion.div>
                 ))}
+              </div>
+
+              {/* Visualizzazione Utenti per Squadra */}
+              <div className="mt-4 pt-3 border-t border-white/10">
+                <h3 className="text-xs font-semibold text-gray-400 mb-2">Utenti</h3>
+                <div className="space-y-1">
+                  {(() => {
+                    const sortedUsers = [...leaderboardSingoli].sort((a, b) => {
+                      if (a.squadra_id && !b.squadra_id) return -1;
+                      if (!a.squadra_id && b.squadra_id) return 1;
+                      if (a.squadra_id && b.squadra_id) {
+                        const squadraA = squadre.find(s => s.id === a.squadra_id);
+                        const squadraB = squadre.find(s => s.id === b.squadra_id);
+                        const nomeA = squadraA?.nome || '';
+                        const nomeB = squadraB?.nome || '';
+                        if (nomeA !== nomeB) return nomeA.localeCompare(nomeB);
+                      }
+                      return (a.nickname || '').localeCompare(b.nickname || '');
+                    });
+
+                    return sortedUsers.map((u) => {
+                      const isChanging = changingSquadraForUser === u.id;
+                      return (
+                        <div
+                          key={u.id}
+                          className="flex items-center gap-2 py-1 px-2 rounded hover:bg-white/5 transition-colors"
+                        >
+                          <div className="text-xs flex-1 min-w-0">
+                            <div className="truncate">
+                              {u.nickname}
+                              {u.is_admin && <span className="ml-1 text-[9px] text-party-300">●</span>}
+                            </div>
+                            {(u.nome || u.cognome) && (
+                              <div className="text-[10px] text-gray-400 truncate">
+                                {[u.nome, u.cognome].filter(Boolean).join(' ')}
+                              </div>
+                            )}
+                          </div>
+                          <select
+                            value={u.squadra_id || ''}
+                            onChange={async (e) => {
+                              const nuovaSquadraId = e.target.value || null;
+                              if (nuovaSquadraId === u.squadra_id) return;
+                              setChangingSquadraForUser(u.id);
+                              try {
+                                await cambiaSquadraUtente(u.id, nuovaSquadraId);
+                                setSuccessMessage(`Squadra aggiornata per ${u.nickname}`);
+                                setTimeout(() => setSuccessMessage(null), 2000);
+                              } catch (error: any) {
+                                alert(`Errore: ${error.message || 'Impossibile cambiare la squadra'}`);
+                              } finally {
+                                setChangingSquadraForUser(null);
+                              }
+                            }}
+                            disabled={isChanging || isSubmittingSquadra}
+                            className="text-[10px] py-1 px-1.5 rounded bg-gray-800/50 border border-white/10 text-gray-200 focus:outline-none focus:ring-1 focus:ring-turquoise-500/50 disabled:opacity-50 min-w-[100px]"
+                          >
+                            <option value="">-</option>
+                            {squadre.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.emoji} {s.nome}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
               </div>
             </motion.div>
           )}
@@ -1658,6 +1730,7 @@ export const AdminPage: React.FC = () => {
                   setSquadraColore('#FF6B6B');
                   setEditingSquadraMembers(new Set());
                   setSearchEditingMembers('');
+                  setShowOnlyMembers(false);
                   setSquadraError(null);
                 }
               }}
@@ -1688,6 +1761,7 @@ export const AdminPage: React.FC = () => {
                         setSquadraColore('#FF6B6B');
                         setEditingSquadraMembers(new Set());
                         setSearchEditingMembers('');
+                        setShowOnlyMembers(false);
                         setSquadraError(null);
                       }
                     }}
@@ -1747,9 +1821,23 @@ export const AdminPage: React.FC = () => {
 
                   {/* Gestione Membri */}
                   <div>
-                    <label className="block text-xs text-gray-300 mb-1.5 font-semibold">
-                      Membri della squadra
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs text-gray-300 font-semibold">
+                        Membri della squadra
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowOnlyMembers(!showOnlyMembers)}
+                        className={`text-[10px] px-2 py-1 rounded transition-colors ${
+                          showOnlyMembers
+                            ? 'bg-turquoise-500/20 text-turquoise-400 border border-turquoise-500/40'
+                            : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+                        }`}
+                        disabled={isSubmittingSquadra}
+                      >
+                        Solo membri
+                      </button>
+                    </div>
                     <input
                       type="text"
                       value={searchEditingMembers}
@@ -1761,6 +1849,13 @@ export const AdminPage: React.FC = () => {
                     <div className="max-h-48 overflow-y-auto scrollbar-hide border border-white/10 rounded-lg p-2 space-y-1">
                       {leaderboardSingoli
                         .filter(u => {
+                          // Filtro "Solo membri"
+                          if (showOnlyMembers) {
+                            const isCurrentMember = squadra.membri.some(m => m.id === u.id);
+                            if (!isCurrentMember) return false;
+                          }
+                          
+                          // Filtro ricerca
                           const searchLower = searchEditingMembers.toLowerCase();
                           const nicknameMatch = u.nickname?.toLowerCase().includes(searchLower) || false;
                           const nomeMatch = u.nome?.toLowerCase().includes(searchLower) || false;
@@ -1835,6 +1930,13 @@ export const AdminPage: React.FC = () => {
                           );
                         })}
                       {leaderboardSingoli.filter(u => {
+                        // Filtro "Solo membri"
+                        if (showOnlyMembers) {
+                          const isCurrentMember = squadra.membri.some(m => m.id === u.id);
+                          if (!isCurrentMember) return false;
+                        }
+                        
+                        // Filtro ricerca
                         const searchLower = searchEditingMembers.toLowerCase();
                         const nicknameMatch = u.nickname?.toLowerCase().includes(searchLower) || false;
                         const nomeMatch = u.nome?.toLowerCase().includes(searchLower) || false;
@@ -1917,6 +2019,7 @@ export const AdminPage: React.FC = () => {
                           setSquadraColore('#FF6B6B');
                           setEditingSquadraMembers(new Set());
                           setSearchEditingMembers('');
+                          setShowOnlyMembers(false);
                           setSquadraError(null);
                         } catch (error: any) {
                           setSquadraError(error.message || 'Errore durante la modifica');

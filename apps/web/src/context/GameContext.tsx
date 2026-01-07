@@ -902,14 +902,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       console.log('[Register] 🔑 Passkey ID salvato:', passkeyCredential.id);
       console.log('[Register] 🔑 Passkey ID length:', passkeyCredential.id.length);
 
-          // Assegna squadra casuale (bilanciata)
-          const { data: squadreData } = await supabase
-            .from('squadre')
-        .select('id, punti_squadra')
-            .order('punti_squadra', { ascending: true });
-          
-      const squadreIds = squadreData?.map((s: any) => s.id) || [];
-          const randomSquadraId = squadreIds[Math.floor(Math.random() * squadreIds.length)] || null;
+          // Nuovi iscritti senza squadra
+          const randomSquadraId = null;
 
           // Carica avatar se presente
           let avatarUrl: string | null = null;
@@ -1135,14 +1129,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         console.log('[Register] Login automatico riuscito, sessione ottenuta');
       }
 
-      // Assegna squadra casuale (bilanciata)
-      const { data: squadreData } = await supabase
-        .from('squadre')
-        .select('id, punti_squadra')
-        .order('punti_squadra', { ascending: true });
-
-      const squadreIds = squadreData?.map((s: any) => s.id) || [];
-      const randomSquadraId = squadreIds[Math.floor(Math.random() * squadreIds.length)] || null;
+      // Nuovi iscritti senza squadra
+      const randomSquadraId = null;
 
       // Avatar opzionale (ma supportato)
       let avatarUrl: string | null = null;
