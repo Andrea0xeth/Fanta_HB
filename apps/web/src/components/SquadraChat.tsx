@@ -175,7 +175,7 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
     };
   }, [squadraId]);
 
-  // Setup realtime subscription per reazioni
+  // Setup realtime subscription per reazioni - Silent update
   useEffect(() => {
     if (!isSupabaseConfigured() || !squadraId) return;
 
@@ -189,26 +189,29 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
           table: 'reazioni_chat',
         },
         async (payload) => {
-          // Ricarica tutte le reazioni per il messaggio
+          // Silent update: aggiorna solo le reazioni per quel messaggio, senza ricaricare i messaggi
           const messaggioId = (payload.new as any)?.messaggio_id || (payload.old as any)?.messaggio_id;
           if (messaggioId) {
+            // Carica solo le reazioni per questo messaggio specifico
             const { data: reazioniData } = await (supabase
               .from('reazioni_chat') as any)
               .select('*')
               .eq('messaggio_id', messaggioId);
             
-            if (reazioniData) {
-              setReazioni(prev => ({
-                ...prev,
-                [messaggioId]: reazioniData
-              }));
-            } else {
-              setReazioni(prev => {
+            // Aggiorna silenziosamente solo le reazioni
+            setReazioni(prev => {
+              if (reazioniData && reazioniData.length > 0) {
+                return {
+                  ...prev,
+                  [messaggioId]: reazioniData
+                };
+              } else {
+                // Rimuovi le reazioni se non ce ne sono più
                 const newReazioni = { ...prev };
                 delete newReazioni[messaggioId];
                 return newReazioni;
-              });
-            }
+              }
+            });
           }
         }
       )
@@ -280,27 +283,78 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
 
     const existingReaction = reazioni[messaggioId]?.find(r => r.user_id === currentUser.id);
     
-    if (existingReaction) {
-      if (existingReaction.emoji === emoji) {
-        // Rimuovi reazione se è la stessa
-        await (supabase.from('reazioni_chat') as any).delete().eq('id', existingReaction.id);
+    // Aggiorna ottimisticamente l'UI prima della chiamata API
+    setReazioni(prev => {
+      const currentReazioni = prev[messaggioId] || [];
+      const newReazioni = { ...prev };
+      
+      if (existingReaction) {
+        if (existingReaction.emoji === emoji) {
+          // Rimuovi reazione se è la stessa
+          newReazioni[messaggioId] = currentReazioni.filter(r => r.id !== existingReaction.id);
+          if (newReazioni[messaggioId].length === 0) {
+            delete newReazioni[messaggioId];
+          }
+        } else {
+          // Aggiorna reazione
+          newReazioni[messaggioId] = currentReazioni.map(r => 
+            r.id === existingReaction.id ? { ...r, emoji } : r
+          );
+        }
       } else {
-        // Aggiorna reazione
-        await (supabase.from('reazioni_chat') as any)
-          .update({ emoji })
-          .eq('id', existingReaction.id);
+        // Aggiungi nuova reazione (temporanea, verrà aggiornata dal realtime)
+        const tempReaction: ReazioneChat = {
+          id: `temp-${Date.now()}`,
+          messaggio_id: messaggioId,
+          user_id: currentUser.id,
+          emoji,
+          created_at: new Date().toISOString()
+        };
+        newReazioni[messaggioId] = [...currentReazioni, tempReaction];
       }
-    } else {
-      // Aggiungi nuova reazione
-      await (supabase.from('reazioni_chat') as any).insert({
-        messaggio_id: messaggioId,
-        user_id: currentUser.id,
-        emoji
-      });
-    }
+      
+      return newReazioni;
+    });
     
     setShowEmojiPicker(null);
+
+    // Esegui l'operazione sul database (il realtime aggiornerà l'UI)
+    try {
+      if (existingReaction) {
+        if (existingReaction.emoji === emoji) {
+          // Rimuovi reazione se è la stessa
+          await (supabase.from('reazioni_chat') as any).delete().eq('id', existingReaction.id);
+        } else {
+          // Aggiorna reazione
+          await (supabase.from('reazioni_chat') as any)
+            .update({ emoji })
+            .eq('id', existingReaction.id);
+        }
+      } else {
+        // Aggiungi nuova reazione
+        await (supabase.from('reazioni_chat') as any).insert({
+          messaggio_id: messaggioId,
+          user_id: currentUser.id,
+          emoji
+        });
+      }
+    } catch (error) {
+      console.error('Errore aggiornamento reazione:', error);
+      // In caso di errore, ricarica le reazioni per quel messaggio
+      const { data: reazioniData } = await (supabase
+        .from('reazioni_chat') as any)
+        .select('*')
+        .eq('messaggio_id', messaggioId);
+      
+      if (reazioniData) {
+        setReazioni(prev => ({
+          ...prev,
+          [messaggioId]: reazioniData
+        }));
+      }
+    }
   };
+
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -459,24 +513,38 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
                           <p className="text-sm whitespace-pre-wrap break-words">{msg.messaggio}</p>
                         )}
                       </div>
-                      {isMine && (
+                      <div className="flex items-center gap-1">
+                        {/* Icona reazione - sempre visibile */}
                         <button
-                          onClick={() => handleDeleteMessage(msg.id)}
-                          disabled={deletingMessageId === msg.id}
-                          className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 disabled:opacity-50 transition-colors"
-                          aria-label="Elimina messaggio"
+                          onClick={() => setShowEmojiPicker(showEmojiPicker === msg.id ? null : msg.id)}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            showEmojiPicker === msg.id
+                              ? 'bg-turquoise-500/30 text-turquoise-400'
+                              : 'bg-gray-700/30 text-gray-400 hover:bg-gray-700/50 hover:text-gray-300'
+                          }`}
+                          aria-label="Aggiungi reazione"
                         >
-                          {deletingMessageId === msg.id ? (
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                              className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full"
-                            />
-                          ) : (
-                            <Trash2 size={12} />
-                          )}
+                          <Smile size={14} />
                         </button>
-                      )}
+                        {isMine && (
+                          <button
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            disabled={deletingMessageId === msg.id}
+                            className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 disabled:opacity-50 transition-colors"
+                            aria-label="Elimina messaggio"
+                          >
+                            {deletingMessageId === msg.id ? (
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full"
+                              />
+                            ) : (
+                              <Trash2 size={12} />
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <span className="text-[9px] text-turquoise-400/70 mt-0.5 px-1">
                       {formatTime(msg.created_at)}
@@ -504,36 +572,28 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
                             <span className="text-gray-300">{reazioniEmoji.length}</span>
                           </button>
                         ))}
-                        <button
-                          onClick={() => setShowEmojiPicker(showEmojiPicker === msg.id ? null : msg.id)}
-                          className="px-1.5 py-0.5 rounded-full text-[11px] bg-gray-700/30 border border-gray-600/20 hover:bg-gray-700/50 transition-colors"
-                        >
-                          <Smile size={12} className="text-gray-400" />
-                        </button>
                       </div>
-                    )}
-                    {(!reazioni[msg.id] || reazioni[msg.id].length === 0) && (
-                      <button
-                        onClick={() => setShowEmojiPicker(showEmojiPicker === msg.id ? null : msg.id)}
-                        className="mt-1 px-1.5 py-0.5 rounded-full text-[11px] bg-gray-700/30 border border-gray-600/20 hover:bg-gray-700/50 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Smile size={12} className="text-gray-400" />
-                      </button>
                     )}
                     {/* Emoji Picker */}
                     {showEmojiPicker === msg.id && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        className="absolute z-10 bg-gray-800 border border-gray-700 rounded-xl p-2 shadow-lg flex gap-1"
-                        style={{ bottom: '100%', marginBottom: '4px' }}
+                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                        className="absolute z-20 bg-gray-800 border border-gray-700 rounded-xl p-2 shadow-lg flex gap-1"
+                        style={{ 
+                          bottom: '100%', 
+                          marginBottom: '8px',
+                          right: isMine ? '0' : 'auto',
+                          left: isMine ? 'auto' : '0'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {EMOJI_LIST.map(emoji => (
                           <button
                             key={emoji}
                             onClick={() => handleReaction(msg.id, emoji)}
-                            className="text-xl hover:scale-125 transition-transform p-1"
+                            className="text-xl hover:scale-125 transition-transform p-1.5 rounded-lg hover:bg-gray-700/50"
                           >
                             {emoji}
                           </button>
@@ -600,7 +660,7 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
                 handleSend(e as any);
               }
             }}
-            placeholder="Scrivi un messaggio... (Shift+Invio per inviare)"
+            placeholder="Scrivi un messaggio..."
             className="flex-1 input text-sm py-2 px-3 focus:border-turquoise-500/60 focus:shadow-[0_8px_24px_rgba(78,205,196,0.35),0_0_0_4px_rgba(78,205,196,0.15),0_0_0_1px_rgba(78,205,196,0.45)_inset] resize-none min-h-[40px] max-h-[120px]"
             disabled={isSending || isUploadingPhoto}
             maxLength={500}
