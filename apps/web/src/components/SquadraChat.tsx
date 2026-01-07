@@ -97,7 +97,12 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
           })
         );
 
-        setMessaggi(messaggiConUser);
+        // Assicurati che i messaggi siano ordinati dal più vecchio al più recente
+        const messaggiOrdinati = messaggiConUser.sort((a, b) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        
+        setMessaggi(messaggiOrdinati);
         
         // Carica reazioni per tutti i messaggi
         const messaggiIds = messaggiConUser.map(m => m.id);
@@ -165,7 +170,13 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
             } : undefined,
           };
 
-          setMessaggi((prev) => [...prev, nuovoMessaggio]);
+          // Aggiungi il nuovo messaggio e mantieni l'ordinamento
+          setMessaggi((prev) => {
+            const updated = [...prev, nuovoMessaggio];
+            return updated.sort((a, b) => 
+              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            );
+          });
         }
       )
       .subscribe();
@@ -222,26 +233,59 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
     };
   }, [squadraId]);
 
-  // Scroll automatico quando arrivano nuovi messaggi (solo se non è il caricamento iniziale)
+  // Scroll automatico all'ultimo messaggio - sempre il più in basso possibile
   useEffect(() => {
-    if (isInitialLoadRef.current) {
-      // Al primo caricamento, scrolla senza animazione
-      if (chatContainerRef.current && messagesEndRef.current) {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    if (!chatContainerRef.current) return;
+
+    // Funzione per scrollare all'ultimo messaggio (sempre in fondo)
+    const scrollToBottom = () => {
+      if (chatContainerRef.current) {
+        // Usa requestAnimationFrame per assicurarsi che il DOM sia aggiornato
+        requestAnimationFrame(() => {
+          if (chatContainerRef.current) {
+            // Scrolla sempre al massimo in basso
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+          }
+        });
+      }
+    };
+
+    if (isInitialLoadRef.current && messaggi.length > 0) {
+      // Al primo caricamento, scrolla immediatamente all'ultimo messaggio
+      // Usa più delay per assicurarsi che tutto sia renderizzato
+      setTimeout(() => {
+        scrollToBottom();
+        // Doppio check dopo un altro frame per essere sicuri
+        requestAnimationFrame(() => {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+          }
+          // Terzo check per sicurezza
+          setTimeout(() => {
+            if (chatContainerRef.current) {
+              chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+            }
+          }, 50);
+        });
         isInitialLoadRef.current = false;
         prevMessagesCountRef.current = messaggi.length;
-      }
+      }, 300);
       return;
     }
 
-    // Scroll solo se ci sono nuovi messaggi (non al caricamento iniziale)
+    // Per nuovi messaggi, scrolla sempre in fondo
     const hasNewMessages = messaggi.length > prevMessagesCountRef.current;
-    if (hasNewMessages && chatContainerRef.current && messagesEndRef.current) {
-      // Scrolla il container, non la pagina
-      chatContainerRef.current.scrollTo({
-        top: chatContainerRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
+    if (hasNewMessages && messaggi.length > 0) {
+      // Scrolla all'ultimo messaggio quando ne arrivano di nuovi
+      setTimeout(() => {
+        scrollToBottom();
+        // Doppio check per sicurezza
+        requestAnimationFrame(() => {
+          if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+          }
+        });
+      }, 100);
       prevMessagesCountRef.current = messaggi.length;
     }
   }, [messaggi]);
@@ -606,7 +650,8 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
             })}
           </AnimatePresence>
         )}
-        <div ref={messagesEndRef} />
+        {/* Elemento invisibile per lo scroll all'ultimo messaggio */}
+        <div ref={messagesEndRef} style={{ height: '1px' }} />
       </div>
 
       {/* Input */}
