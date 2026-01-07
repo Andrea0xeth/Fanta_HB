@@ -13,7 +13,7 @@ export const SquadraPage: React.FC = () => {
   const { user, mySquadra, gare, leaderboardSquadre, gameState } = useGame();
   const [showSquadraModal, setShowSquadraModal] = useState(false);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'membri' | 'chat'>('chat');
+  const [activeTab, setActiveTab] = useState<'membri' | 'chat' | 'gare'>('chat');
 
   // Usa i membri reali della squadra se disponibili, altrimenti mock
   const teamMembers = useMemo(() => {
@@ -171,7 +171,7 @@ export const SquadraPage: React.FC = () => {
       </div>
 
       {/* Content - Scrollable, snello */}
-      <div className="flex-1 px-3 py-2 pb-28 space-y-2">
+      <div className={`flex-1 px-3 py-2 pb-28 ${activeTab === 'chat' ? 'overflow-hidden' : 'space-y-2 overflow-y-auto'}`}>
         {/* Team Stats - Minimizzato */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
@@ -196,8 +196,8 @@ export const SquadraPage: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Tab Chat / Membri */}
-        <section>
+        {/* Tab Chat / Membri / Gare */}
+        <section className={activeTab === 'chat' ? 'h-[calc(100vh-280px)] min-h-[500px] flex flex-col' : ''}>
           <div className="bg-gray-800/30 rounded-xl p-0.5 flex gap-0.5 mb-2">
             <button
               onClick={() => setActiveTab('membri')}
@@ -223,6 +223,17 @@ export const SquadraPage: React.FC = () => {
                 Chat
               </button>
             )}
+            <button
+              onClick={() => setActiveTab('gare')}
+              className={`flex-1 py-2 rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                activeTab === 'gare' 
+                  ? 'bg-turquoise-500 text-white' 
+                  : 'text-gray-400 hover:text-gray-300'
+              }`}
+            >
+              <Swords size={14} />
+              Gare
+            </button>
           </div>
 
           <AnimatePresence mode="wait">
@@ -287,39 +298,39 @@ export const SquadraPage: React.FC = () => {
                   </motion.div>
                 ))}
               </motion.div>
-            ) : (
+            ) : activeTab === 'chat' ? (
               <motion.div
                 key="chat"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="h-[calc(100vh-280px)] min-h-[500px]"
+                className="flex-1 min-h-0"
               >
                 {user && <SquadraChat squadraId={mySquadra.id} currentUser={user} />}
               </motion.div>
+            ) : (
+              <motion.div
+                key="gare"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-2"
+              >
+                {teamGare.length === 0 ? (
+                  <div className="text-center text-gray-400 py-4 text-xs">
+                    <Swords size={24} className="mx-auto mb-2 opacity-50" />
+                    <p>Nessuna gara programmata</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {teamGare.map((gara) => (
+                      <GaraCard key={gara.id} gara={gara} />
+                    ))}
+                  </div>
+                )}
+              </motion.div>
             )}
           </AnimatePresence>
-        </section>
-
-        {/* Team Games - Snello */}
-        <section>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Swords size={14} className="text-coral-500" />
-            <h2 className="font-display font-bold text-sm">Gare della Squadra</h2>
-          </div>
-          
-          {teamGare.length === 0 ? (
-            <div className="text-center text-gray-400 py-4 text-xs">
-              <Swords size={24} className="mx-auto mb-2 opacity-50" />
-              <p>Nessuna gara programmata</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {teamGare.map((gara) => (
-                <GaraCard key={gara.id} gara={gara} />
-              ))}
-            </div>
-          )}
         </section>
 
       </div>
