@@ -513,8 +513,14 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
           </div>
         ) : (
           <AnimatePresence>
-            {messaggi.map((msg) => {
+            {messaggi.map((msg, index) => {
               const isMine = msg.user_id === currentUser.id;
+              // Controlla se il messaggio precedente è dello stesso utente
+              const prevMsg = index > 0 ? messaggi[index - 1] : null;
+              const isSameUser = prevMsg && prevMsg.user_id === msg.user_id;
+              const showAvatar = !isSameUser;
+              const showNickname = !isSameUser;
+              
               return (
                 <motion.div
                   key={msg.id}
@@ -523,14 +529,17 @@ export const SquadraChat: React.FC<SquadraChatProps> = ({ squadraId, currentUser
                   exit={{ opacity: 0, scale: 0.95 }}
                   className={`flex gap-2 ${isMine ? 'flex-row-reverse' : ''}`}
                 >
-                  {msg.user && (
+                  {showAvatar && msg.user && (
                     <Avatar
                       user={msg.user}
                       size="sm"
                     />
                   )}
+                  {!showAvatar && (
+                    <div className="w-8" /> // Spazio vuoto per allineare quando non c'è avatar
+                  )}
                   <div className={`flex flex-col max-w-[75%] ${isMine ? 'items-end' : 'items-start'} group relative`}>
-                    {msg.user && (
+                    {showNickname && msg.user && (
                       <span className={`text-[10px] mb-0.5 px-1 ${isMine ? 'text-turquoise-300' : 'text-turquoise-300'}`}>
                         {msg.user.nickname}
                       </span>
