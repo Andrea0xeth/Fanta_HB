@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Calendar, Clock, Users } from 'lucide-react';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Squadra } from '../types';
 
 type TipoGara = '1v1' | 'tutti' | '1v1v1';
+
+interface GiocoTemplate {
+  nome: string;
+  descrizione: string | null;
+  emoji: string | null;
+}
 
 interface CreaGaraModalProps {
   squadre: Squadra[];
@@ -20,34 +27,13 @@ interface CreaGaraModalProps {
   }) => Promise<void>;
 }
 
-const giochiDisponibili = [
-  { nome: 'Rubabandiera', descrizione: 'Due squadre allineate, l\'arbitro chiama un numero e i giocatori corrispondenti corrono per prendere la bandiera', emoji: '🚩' },
-  { nome: 'Nascondino', descrizione: 'Un cercatore cerca gli altri giocatori nascosti prima che raggiungano la "tana"', emoji: '🫥' },
-  { nome: 'Birrapong (Beer Pong)', descrizione: 'Adattato alla spiaggia con bicchieri in sabbia, si lancia la pallina nei bicchieri avversari', emoji: '🍺' },
-  { nome: 'Bocce', descrizione: 'Due squadre lanciano le bocce cercando di avvicinarsi il più possibile al boccino', emoji: '🎳' },
-  { nome: 'Beach Volley', descrizione: 'Pallavolo sulla sabbia, due squadre cercano di far cadere la palla nel campo avversario', emoji: '🏐' },
-  { nome: 'Footvolley', descrizione: 'Come il beach volley ma senza usare le mani, solo piedi e testa', emoji: '⚽' },
-  { nome: 'Beach Soccer', descrizione: 'Calcio sulla sabbia con squadre di 5 giocatori', emoji: '⚽' },
-  { nome: 'Beach Tennis', descrizione: 'Tennis sulla sabbia con racchette e rete', emoji: '🎾' },
-  { nome: 'Palla Prigioniera', descrizione: 'Due squadre si lanciano la palla per colpire gli avversari e farli prigionieri', emoji: '🏀' },
-  { nome: 'Tiro alla Fune', descrizione: 'Due squadre tirano una corda in direzioni opposte', emoji: '🪢' },
-  { nome: 'Frisbee / Ultimate Frisbee', descrizione: 'Lancio del disco tra i giocatori, con variante Ultimate che combina calcio e rugby', emoji: '🥏' },
-  { nome: 'Kubb', descrizione: 'Gioco svedese che combina bowling e bocce, si lanciano bastoni per abbattere i kubb avversari', emoji: '🪵' },
-  { nome: 'Roundnet (Spikeball)', descrizione: 'Due squadre di due giocatori colpiscono una palla su una rete a terra', emoji: '🎾' },
-  { nome: 'Beach Rugby', descrizione: 'Rugby sulla sabbia con squadre di 5 giocatori', emoji: '🏉' },
-  { nome: 'Beach Waterpolo', descrizione: 'Pallanuoto in mare in un\'area delimitata', emoji: '🏊' },
-  { nome: 'Racchettoni', descrizione: 'Si usa una racchetta e una pallina, si cerca di mantenerla in aria il più a lungo possibile', emoji: '🏓' },
-  { nome: 'Palla Avvelenata', descrizione: 'Variante della palla prigioniera con regole specifiche', emoji: '☠️' },
-  { nome: 'Staffetta', descrizione: 'Gare di corsa a squadre con testimone da passare', emoji: '🏃' },
-  { nome: 'Pallone', descrizione: 'Gioco tradizionale con palla da calciare e passare tra i giocatori', emoji: '⚽' },
-  { nome: 'Caccia al Tesoro', descrizione: 'Squadre cercano oggetti nascosti seguendo indizi', emoji: '🗺️' },
-];
-
 export const CreaGaraModal: React.FC<CreaGaraModalProps> = ({
   squadre,
   onClose,
   onCreate,
 }) => {
+  const [giochiDisponibili, setGiochiDisponibili] = useState<GiocoTemplate[]>([]);
+  const [isLoadingGiochi, setIsLoadingGiochi] = useState(true);
   const [selectedGioco, setSelectedGioco] = useState<string>('');
   const [tipoGara, setTipoGara] = useState<TipoGara>('1v1');
   const [squadraA, setSquadraA] = useState<string>('');
@@ -58,6 +44,39 @@ export const CreaGaraModal: React.FC<CreaGaraModalProps> = ({
   const [giorno, setGiorno] = useState<number>(1);
   const [orario, setOrario] = useState<string>('');
   const [creating, setCreating] = useState(false);
+
+  // Carica giochi da giochi_template
+  useEffect(() => {
+    const loadGiochi = async () => {
+      if (!isSupabaseConfigured()) {
+        setIsLoadingGiochi(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await (supabase
+          .from('giochi_template') as any)
+          .select('nome, descrizione, emoji')
+          .order('nome', { ascending: true });
+
+        if (error) throw error;
+
+        if (data) {
+          setGiochiDisponibili(data.map((g: any) => ({
+            nome: g.nome,
+            descrizione: g.descrizione || '',
+            emoji: g.emoji || '🎯'
+          })));
+        }
+      } catch (error) {
+        console.error('Errore caricamento giochi:', error);
+      } finally {
+        setIsLoadingGiochi(false);
+      }
+    };
+
+    loadGiochi();
+  }, []);
 
   const giocoSelezionato = giochiDisponibili.find(g => g.nome === selectedGioco);
 
@@ -154,20 +173,28 @@ export const CreaGaraModal: React.FC<CreaGaraModalProps> = ({
             {/* Selezione Gioco */}
             <div>
               <label className="block text-sm font-semibold mb-2">Gioco *</label>
-              <select
-                value={selectedGioco}
-                onChange={(e) => setSelectedGioco(e.target.value)}
-                className="w-full input"
-              >
-                <option value="">Seleziona un gioco...</option>
-                {giochiDisponibili.map((gioco) => (
-                  <option key={gioco.nome} value={gioco.nome}>
-                    {gioco.emoji} {gioco.nome}
-                  </option>
-                ))}
-              </select>
-              {giocoSelezionato && (
-                <p className="text-xs text-gray-400 mt-1">{giocoSelezionato.descrizione}</p>
+              {isLoadingGiochi ? (
+                <div className="w-full input text-center text-gray-400 py-2">
+                  Caricamento giochi...
+                </div>
+              ) : (
+                <>
+                  <select
+                    value={selectedGioco}
+                    onChange={(e) => setSelectedGioco(e.target.value)}
+                    className="w-full input"
+                  >
+                    <option value="">Seleziona un gioco...</option>
+                    {giochiDisponibili.map((gioco) => (
+                      <option key={gioco.nome} value={gioco.nome}>
+                        {gioco.emoji} {gioco.nome}
+                      </option>
+                    ))}
+                  </select>
+                  {giocoSelezionato && (
+                    <p className="text-xs text-gray-400 mt-1">{giocoSelezionato.descrizione}</p>
+                  )}
+                </>
               )}
             </div>
 
