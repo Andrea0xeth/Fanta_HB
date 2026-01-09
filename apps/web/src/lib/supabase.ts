@@ -36,12 +36,27 @@ export const uploadProofFile = async (
   try {
     // Nota: Non verifichiamo la sessione Supabase Auth perché usiamo WebAuthn
     // Le policy RLS permetteranno l'upload se configurate correttamente
-    const fileExt = file.name.split('.').pop();
+    let fileToUpload = file;
+    let fileExt = file.name.split('.').pop() || 'jpg';
+    
+    // Se è un'immagine, comprimila prima dell'upload (max 1920x1920, qualità 0.7)
+    if (file.type.startsWith('image/')) {
+      fileToUpload = await compressImage(file, 1920, 1920, 0.7);
+      fileExt = 'jpg'; // Sempre JPG dopo compressione
+      
+      console.log('[Upload Proof] Immagine compressa:', {
+        originalSize: file.size,
+        compressedSize: fileToUpload.size,
+        compressionRatio: ((1 - fileToUpload.size / file.size) * 100).toFixed(1) + '%',
+      });
+    }
+    
     const fileName = `${userId}/${questId}/${Date.now()}.${fileExt}`;
     
     console.log('[Upload Proof] Inizio upload:', {
       fileName,
       fileSize: file.size,
+      uploadSize: fileToUpload.size,
       fileType: file.type,
       userId,
       questId
@@ -49,10 +64,10 @@ export const uploadProofFile = async (
     
     const { data, error } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .upload(fileName, file, {
+      .upload(fileName, fileToUpload, {
         cacheControl: '3600',
         upsert: false,
-        contentType: file.type || (fileExt === 'mov' || fileExt === 'mp4' ? 'video/quicktime' : 'application/octet-stream'),
+        contentType: fileToUpload.type || (fileExt === 'mov' || fileExt === 'mp4' ? 'video/quicktime' : 'image/jpeg'),
       });
 
     if (error) {
@@ -103,28 +118,99 @@ export const deleteProofFile = async (filePath: string): Promise<boolean> => {
   return !error;
 };
 
+// Helper per comprimere immagine
+const compressImage = async (file: File, maxWidth: number = 1920, maxHeight: number = 1920, quality: number = 0.7): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Calcola dimensioni mantenendo aspect ratio
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height;
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Impossibile creare canvas context'));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Impossibile comprimere immagine'));
+              return;
+            }
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error('Errore caricamento immagine'));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error('Errore lettura file'));
+    reader.readAsDataURL(file);
+  });
+};
+
+// Helper per ottimizzare URL immagine (la compressione avviene durante l'upload)
+// Questa funzione può essere estesa in futuro per aggiungere parametri di trasformazione
+export const getOptimizedImageUrl = (url: string): string => {
+  // La compressione avviene durante l'upload, quindi ritorniamo l'URL originale
+  return url;
+};
+
 // Helper per upload avatar utente
 export const uploadAvatar = async (
   file: File, 
   userId: string
 ): Promise<string | null> => {
   try {
-    const fileExt = file.name.split('.').pop() || 'jpg';
+    // Comprimi immagine prima dell'upload (max 800x800, qualità 0.7)
+    const compressedFile = await compressImage(file, 800, 800, 0.7);
+    
+    const fileExt = 'jpg'; // Sempre JPG dopo compressione
     const fileName = `avatars/${userId}/${Date.now()}.${fileExt}`;
     
     console.log('[Upload Avatar] Inizio upload:', {
       fileName,
       fileSize: file.size,
+      compressedSize: compressedFile.size,
+      compressionRatio: ((1 - compressedFile.size / file.size) * 100).toFixed(1) + '%',
       fileType: file.type,
       userId
     });
     
     const { data, error } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .upload(fileName, file, {
+      .upload(fileName, compressedFile, {
         cacheControl: '3600',
         upsert: false,
-        contentType: file.type || 'image/jpeg',
+        contentType: 'image/jpeg',
       });
 
     if (error) {
@@ -172,12 +258,17 @@ export const uploadChatPhoto = async (
   squadraId: string
 ): Promise<string | null> => {
   try {
-    const fileExt = file.name.split('.').pop() || 'jpg';
+    // Comprimi immagine prima dell'upload (max 1920x1920, qualità 0.7)
+    const compressedFile = await compressImage(file, 1920, 1920, 0.7);
+    
+    const fileExt = 'jpg'; // Sempre JPG dopo compressione
     const fileName = `chat/${squadraId}/${userId}/${Date.now()}.${fileExt}`;
     
     console.log('[Upload Chat Photo] Inizio upload:', {
       fileName,
       fileSize: file.size,
+      compressedSize: compressedFile.size,
+      compressionRatio: ((1 - compressedFile.size / file.size) * 100).toFixed(1) + '%',
       fileType: file.type,
       userId,
       squadraId
@@ -185,10 +276,10 @@ export const uploadChatPhoto = async (
     
     const { data, error } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .upload(fileName, file, {
+      .upload(fileName, compressedFile, {
         cacheControl: '3600',
         upsert: false,
-        contentType: file.type || 'image/jpeg',
+        contentType: 'image/jpeg',
       });
 
     if (error) {
