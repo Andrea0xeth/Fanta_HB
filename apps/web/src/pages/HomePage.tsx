@@ -165,11 +165,11 @@ export const HomePage: React.FC = () => {
                     const puntiTotali = Math.round(sommaPuntiPersonali * 0.5 + mySquadra.punti_squadra * 1);
                     return (
                       <>
-                        <div className="flex items-center gap-1 text-turquoise-400 font-bold text-lg leading-tight">
-                          <Flame size={14} />
+                  <div className="flex items-center gap-1 text-turquoise-400 font-bold text-lg leading-tight">
+                    <Flame size={14} />
                           {puntiTotali}
-                        </div>
-                        <p className="text-[10px] text-gray-400 leading-tight">punti</p>
+                  </div>
+                  <p className="text-[10px] text-gray-400 leading-tight">punti</p>
                       </>
                     );
                   })()}
@@ -351,17 +351,17 @@ export const HomePage: React.FC = () => {
                 <section className="mt-6">
                   {/* Tab Navigation - Sticky */}
                   <div className="sticky top-0 z-10 glass rounded-xl p-0.5 mb-2 flex gap-0.5 bg-dark/95 backdrop-blur-sm max-w-md mx-auto">
-                    <motion.button
+                  <motion.button
                       onClick={() => setActiveTab('daily')}
                       className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all relative ${
                         activeTab === 'daily'
                           ? 'text-white'
                           : 'text-gray-400'
                       }`}
-                      whileTap={{ scale: 0.98 }}
-                    >
+                    whileTap={{ scale: 0.98 }}
+                  >
                       {activeTab === 'daily' && (
-                        <motion.div
+                      <motion.div
                           layoutId="activeTab"
                           className="absolute inset-0 bg-white/10 rounded-lg"
                           transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
@@ -375,8 +375,8 @@ export const HomePage: React.FC = () => {
                           </span>
                         )}
                       </span>
-                    </motion.button>
-                    
+                  </motion.button>
+
                     <motion.button
                       onClick={() => setActiveTab('special')}
                       className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all relative ${
@@ -387,7 +387,7 @@ export const HomePage: React.FC = () => {
                       whileTap={{ scale: 0.98 }}
                     >
                       {activeTab === 'special' && (
-                        <motion.div
+                      <motion.div
                           layoutId="activeTab"
                           className="absolute inset-0 bg-white/10 rounded-lg"
                           transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
@@ -403,8 +403,8 @@ export const HomePage: React.FC = () => {
                         )}
                       </span>
                     </motion.button>
-                  </div>
-
+                        </div>
+                        
                   {/* Tab Content */}
                   <div className="-mx-4 px-4 pb-24">
                     <AnimatePresence mode="wait">
@@ -449,22 +449,22 @@ export const HomePage: React.FC = () => {
                           </div>
                           <div className="space-y-2">
                             {specialQuests.map((quest, index) => (
-                              <motion.div
-                                key={quest.id}
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                              >
-                                <QuestCard 
-                                  quest={quest} 
-                                  onSubmit={submitProva}
-                                  completed={quest.completed}
-                                />
-                              </motion.div>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
+                            <motion.div
+                              key={quest.id}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.05 }}
+                            >
+                              <QuestCard 
+                                quest={quest} 
+                                onSubmit={submitProva}
+                                completed={quest.completed}
+                              />
+                            </motion.div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
 
                       {activeTab === 'daily' && normalQuests.length === 0 && (
                         <motion.div
@@ -487,7 +487,7 @@ export const HomePage: React.FC = () => {
                           Nessuna sfida speciale disponibile
                         </motion.div>
                       )}
-                    </AnimatePresence>
+                  </AnimatePresence>
                   </div>
                 </section>
               ) : null;
@@ -512,20 +512,20 @@ export const HomePage: React.FC = () => {
               const specialQuests = quests.filter(q => q.is_special);
               
               return (normalQuests.length > 0 || specialQuests.length > 0) ? (
-                <section>
+                    <section>
                   {/* Tab Navigation - Sticky */}
                   <div className="sticky top-0 z-10 glass rounded-xl p-0.5 mb-2 flex gap-0.5 bg-dark/95 backdrop-blur-sm max-w-md mx-auto">
-                    <motion.button
+                      <motion.button
                       onClick={() => setActiveTab('daily')}
                       className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all relative ${
                         activeTab === 'daily'
                           ? 'text-white'
                           : 'text-gray-400'
                       }`}
-                      whileTap={{ scale: 0.98 }}
-                    >
+                        whileTap={{ scale: 0.98 }}
+                      >
                       {activeTab === 'daily' && (
-                        <motion.div
+                          <motion.div
                           layoutId="activeTab"
                           className="absolute inset-0 bg-white/10 rounded-lg"
                           transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
@@ -537,10 +537,10 @@ export const HomePage: React.FC = () => {
                           <span className="text-[9px] bg-white/20 px-1 py-0.5 rounded-full">
                             {normalQuests.length}
                           </span>
-                        )}
+                            )}
                       </span>
-                    </motion.button>
-                    
+                      </motion.button>
+
                     <motion.button
                       onClick={() => setActiveTab('special')}
                       className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all relative ${
@@ -573,7 +573,7 @@ export const HomePage: React.FC = () => {
                   <div className="-mx-4 px-4 pb-24">
                     <AnimatePresence mode="wait">
                       {activeTab === 'daily' && normalQuests.length > 0 && (
-                      <motion.div
+                          <motion.div
                         key="daily"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -581,22 +581,22 @@ export const HomePage: React.FC = () => {
                         transition={{ duration: 0.2 }}
                         className="space-y-2"
                       >
-                        {normalQuests.map((quest, index) => (
-                          <motion.div
-                            key={quest.id}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                          >
-                            <QuestCard 
-                              quest={quest} 
-                              onSubmit={submitProva}
-                              completed={quest.completed}
-                            />
+                              {normalQuests.map((quest, index) => (
+                                <motion.div
+                                  key={quest.id}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                >
+                                  <QuestCard 
+                                    quest={quest} 
+                                    onSubmit={submitProva}
+                                    completed={quest.completed}
+                                  />
+                                </motion.div>
+                              ))}
                           </motion.div>
-                        ))}
-                      </motion.div>
-                    )}
+                        )}
 
                     {activeTab === 'special' && specialQuests.length > 0 && (
                       <motion.div
@@ -608,27 +608,27 @@ export const HomePage: React.FC = () => {
                       >
                         <div className="mb-2 px-1">
                           <p className="text-[9px] text-gray-400 text-center">
-                            Attive dal <span className="text-coral-500 font-semibold">08/01/2026 ore 15:20</span>
-                          </p>
+                                Attive dal <span className="text-coral-500 font-semibold">08/01/2026 ore 15:20</span>
+                              </p>
                         </div>
-                        <div className="space-y-2">
-                          {specialQuests.map((quest, index) => (
-                            <motion.div
-                              key={quest.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                            >
-                              <QuestCard 
-                                quest={quest} 
-                                onSubmit={submitProva}
-                                completed={quest.completed}
-                              />
-                            </motion.div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
+                            <div className="space-y-2">
+                              {specialQuests.map((quest, index) => (
+                                <motion.div
+                                  key={quest.id}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                >
+                                  <QuestCard 
+                                    quest={quest} 
+                                    onSubmit={submitProva}
+                                    completed={quest.completed}
+                                  />
+                                </motion.div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
 
                     {activeTab === 'daily' && normalQuests.length === 0 && (
                       <motion.div
@@ -651,9 +651,9 @@ export const HomePage: React.FC = () => {
                         Nessuna sfida speciale disponibile
                       </motion.div>
                     )}
-                  </AnimatePresence>
+                      </AnimatePresence>
                   </div>
-                </section>
+                    </section>
               ) : null;
             })()}
           </>

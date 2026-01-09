@@ -1097,19 +1097,19 @@ export const AdminPage: React.FC = () => {
                         <h3 className="text-xs font-semibold text-turquoise-400 mb-2 uppercase tracking-wide">
                           In Verifica ({proofsInVerifica.length})
                         </h3>
-                        <div className="space-y-2">
+                  <div className="space-y-2">
                           {proofsInVerifica.map((prova) => {
-                            const quest = quests.find(q => q.id === prova.quest_id);
-                            const user = leaderboardSingoli.find(u => u.id === prova.user_id);
-                            const percentuale = prova.voti_totali > 0 
-                              ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
-                              : 0;
+                      const quest = quests.find(q => q.id === prova.quest_id);
+                      const user = leaderboardSingoli.find(u => u.id === prova.user_id);
+                      const percentuale = prova.voti_totali > 0 
+                        ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
+                        : 0;
 
-                            return (
-                              <motion.div
-                                key={prova.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
+                      return (
+                        <motion.div
+                          key={prova.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
                                 className="glass rounded-xl p-3 border border-turquoise-500/30"
                               >
                                 <div className="flex items-start justify-between gap-3">
@@ -1174,45 +1174,45 @@ export const AdminPage: React.FC = () => {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 className="glass rounded-xl p-3 border border-party-300/20 opacity-75"
-                              >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-lg">{quest?.emoji || '⭐'}</span>
-                                      <h3 className="font-semibold text-sm truncate">{quest?.titolo || 'Quest Speciale'}</h3>
-                                    </div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Avatar user={user || { id: prova.user_id, nickname: 'Utente', punti_personali: 0, is_admin: false, created_at: '', squadra_id: null }} size="sm" />
-                                      <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-xs">{user?.nickname || 'Utente sconosciuto'}</p>
-                                        <p className="text-[10px] text-gray-400">{prova.voti_positivi}/{prova.voti_totali} voti positivi ({percentuale}%)</p>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs">
-                                      <span className="text-party-300 font-bold">{quest?.punti || 0} punti</span>
-                                      <span className="text-gray-400">•</span>
-                                      <span className="text-gray-400">Validata</span>
-                                    </div>
-                                  </div>
-                                  <button
-                                    onClick={async () => {
-                                      if (!window.confirm(`Assegnare ${quest?.punti || 0} punti a ${user?.nickname || 'questo utente'}?`)) return;
-                                      try {
-                                        await assegnaPuntiQuestSpeciale(prova.id);
-                                        alert('Punti assegnati con successo!');
-                                        await refreshData();
-                                      } catch (error: any) {
-                                        alert(`Errore: ${error.message}`);
-                                      }
-                                    }}
-                                    className="btn-primary text-xs py-1.5 px-3 flex-shrink-0"
-                                  >
-                                    Assegna Punti
-                                  </button>
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-lg">{quest?.emoji || '⭐'}</span>
+                                <h3 className="font-semibold text-sm truncate">{quest?.titolo || 'Quest Speciale'}</h3>
+                              </div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Avatar user={user || { id: prova.user_id, nickname: 'Utente', punti_personali: 0, is_admin: false, created_at: '', squadra_id: null }} size="sm" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-xs">{user?.nickname || 'Utente sconosciuto'}</p>
+                                  <p className="text-[10px] text-gray-400">{prova.voti_positivi}/{prova.voti_totali} voti positivi ({percentuale}%)</p>
                                 </div>
-                              </motion.div>
-                            );
-                          })}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs">
+                                <span className="text-party-300 font-bold">{quest?.punti || 0} punti</span>
+                                <span className="text-gray-400">•</span>
+                                <span className="text-gray-400">Validata</span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm(`Assegnare ${quest?.punti || 0} punti a ${user?.nickname || 'questo utente'}?`)) return;
+                                try {
+                                  await assegnaPuntiQuestSpeciale(prova.id);
+                                  alert('Punti assegnati con successo!');
+                                        await refreshData();
+                                } catch (error: any) {
+                                  alert(`Errore: ${error.message}`);
+                                }
+                              }}
+                              className="btn-primary text-xs py-1.5 px-3 flex-shrink-0"
+                            >
+                              Assegna Punti
+                            </button>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                         </div>
                       </div>
                     )}

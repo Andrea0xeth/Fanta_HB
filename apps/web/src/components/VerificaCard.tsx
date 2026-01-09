@@ -83,6 +83,17 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
       }
     };
 
+    const preventWheel = (e: WheelEvent) => {
+      if (expandedImageUrl) {
+        // Permetti scroll solo dentro il modale, non nella pagina
+        const target = e.target as HTMLElement;
+        const modal = target.closest('[class*="max-w-"]');
+        if (!modal) {
+          e.preventDefault();
+        }
+      }
+    };
+
     if (expandedImageUrl) {
       // Blocca scroll del body
       const scrollY = window.scrollY;
@@ -91,8 +102,9 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       
-      // Previeni scroll su mobile
+      // Previeni scroll su mobile e desktop
       document.addEventListener('touchmove', preventScroll, { passive: false });
+      document.addEventListener('wheel', preventWheel, { passive: false });
       document.addEventListener('keydown', handleEscape);
     }
 
@@ -108,6 +120,7 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
       }
       
       document.removeEventListener('touchmove', preventScroll);
+      document.removeEventListener('wheel', preventWheel);
       document.removeEventListener('keydown', handleEscape);
     };
   }, [expandedImageUrl]);
@@ -327,47 +340,51 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
         </div>
       )}
 
-      {/* Image Modal - Centrato */}
+      {/* Image Modal - Overlay Centrato */}
       <AnimatePresence>
         {expandedImageUrl && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-4 pb-[calc(max(20px,env(safe-area-inset-bottom))+96px)]"
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={() => {
               setExpandedImageUrl(null);
             }}
+            onTouchMove={(e) => e.preventDefault()}
           >
-            {/* Modal card */}
+            {/* Modal card - Centrato e più piccolo */}
             <motion.div
               key={expandedImageUrl}
-              initial={{ scale: 0.98, opacity: 0, y: 6 }}
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.98, opacity: 0, y: 6 }}
-              transition={{ type: "spring", damping: 22, stiffness: 280 }}
-              className="relative w-full max-w-[520px] bg-dark rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative w-full max-w-[85vw] max-h-[85vh] bg-dark rounded-2xl border border-white/20 shadow-2xl overflow-hidden flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header mini con chiudi */}
-              <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-black/30">
-                <div className="text-xs text-gray-300 truncate">Foto</div>
+              <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-black/40 backdrop-blur-sm flex-shrink-0">
+                <div className="text-xs text-gray-200 font-semibold">Foto</div>
                 <button
                   onClick={() => setExpandedImageUrl(null)}
-                  className="text-gray-300 hover:text-white transition-colors rounded-full p-1"
+                  className="text-gray-300 hover:text-white transition-colors rounded-full p-1 hover:bg-white/10"
                   aria-label="Chiudi"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              {/* Immagine */}
-              <div className="p-2">
+              {/* Immagine - Fill del modale */}
+              <div className="flex-1 overflow-auto p-2 flex items-center justify-center min-h-0">
                 <img
                   src={expandedImageUrl}
                   alt="Prova quest - vista completa"
-                  className="w-full h-auto max-h-[70vh] object-contain rounded-xl select-none bg-black/20"
+                  className="w-full h-full max-w-full max-h-full object-contain rounded-lg select-none"
                   draggable={false}
+                  onError={(e) => {
+                    console.error('[VerificaCard] Errore caricamento immagine nel modale:', expandedImageUrl);
+                  }}
                 />
               </div>
             </motion.div>
