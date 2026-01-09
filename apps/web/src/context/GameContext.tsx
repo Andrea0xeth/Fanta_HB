@@ -149,7 +149,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     id: row.id,
     nome: row.nome,
     emoji: row.emoji,
-    punti_squadra: row.punti_squadra,
+    punti_squadra: (row.punti_squadra ?? 0) as number,
     colore: row.colore,
     membri,
   });
@@ -481,6 +481,24 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
       if (proveError) throw proveError;
 
+      // Carica i voti dell'utente corrente per queste prove (se loggato)
+      let userVotes: Record<string, boolean> = {};
+      if (user && proveData && proveData.length > 0) {
+        const provaIds = proveData.map((p: any) => p.id);
+        const { data: votiData } = await supabase
+          .from('voti')
+          .select('prova_id, valore')
+          .eq('user_id', user.id)
+          .in('prova_id', provaIds);
+
+        if (votiData) {
+          userVotes = votiData.reduce((acc: Record<string, boolean>, v: any) => {
+            acc[v.prova_id] = v.valore;
+            return acc;
+          }, {});
+        }
+      }
+
       const proveList = (proveData || []).map((p: any) => ({
         id: p.id,
         quest_id: p.quest_id,
@@ -505,6 +523,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         voti_positivi: p.voti_positivi,
         voti_totali: p.voti_totali,
         created_at: p.created_at,
+        mio_voto: user ? (userVotes[p.id] ?? null) : null,
       }));
 
       setProveInVerifica(proveList);
@@ -1378,6 +1397,13 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
       if (error) throw error;
 
+      // Aggiorna immediatamente lo stato locale per mostrare che ha votato
+      setProveInVerifica(prev => prev.map(p => 
+        p.id === provaId 
+          ? { ...p, mio_voto: valore }
+          : p
+      ));
+
       // Ricarica i dati per vedere gli aggiornamenti (il trigger ha già aggiornato tutto)
       await loadData();
     } catch (error) {
@@ -2013,7 +2039,17 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     ? squadre.find(s => s.id === user.squadra_id) || null 
     : null;
 
-  const leaderboardSquadre = [...squadre].sort((a, b) => b.punti_squadra - a.punti_squadra);
+  // Calcola leaderboard squadre con formula: (Somma punti personali membri × 0.5) + (Punti squadra × 1)
+  const leaderboardSquadre = [...squadre]
+    .map(squadra => {
+      // Calcola somma punti personali di tutti i membri
+      const sommaPuntiPersonali = squadra.membri.reduce((sum, membro) => sum + membro.punti_personali, 0);
+      // Calcola punti totali: (punti personali × 0.5) + (punti squadra × 1)
+      const puntiTotali = Math.round(sommaPuntiPersonali * 0.5 + squadra.punti_squadra * 1);
+      return { ...squadra, puntiTotali } as Squadra & { puntiTotali: number };
+    })
+    .sort((a, b) => (b as Squadra & { puntiTotali: number }).puntiTotali - (a as Squadra & { puntiTotali: number }).puntiTotali)
+    .map(({ puntiTotali, ...squadra }) => squadra); // Rimuovi puntiTotali dal risultato finale
   
   // Calcola leaderboard singoli da tutti gli utenti (inclusi quelli senza squadra)
   // Gli utenti nascosti sono già filtrati in allUsers
@@ -2022,8 +2058,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       // Calcola punti totali per ogni utente
       const squadraA = squadre.find(s => s.id === a.squadra_id);
       const squadraB = squadre.find(s => s.id === b.squadra_id);
-      const puntiTotaliA = Math.round(a.punti_personali * 0.7 + (squadraA?.punti_squadra || 0) * 0.3);
-      const puntiTotaliB = Math.round(b.punti_personali * 0.7 + (squadraB?.punti_squadra || 0) * 0.3);
+      const puntiTotaliA = Math.round(a.punti_personali * 1 + (squadraA?.punti_squadra || 0) * 0.3);
+      const puntiTotaliB = Math.round(b.punti_personali * 1 + (squadraB?.punti_squadra || 0) * 0.3);
       return puntiTotaliB - puntiTotaliA;
     });
 

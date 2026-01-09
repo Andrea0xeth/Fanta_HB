@@ -179,20 +179,20 @@ export const CreaGaraModal: React.FC<CreaGaraModalProps> = ({
                 </div>
               ) : (
                 <>
-                  <select
-                    value={selectedGioco}
-                    onChange={(e) => setSelectedGioco(e.target.value)}
-                    className="w-full input"
-                  >
-                    <option value="">Seleziona un gioco...</option>
-                    {giochiDisponibili.map((gioco) => (
-                      <option key={gioco.nome} value={gioco.nome}>
-                        {gioco.emoji} {gioco.nome}
-                      </option>
-                    ))}
-                  </select>
-                  {giocoSelezionato && (
-                    <p className="text-xs text-gray-400 mt-1">{giocoSelezionato.descrizione}</p>
+              <select
+                value={selectedGioco}
+                onChange={(e) => setSelectedGioco(e.target.value)}
+                className="w-full input"
+              >
+                <option value="">Seleziona un gioco...</option>
+                {giochiDisponibili.map((gioco) => (
+                  <option key={gioco.nome} value={gioco.nome}>
+                    {gioco.emoji} {gioco.nome}
+                  </option>
+                ))}
+              </select>
+              {giocoSelezionato && (
+                <p className="text-xs text-gray-400 mt-1">{giocoSelezionato.descrizione}</p>
                   )}
                 </>
               )}

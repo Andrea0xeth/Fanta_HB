@@ -1064,78 +1064,254 @@ export const AdminPage: React.FC = () => {
             >
               <div className="flex items-center gap-1.5 mb-2">
                 <Trophy size={14} className="text-party-300" />
-                <h2 className="font-display font-bold text-sm">Quest Speciali Validate</h2>
+                <h2 className="font-display font-bold text-sm">Quest Speciali</h2>
               </div>
 
               {(() => {
-                // Filtra le prove validate delle quest speciali
+                // Filtra TUTTE le prove delle quest speciali (qualsiasi stato)
                 const specialQuestsIds = quests.filter(q => q.is_special).map(q => q.id);
-                const validatedSpecialProofs = proveInVerifica.filter(
-                  p => p.stato === 'validata' && specialQuestsIds.includes(p.quest_id)
+                const specialProofs = proveInVerifica.filter(
+                  p => specialQuestsIds.includes(p.quest_id)
                 );
 
-                if (validatedSpecialProofs.length === 0) {
+                // Separa per stato: in verifica, validate, rifiutate, pending
+                const proofsInVerifica = specialProofs.filter(p => p.stato === 'in_verifica');
+                const proofsValidate = specialProofs.filter(p => p.stato === 'validata');
+                const proofsRifiutate = specialProofs.filter(p => p.stato === 'rifiutata');
+                const proofsPending = specialProofs.filter(p => p.stato === 'pending' || !p.stato);
+
+                if (specialProofs.length === 0) {
                   return (
                     <div className="text-center py-8 text-gray-400 text-xs">
                       <Trophy size={32} className="mx-auto mb-2 opacity-50" />
-                      <p>Nessuna quest speciale validata</p>
+                      <p>Nessuna quest speciale da gestire</p>
                     </div>
                   );
                 }
 
                 return (
-                  <div className="space-y-2">
-                    {validatedSpecialProofs.map((prova) => {
-                      const quest = quests.find(q => q.id === prova.quest_id);
-                      const user = leaderboardSingoli.find(u => u.id === prova.user_id);
-                      const percentuale = prova.voti_totali > 0 
-                        ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
-                        : 0;
+                  <div className="space-y-4">
+                    {/* Prove in Verifica */}
+                    {proofsInVerifica.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-semibold text-turquoise-400 mb-2 uppercase tracking-wide">
+                          In Verifica ({proofsInVerifica.length})
+                        </h3>
+                        <div className="space-y-2">
+                          {proofsInVerifica.map((prova) => {
+                            const quest = quests.find(q => q.id === prova.quest_id);
+                            const user = leaderboardSingoli.find(u => u.id === prova.user_id);
+                            const percentuale = prova.voti_totali > 0 
+                              ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
+                              : 0;
 
-                      return (
-                        <motion.div
-                          key={prova.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="glass rounded-xl p-3 border border-party-300/20"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-lg">{quest?.emoji || '⭐'}</span>
-                                <h3 className="font-semibold text-sm truncate">{quest?.titolo || 'Quest Speciale'}</h3>
-                              </div>
-                              <div className="flex items-center gap-2 mb-2">
-                                <Avatar user={user || { id: prova.user_id, nickname: 'Utente', punti_personali: 0, is_admin: false, created_at: '', squadra_id: null }} size="sm" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-semibold text-xs">{user?.nickname || 'Utente sconosciuto'}</p>
-                                  <p className="text-[10px] text-gray-400">{prova.voti_positivi}/{prova.voti_totali} voti positivi ({percentuale}%)</p>
+                            return (
+                              <motion.div
+                                key={prova.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="glass rounded-xl p-3 border border-turquoise-500/30"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-lg">{quest?.emoji || '⭐'}</span>
+                                      <h3 className="font-semibold text-sm truncate">{quest?.titolo || 'Quest Speciale'}</h3>
+                                    </div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Avatar user={user || { id: prova.user_id, nickname: 'Utente', punti_personali: 0, is_admin: false, created_at: '', squadra_id: null }} size="sm" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-xs">{user?.nickname || 'Utente sconosciuto'}</p>
+                                        <p className="text-[10px] text-gray-400">{prova.voti_positivi}/{prova.voti_totali} voti positivi ({percentuale}%)</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <span className="text-party-300 font-bold">{quest?.punti || 0} punti</span>
+                                      <span className="text-gray-400">•</span>
+                                      <span className="text-turquoise-400">In Verifica</span>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={async () => {
+                                      if (!window.confirm(`Confermare e assegnare ${quest?.punti || 0} punti a ${user?.nickname || 'questo utente'}?`)) return;
+                                      try {
+                                        await assegnaPuntiQuestSpeciale(prova.id);
+                                        alert('Punti assegnati con successo!');
+                                        await refreshData();
+                                      } catch (error: any) {
+                                        alert(`Errore: ${error.message}`);
+                                      }
+                                    }}
+                                    className="btn-primary text-xs py-1.5 px-3 flex-shrink-0"
+                                  >
+                                    Conferma & Assegna
+                                  </button>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-2 text-xs">
-                                <span className="text-party-300 font-bold">{quest?.punti || 0} punti</span>
-                                <span className="text-gray-400">•</span>
-                                <span className="text-gray-400">Validata</span>
-                              </div>
-                            </div>
-                            <button
-                              onClick={async () => {
-                                if (!window.confirm(`Assegnare ${quest?.punti || 0} punti a ${user?.nickname || 'questo utente'}?`)) return;
-                                try {
-                                  await assegnaPuntiQuestSpeciale(prova.id);
-                                  alert('Punti assegnati con successo!');
-                                } catch (error: any) {
-                                  alert(`Errore: ${error.message}`);
-                                }
-                              }}
-                              className="btn-primary text-xs py-1.5 px-3 flex-shrink-0"
-                            >
-                              Assegna Punti
-                            </button>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Prove Validate */}
+                    {proofsValidate.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                          Validate ({proofsValidate.length})
+                        </h3>
+                        <div className="space-y-2">
+                          {proofsValidate.map((prova) => {
+                            const quest = quests.find(q => q.id === prova.quest_id);
+                            const user = leaderboardSingoli.find(u => u.id === prova.user_id);
+                            const percentuale = prova.voti_totali > 0 
+                              ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
+                              : 0;
+
+                            return (
+                              <motion.div
+                                key={prova.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="glass rounded-xl p-3 border border-party-300/20 opacity-75"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-lg">{quest?.emoji || '⭐'}</span>
+                                      <h3 className="font-semibold text-sm truncate">{quest?.titolo || 'Quest Speciale'}</h3>
+                                    </div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Avatar user={user || { id: prova.user_id, nickname: 'Utente', punti_personali: 0, is_admin: false, created_at: '', squadra_id: null }} size="sm" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-xs">{user?.nickname || 'Utente sconosciuto'}</p>
+                                        <p className="text-[10px] text-gray-400">{prova.voti_positivi}/{prova.voti_totali} voti positivi ({percentuale}%)</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <span className="text-party-300 font-bold">{quest?.punti || 0} punti</span>
+                                      <span className="text-gray-400">•</span>
+                                      <span className="text-gray-400">Validata</span>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={async () => {
+                                      if (!window.confirm(`Assegnare ${quest?.punti || 0} punti a ${user?.nickname || 'questo utente'}?`)) return;
+                                      try {
+                                        await assegnaPuntiQuestSpeciale(prova.id);
+                                        alert('Punti assegnati con successo!');
+                                        await refreshData();
+                                      } catch (error: any) {
+                                        alert(`Errore: ${error.message}`);
+                                      }
+                                    }}
+                                    className="btn-primary text-xs py-1.5 px-3 flex-shrink-0"
+                                  >
+                                    Assegna Punti
+                                  </button>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Prove Rifiutate */}
+                    {proofsRifiutate.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-semibold text-red-400 mb-2 uppercase tracking-wide">
+                          Rifiutate ({proofsRifiutate.length})
+                        </h3>
+                        <div className="space-y-2">
+                          {proofsRifiutate.map((prova) => {
+                            const quest = quests.find(q => q.id === prova.quest_id);
+                            const user = leaderboardSingoli.find(u => u.id === prova.user_id);
+                            const percentuale = prova.voti_totali > 0 
+                              ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
+                              : 0;
+
+                            return (
+                              <motion.div
+                                key={prova.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="glass rounded-xl p-3 border border-red-500/20 opacity-60"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-lg">{quest?.emoji || '⭐'}</span>
+                                      <h3 className="font-semibold text-sm truncate">{quest?.titolo || 'Quest Speciale'}</h3>
+                                    </div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Avatar user={user || { id: prova.user_id, nickname: 'Utente', punti_personali: 0, is_admin: false, created_at: '', squadra_id: null }} size="sm" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-xs">{user?.nickname || 'Utente sconosciuto'}</p>
+                                        <p className="text-[10px] text-gray-400">{prova.voti_positivi}/{prova.voti_totali} voti positivi ({percentuale}%)</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <span className="text-party-300 font-bold">{quest?.punti || 0} punti</span>
+                                      <span className="text-gray-400">•</span>
+                                      <span className="text-red-400">Rifiutata</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Prove Pending */}
+                    {proofsPending.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                          Pending ({proofsPending.length})
+                        </h3>
+                        <div className="space-y-2">
+                          {proofsPending.map((prova) => {
+                            const quest = quests.find(q => q.id === prova.quest_id);
+                            const user = leaderboardSingoli.find(u => u.id === prova.user_id);
+                            const percentuale = prova.voti_totali > 0 
+                              ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
+                              : 0;
+
+                            return (
+                              <motion.div
+                                key={prova.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="glass rounded-xl p-3 border border-gray-500/20 opacity-60"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-lg">{quest?.emoji || '⭐'}</span>
+                                      <h3 className="font-semibold text-sm truncate">{quest?.titolo || 'Quest Speciale'}</h3>
+                                    </div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Avatar user={user || { id: prova.user_id, nickname: 'Utente', punti_personali: 0, is_admin: false, created_at: '', squadra_id: null }} size="sm" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-xs">{user?.nickname || 'Utente sconosciuto'}</p>
+                                        <p className="text-[10px] text-gray-400">{prova.voti_positivi}/{prova.voti_totali} voti positivi ({percentuale}%)</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <span className="text-party-300 font-bold">{quest?.punti || 0} punti</span>
+                                      <span className="text-gray-400">•</span>
+                                      <span className="text-gray-400">Pending</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })()}
@@ -1823,8 +1999,8 @@ export const AdminPage: React.FC = () => {
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="block text-xs text-gray-300 font-semibold">
-                        Membri della squadra
-                      </label>
+                      Membri della squadra
+                    </label>
                       <button
                         type="button"
                         onClick={() => setShowOnlyMembers(!showOnlyMembers)}

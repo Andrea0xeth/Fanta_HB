@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Image, Video, FileText, Clock, Play } from 'lucide-react';
 import type { ProvaQuest } from '../types';
 import { Avatar } from './Avatar';
@@ -19,11 +19,27 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
   const [imageError, setImageError] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const MIN_VOTES_FOR_VALIDATION = 10;
+  const [expandedImageUrl, setExpandedImageUrl] = useState<string | null>(null);
+  
+  // Per quest normali: 5 conferme (voti positivi)
+  // Per quest speciali: 10 voti totali + 66% positivi
+  const MIN_VOTES_FOR_VALIDATION_NORMAL = 5;
+  const MIN_VOTES_FOR_VALIDATION_SPECIAL = 10;
+  const POSITIVE_THRESHOLD_PERCENT = 66;
+  
+  const isSpecial = prova.quest?.is_special ?? false;
   
   const percentuale = prova.voti_totali > 0 
     ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
     : 0;
+  
+  // Logica diversa per quest normali vs speciali
+  const hasMinVotes = isSpecial 
+    ? prova.voti_totali >= MIN_VOTES_FOR_VALIDATION_SPECIAL 
+    : prova.voti_positivi >= MIN_VOTES_FOR_VALIDATION_NORMAL;
+  const hasThreshold = isSpecial 
+    ? percentuale >= POSITIVE_THRESHOLD_PERCENT 
+    : true; // Per quest normali non serve il 66%, solo 5 conferme
   
   const timeAgo = () => {
     const diff = Date.now() - new Date(prova.created_at).getTime();
@@ -34,13 +50,67 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
     return `${minutes}m fa`;
   };
 
+  const formatDateTime = () => {
+    const date = new Date(prova.created_at);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${day}/${month} ${hours}:${minutes}`;
+  };
+
   const isValidUrl = (url: string) => {
     try {
-      return url && (url.startsWith('http://') || url.startsWith('https://'));
+      if (!url) return false;
+      // Controlla se è un URL valido (http/https) o un URL Supabase storage
+      return (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/'));
     } catch {
       return false;
     }
   };
+
+  // Blocca scroll quando overlay immagine è aperto
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && expandedImageUrl) {
+        setExpandedImageUrl(null);
+      }
+    };
+
+    const preventScroll = (e: TouchEvent) => {
+      if (expandedImageUrl) {
+        e.preventDefault();
+      }
+    };
+
+    if (expandedImageUrl) {
+      // Blocca scroll del body
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      // Previeni scroll su mobile
+      document.addEventListener('touchmove', preventScroll, { passive: false });
+      document.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      // Ripristina scroll
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+      
+      document.removeEventListener('touchmove', preventScroll);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [expandedImageUrl]);
 
   return (
     <motion.div
@@ -60,6 +130,8 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
             <span className="capitalize">{prova.tipo}</span>
             <Clock size={10} />
             <span>{timeAgo()}</span>
+            <span className="text-gray-500">•</span>
+            <span>{formatDateTime()}</span>
           </div>
         </div>
         <div className="text-right flex-shrink-0">
@@ -97,14 +169,31 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
       {/* Content Preview - Mostra contenuto reale */}
       <div className="mb-2 rounded-2xl overflow-hidden glass">
         {prova.tipo === 'foto' && isValidUrl(prova.contenuto) ? (
-          <div className="relative aspect-video bg-gray-900/50">
+          <div 
+            className="relative aspect-video bg-gray-900/50 cursor-pointer group hover:opacity-90 transition-opacity" 
+            onClick={() => {
+              if (isValidUrl(prova.contenuto)) {
+                // La foto è già caricata nella preview: qui la espandiamo e basta
+                setExpandedImageUrl(prova.contenuto);
+              }
+            }}
+          >
             {!imageError ? (
-              <img 
-                src={prova.contenuto} 
-                alt="Prova quest"
-                className="w-full h-full object-cover"
-                onError={() => setImageError(true)}
-              />
+              <>
+                <img 
+                  src={prova.contenuto} 
+                  alt="Prova quest"
+                  className="w-full h-full object-cover"
+                  onError={() => setImageError(true)}
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
+                      <Image size={24} className="text-white" />
+                    </div>
+                  </div>
+                </div>
+              </>
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center text-gray-500">
                 <Image size={32} />
@@ -177,40 +266,114 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
         <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${percentuale}%` }}
+            animate={{ width: `${Math.min(100, isSpecial ? percentuale : (prova.voti_positivi / MIN_VOTES_FOR_VALIDATION_NORMAL) * 100)}%` }}
             className={`h-full ${
-              percentuale >= 66 ? 'bg-green-500' : 'bg-coral-500'
+              hasMinVotes && hasThreshold ? 'bg-green-500' : 'bg-coral-500'
             }`}
           />
         </div>
         <p className="text-[10px] text-gray-400 mt-1 text-center">
-          {prova.voti_totali < MIN_VOTES_FOR_VALIDATION
-            ? `Servono ${MIN_VOTES_FOR_VALIDATION} voti (mancano ${MIN_VOTES_FOR_VALIDATION - prova.voti_totali})`
-            : percentuale >= 66
-              ? '✅ Soglia raggiunta!'
-              : `Serve 66% (ancora ${66 - percentuale}%)`}
+          {isSpecial ? (
+            // Quest speciali: 10 voti + 66%
+            prova.voti_totali < MIN_VOTES_FOR_VALIDATION_SPECIAL
+              ? `Servono ${MIN_VOTES_FOR_VALIDATION_SPECIAL} voti (mancano ${MIN_VOTES_FOR_VALIDATION_SPECIAL - prova.voti_totali})`
+              : percentuale >= POSITIVE_THRESHOLD_PERCENT
+                ? '✅ Soglia raggiunta!'
+                : `Serve 66% (ancora ${POSITIVE_THRESHOLD_PERCENT - percentuale}%)`
+          ) : (
+            // Quest normali: solo 5 conferme
+            prova.voti_positivi < MIN_VOTES_FOR_VALIDATION_NORMAL
+              ? `Servono ${MIN_VOTES_FOR_VALIDATION_NORMAL} conferme (mancano ${MIN_VOTES_FOR_VALIDATION_NORMAL - prova.voti_positivi})`
+              : '✅ Soglia raggiunta!'
+          )}
         </p>
       </div>
 
       {/* Vote Buttons - Snello */}
-      <div className="flex gap-2">
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onVote(prova.id, false)}
-          className="flex-1 py-2 rounded-xl bg-gray-800/30 border border-red-500/30 text-red-400 font-semibold text-xs flex items-center justify-center gap-1 hover:bg-red-500/10 transition-colors"
-        >
-          <X size={12} />
-          Rifiuta
-        </motion.button>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onVote(prova.id, true)}
-          className="flex-1 py-2 rounded-xl bg-gray-800/30 border border-green-500/30 text-green-400 font-semibold text-xs flex items-center justify-center gap-1 hover:bg-green-500/10 transition-colors"
-        >
-          <Check size={12} />
-          Valida
-        </motion.button>
-      </div>
+      {prova.mio_voto !== undefined && prova.mio_voto !== null ? (
+        <div className="flex gap-2">
+          <div className="flex-1 py-2 rounded-xl bg-gray-800/50 border border-gray-600/50 text-gray-400 font-semibold text-xs flex items-center justify-center gap-1">
+            {prova.mio_voto ? (
+              <>
+                <Check size={12} className="text-green-400" />
+                <span>Hai validato</span>
+              </>
+            ) : (
+              <>
+                <X size={12} className="text-red-400" />
+                <span>Hai rifiutato</span>
+              </>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onVote(prova.id, false)}
+            className="flex-1 py-2 rounded-xl bg-gray-800/30 border border-red-500/30 text-red-400 font-semibold text-xs flex items-center justify-center gap-1 hover:bg-red-500/10 transition-colors"
+          >
+            <X size={12} />
+            Rifiuta
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onVote(prova.id, true)}
+            className="flex-1 py-2 rounded-xl bg-gray-800/30 border border-green-500/30 text-green-400 font-semibold text-xs flex items-center justify-center gap-1 hover:bg-green-500/10 transition-colors"
+          >
+            <Check size={12} />
+            Valida
+          </motion.button>
+        </div>
+      )}
+
+      {/* Image Modal - Centrato */}
+      <AnimatePresence>
+        {expandedImageUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-4 pb-[calc(max(20px,env(safe-area-inset-bottom))+96px)]"
+            onClick={() => {
+              setExpandedImageUrl(null);
+            }}
+          >
+            {/* Modal card */}
+            <motion.div
+              key={expandedImageUrl}
+              initial={{ scale: 0.98, opacity: 0, y: 6 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.98, opacity: 0, y: 6 }}
+              transition={{ type: "spring", damping: 22, stiffness: 280 }}
+              className="relative w-full max-w-[520px] bg-dark rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header mini con chiudi */}
+              <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-black/30">
+                <div className="text-xs text-gray-300 truncate">Foto</div>
+                <button
+                  onClick={() => setExpandedImageUrl(null)}
+                  className="text-gray-300 hover:text-white transition-colors rounded-full p-1"
+                  aria-label="Chiudi"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Immagine */}
+              <div className="p-2">
+                <img
+                  src={expandedImageUrl}
+                  alt="Prova quest - vista completa"
+                  className="w-full h-auto max-h-[70vh] object-contain rounded-xl select-none bg-black/20"
+                  draggable={false}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

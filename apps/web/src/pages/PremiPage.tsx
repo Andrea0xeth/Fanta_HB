@@ -22,7 +22,7 @@ export const PremiPage: React.FC = () => {
   
   const userPoints = user?.punti_personali || 0;
   const teamPoints = mySquadra?.punti_squadra || 0;
-  const totalPoints = Math.round(userPoints * 0.7 + teamPoints * 0.3);
+  const totalPoints = Math.round(userPoints * 1 + teamPoints * 0.3);
   
   // Calcola la posizione della squadra nella classifica
   const mySquadraPosition = mySquadra 

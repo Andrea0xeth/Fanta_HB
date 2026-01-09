@@ -24,7 +24,10 @@ const difficultyLabels = {
 };
 
 export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed }) => {
-  const MIN_VOTES_FOR_VALIDATION = 10;
+  // Per quest normali: 5 conferme (voti positivi)
+  // Per quest speciali: 10 voti totali + 66% positivi
+  const MIN_VOTES_FOR_VALIDATION_NORMAL = 5;
+  const MIN_VOTES_FOR_VALIDATION_SPECIAL = 10;
   const POSITIVE_THRESHOLD_PERCENT = 66;
   
   // Data/ora di attivazione per le sfide speciali: 08/01/2026 ore 15:20
@@ -212,8 +215,15 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
     const votiTotali = quest.prova?.voti_totali ?? 0;
     const votiPositivi = quest.prova?.voti_positivi ?? 0;
     const percentuale = votiTotali > 0 ? Math.round((votiPositivi / votiTotali) * 100) : 0;
-    const hasMinVotes = votiTotali >= MIN_VOTES_FOR_VALIDATION;
-    const hasThreshold = percentuale >= POSITIVE_THRESHOLD_PERCENT;
+    const isSpecial = quest.is_special ?? false;
+    
+    // Logica diversa per quest normali vs speciali
+    const hasMinVotes = isSpecial 
+      ? votiTotali >= MIN_VOTES_FOR_VALIDATION_SPECIAL 
+      : votiPositivi >= MIN_VOTES_FOR_VALIDATION_NORMAL;
+    const hasThreshold = isSpecial 
+      ? percentuale >= POSITIVE_THRESHOLD_PERCENT 
+      : true; // Per quest normali non serve il 66%, solo 5 conferme
     const isValidata = quest.prova?.stato === 'validata';
     const isRifiutata = quest.prova?.stato === 'rifiutata';
 
@@ -243,7 +253,11 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
           <div className="mt-2">
             <div className="flex items-center justify-between text-[10px] text-gray-400">
               <span>
-                Voti <span className="text-gray-200 font-semibold">{votiTotali}</span>/{MIN_VOTES_FOR_VALIDATION}
+                {isSpecial ? (
+                  <>Voti <span className="text-gray-200 font-semibold">{votiTotali}</span>/{MIN_VOTES_FOR_VALIDATION_SPECIAL}</>
+                ) : (
+                  <>Conferme <span className="text-gray-200 font-semibold">{votiPositivi}</span>/{MIN_VOTES_FOR_VALIDATION_NORMAL}</>
+                )}
               </span>
               <span>
                 Positivi <span className="text-gray-200 font-semibold">{votiPositivi}</span> ({percentuale}%)
@@ -253,17 +267,25 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
             <div className="mt-1 h-1 bg-gray-800 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${Math.min(100, percentuale)}%` }}
+                animate={{ width: `${Math.min(100, isSpecial ? percentuale : (votiPositivi / MIN_VOTES_FOR_VALIDATION_NORMAL) * 100)}%` }}
                 className={`h-full ${hasMinVotes && hasThreshold ? 'bg-green-500' : 'bg-coral-500'}`}
               />
             </div>
 
             <p className="mt-1 text-[10px] text-gray-400">
-              {!hasMinVotes
-                ? `Servono ${MIN_VOTES_FOR_VALIDATION} voti (mancano ${MIN_VOTES_FOR_VALIDATION - votiTotali})`
-                : hasThreshold
-                  ? '✅ Soglia raggiunta (≥66%)'
-                  : `Serve ≥66% positivi (ancora ${POSITIVE_THRESHOLD_PERCENT - percentuale}%)`}
+              {isSpecial ? (
+                // Quest speciali: 10 voti + 66%
+                !hasMinVotes
+                  ? `Servono ${MIN_VOTES_FOR_VALIDATION_SPECIAL} voti (mancano ${MIN_VOTES_FOR_VALIDATION_SPECIAL - votiTotali})`
+                  : hasThreshold
+                    ? '✅ Soglia raggiunta (≥66%)'
+                    : `Serve ≥66% positivi (ancora ${POSITIVE_THRESHOLD_PERCENT - percentuale}%)`
+              ) : (
+                // Quest normali: solo 5 conferme
+                !hasMinVotes
+                  ? `Servono ${MIN_VOTES_FOR_VALIDATION_NORMAL} conferme (mancano ${MIN_VOTES_FOR_VALIDATION_NORMAL - votiPositivi})`
+                  : '✅ Soglia raggiunta (5 conferme)'
+              )}
             </p>
           </div>
         )}

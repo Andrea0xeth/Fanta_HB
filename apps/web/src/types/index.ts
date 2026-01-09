@@ -85,6 +85,7 @@ export interface ProvaQuest {
   voti_positivi: number;
   voti_totali: number;
   created_at: string;
+  mio_voto?: boolean | null; // true = valida, false = rifiuta, null/undefined = non votato
 }
 
 // Gara (Team competition) types

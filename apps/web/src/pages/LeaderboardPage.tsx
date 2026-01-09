@@ -99,7 +99,10 @@ export const LeaderboardPage: React.FC = () => {
               {/* Top 3 Podium - Migliorato */}
               <div className="flex items-end justify-center gap-2 py-4 mb-4">
                 {/* 2nd Place */}
-                {leaderboardSquadre[1] && (
+                {leaderboardSquadre[1] && (() => {
+                  const sommaPuntiPersonali = leaderboardSquadre[1].membri.reduce((sum, m) => sum + m.punti_personali, 0);
+                  const puntiTotali = Math.round(sommaPuntiPersonali * 0.5 + leaderboardSquadre[1].punti_squadra * 1);
+                  return (
                   <motion.button
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -114,16 +117,20 @@ export const LeaderboardPage: React.FC = () => {
                     <p className="text-xs font-bold mt-2 truncate">
                       {leaderboardSquadre[1].nome}
                     </p>
-                    <p className="text-[10px] text-turquoise-400 font-semibold mt-0.5">{leaderboardSquadre[1].punti_squadra} pts</p>
+                    <p className="text-[10px] text-turquoise-400 font-semibold mt-0.5">{puntiTotali} pts</p>
                     <div className="flex items-center justify-center gap-1 mt-1">
                       <Users size={10} className="text-gray-500" />
                       <span className="text-[9px] text-gray-500">{leaderboardSquadre[1].membri.length}</span>
                     </div>
                   </motion.button>
-                )}
+                  );
+                })()}
 
                 {/* 1st Place */}
-                {leaderboardSquadre[0] && (
+                {leaderboardSquadre[0] && (() => {
+                  const sommaPuntiPersonali = leaderboardSquadre[0].membri.reduce((sum, m) => sum + m.punti_personali, 0);
+                  const puntiTotali = Math.round(sommaPuntiPersonali * 0.5 + leaderboardSquadre[0].punti_squadra * 1);
+                  return (
                   <motion.button
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -138,16 +145,20 @@ export const LeaderboardPage: React.FC = () => {
                     <p className="text-sm font-bold mt-2 truncate bg-gradient-to-r from-party-300 to-party-400 bg-clip-text text-transparent">
                       {leaderboardSquadre[0].nome}
                     </p>
-                    <p className="text-xs text-turquoise-400 font-bold mt-0.5">{leaderboardSquadre[0].punti_squadra} pts</p>
+                    <p className="text-xs text-turquoise-400 font-bold mt-0.5">{puntiTotali} pts</p>
                     <div className="flex items-center justify-center gap-1 mt-1">
                       <Users size={10} className="text-party-300" />
                       <span className="text-[9px] text-party-300 font-semibold">{leaderboardSquadre[0].membri.length}</span>
                     </div>
                   </motion.button>
-                )}
+                  );
+                })()}
 
                 {/* 3rd Place */}
-                {leaderboardSquadre[2] && (
+                {leaderboardSquadre[2] && (() => {
+                  const sommaPuntiPersonali = leaderboardSquadre[2].membri.reduce((sum, m) => sum + m.punti_personali, 0);
+                  const puntiTotali = Math.round(sommaPuntiPersonali * 0.5 + leaderboardSquadre[2].punti_squadra * 1);
+                  return (
                   <motion.button
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -162,13 +173,14 @@ export const LeaderboardPage: React.FC = () => {
                     <p className="text-xs font-bold mt-2 truncate">
                       {leaderboardSquadre[2].nome}
                     </p>
-                    <p className="text-[10px] text-turquoise-400 font-semibold mt-0.5">{leaderboardSquadre[2].punti_squadra} pts</p>
+                    <p className="text-[10px] text-turquoise-400 font-semibold mt-0.5">{puntiTotali} pts</p>
                     <div className="flex items-center justify-center gap-1 mt-1">
                       <Users size={10} className="text-gray-500" />
                       <span className="text-[9px] text-gray-500">{leaderboardSquadre[2].membri.length}</span>
                     </div>
                   </motion.button>
-                )}
+                  );
+                })()}
               </div>
 
               {/* Rest of leaderboard - Migliorato */}
@@ -181,6 +193,8 @@ export const LeaderboardPage: React.FC = () => {
                   {leaderboardSquadre.slice(3).map((squadra, index) => {
                     const position = index + 4;
                     const isMySquadra = squadra.id === mySquadra?.id;
+                    const sommaPuntiPersonali = squadra.membri.reduce((sum, m) => sum + m.punti_personali, 0);
+                    const puntiTotali = Math.round(sommaPuntiPersonali * 0.5 + squadra.punti_squadra * 1);
                     return (
                       <motion.button
                         key={squadra.id}
@@ -216,7 +230,7 @@ export const LeaderboardPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="text-right min-w-[60px] flex-shrink-0">
-                          <span className="font-bold text-turquoise-400 text-base block">{squadra.punti_squadra}</span>
+                          <span className="font-bold text-turquoise-400 text-base block">{puntiTotali}</span>
                           <span className="text-gray-400 text-[10px]">pts</span>
                         </div>
                       </motion.button>
@@ -236,7 +250,7 @@ export const LeaderboardPage: React.FC = () => {
               {/* Formula explanation - Snello */}
               <div className="text-center py-1.5 mb-1.5 border-b border-white/5">
                 <p className="text-[10px] text-gray-400">
-                  Formula: <span className="text-turquoise-400">Pers. × 0.7</span> + 
+                  Formula: <span className="text-turquoise-400">Pers. × 1</span> + 
                   <span className="text-coral-400"> Squad. × 0.3</span>
                 </p>
               </div>
@@ -244,7 +258,7 @@ export const LeaderboardPage: React.FC = () => {
               {visibleLeaderboard.map((giocatore, index) => {
                 const squadra = leaderboardSquadre.find(s => s.id === giocatore.squadra_id);
                 const puntiTotali = Math.round(
-                  giocatore.punti_personali * 0.7 + (squadra?.punti_squadra || 0) * 0.3
+                  giocatore.punti_personali * 1 + (squadra?.punti_squadra || 0) * 0.3
                 );
 
                 return (
