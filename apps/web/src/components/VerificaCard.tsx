@@ -117,13 +117,6 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
       const html = document.documentElement;
       const body = document.body;
       
-      // Salva lo stato corrente
-      const originalHtmlOverflow = html.style.overflow;
-      const originalBodyOverflow = body.style.overflow;
-      const originalBodyPosition = body.style.position;
-      const originalBodyTop = body.style.top;
-      const originalBodyWidth = body.style.width;
-      
       // Blocca scroll
       html.style.overflow = 'hidden';
       body.style.position = 'fixed';
@@ -420,7 +413,7 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
                   alt="Prova quest - vista completa"
                   className="w-full h-full max-w-full max-h-full object-contain rounded-lg select-none"
                   draggable={false}
-                  onError={(e) => {
+                  onError={() => {
                     console.error('[VerificaCard] Errore caricamento immagine nel modale:', expandedImageUrl);
                   }}
                 />
