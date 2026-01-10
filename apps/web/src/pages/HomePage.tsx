@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy, Play, Calendar } from 'lucide-react';
+import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy, Play, Calendar, Image as ImageIcon } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { QuestCard } from '../components/QuestCard';
 import { GaraCard } from '../components/GaraCard';
@@ -505,6 +505,37 @@ export const HomePage: React.FC = () => {
                 <GaraCard gara={nextGara} />
               </section>
             )}
+
+            {/* Galleria Banner - Sopra le Sfide del Giorno */}
+            <motion.section
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mb-3"
+            >
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/galleria')}
+                className="w-full glass rounded-xl p-3 text-left hover:bg-white/10 transition-colors border border-white/5"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="flex-shrink-0">
+                    <ImageIcon size={18} className="text-turquoise-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-200 text-xs leading-tight">
+                      Galleria Fotografie e Video
+                    </h3>
+                    <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
+                      Foto e video delle sfide completate
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <span className="text-gray-400 text-sm">→</span>
+                  </div>
+                </div>
+              </motion.button>
+            </motion.section>
 
             {/* Quest Section - Tab System */}
             {(() => {

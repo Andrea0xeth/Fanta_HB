@@ -11,6 +11,7 @@ import { AdminPage } from './pages/AdminPage';
 import { MappaPage } from './pages/MappaPage';
 import { AgendaPage } from './pages/AgendaPage';
 import { VerificaPage } from './pages/VerificaPage';
+import { GalleriaPage } from './pages/GalleriaPage';
 
 // Protected Route wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -51,6 +52,7 @@ function AppRoutes() {
         <Route path="/mappa" element={<MappaPage />} />
         <Route path="/agenda" element={<AgendaPage />} />
         <Route path="/verifica" element={<VerificaPage />} />
+        <Route path="/galleria" element={<GalleriaPage />} />
         <Route path="/squadra" element={<SquadraPage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/premi" element={<PremiPage />} />

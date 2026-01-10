@@ -85,42 +85,81 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
 
     const preventWheel = (e: WheelEvent) => {
       if (expandedImageUrl) {
-        // Permetti scroll solo dentro il modale, non nella pagina
+        // Blocca sempre lo scroll della pagina quando il modale è aperto
+        // Permetti scroll solo se l'evento proviene dall'interno del modale
         const target = e.target as HTMLElement;
-        const modal = target.closest('[class*="max-w-"]');
-        if (!modal) {
+        const modalContent = target.closest('[class*="max-w-"]');
+        const modalOverlay = target.closest('[class*="fixed inset-0"]');
+        
+        // Se l'evento non proviene dal contenuto scrollabile del modale, bloccalo
+        if (!modalContent || (modalOverlay && target === modalOverlay)) {
           e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    };
+
+    const preventPageScroll = (e: Event) => {
+      if (expandedImageUrl) {
+        // Previeni qualsiasi scroll della pagina
+        const target = e.target as HTMLElement;
+        const modalContent = target.closest('[class*="max-w-"]');
+        if (!modalContent) {
+          e.preventDefault();
+          e.stopPropagation();
         }
       }
     };
 
     if (expandedImageUrl) {
-      // Blocca scroll del body
+      // Blocca scroll del body e html
       const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
+      const html = document.documentElement;
+      const body = document.body;
+      
+      // Salva lo stato corrente
+      const originalHtmlOverflow = html.style.overflow;
+      const originalBodyOverflow = body.style.overflow;
+      const originalBodyPosition = body.style.position;
+      const originalBodyTop = body.style.top;
+      const originalBodyWidth = body.style.width;
+      
+      // Blocca scroll
+      html.style.overflow = 'hidden';
+      body.style.position = 'fixed';
+      body.style.top = `-${scrollY}px`;
+      body.style.width = '100%';
+      body.style.overflow = 'hidden';
       
       // Previeni scroll su mobile e desktop
       document.addEventListener('touchmove', preventScroll, { passive: false });
       document.addEventListener('wheel', preventWheel, { passive: false });
+      document.addEventListener('scroll', preventPageScroll, { passive: false, capture: true });
+      window.addEventListener('scroll', preventPageScroll, { passive: false, capture: true });
       document.addEventListener('keydown', handleEscape);
     }
 
     return () => {
       // Ripristina scroll
       const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
+      const html = document.documentElement;
+      const body = document.body;
+      
+      // Ripristina stili
+      html.style.overflow = '';
+      body.style.position = '';
+      body.style.top = '';
+      body.style.width = '';
+      body.style.overflow = '';
+      
       if (scrollY) {
         window.scrollTo(0, parseInt(scrollY || '0') * -1);
       }
       
       document.removeEventListener('touchmove', preventScroll);
       document.removeEventListener('wheel', preventWheel);
+      document.removeEventListener('scroll', preventPageScroll, { capture: true });
+      window.removeEventListener('scroll', preventPageScroll, { capture: true });
       document.removeEventListener('keydown', handleEscape);
     };
   }, [expandedImageUrl]);
@@ -351,7 +390,6 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
             onClick={() => {
               setExpandedImageUrl(null);
             }}
-            onTouchMove={(e) => e.preventDefault()}
           >
             {/* Modal card - Centrato e più piccolo */}
             <motion.div
