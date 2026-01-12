@@ -80,41 +80,189 @@ export const GalleriaPage: React.FC = () => {
       setLoading(true);
       console.log('[Galleria] Caricamento contenuti...');
       
-      // Carica tutte le prove validate con foto o video
-      let query = supabase
-        .from('prove_quest')
-        .select(`
-          *,
-          user:users(nickname, avatar),
-          quest:quest(titolo, emoji)
-        `)
-        .in('tipo', ['foto', 'video'])
-        .eq('stato', 'validata')
-        .order('created_at', { ascending: false });
+      // 1. Carica tutti gli utenti e le prove in parallelo
+      const [usersResult, proveResult] = await Promise.all([
+        supabase
+          .from('users')
+          .select('id, nickname, avatar')
+          .order('nickname'),
+        supabase
+          .from('prove_quest')
+          .select(`
+            *,
+            user:users(nickname, avatar),
+            quest:quest(titolo, emoji)
+          `)
+          .in('tipo', ['foto', 'video'])
+      ]);
 
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('[Galleria] Errore query:', error);
-        throw error;
+      if (usersResult.error) {
+        console.error('[Galleria] Errore caricamento utenti:', usersResult.error);
+        throw usersResult.error;
       }
 
-      console.log('[Galleria] Dati ricevuti:', data?.length || 0, 'elementi');
+      const users = (usersResult.data || []) as Array<{ id: string; nickname: string; avatar: string | null }>;
+      console.log('[Galleria] Utenti trovati:', users.length);
 
-      // Mappa i dati al formato GalleryItem
-      const galleryItems: GalleryItem[] = (data || []).map((item: any) => ({
-        id: item.id,
-        tipo: item.tipo,
-        contenuto: item.contenuto,
-        user_id: item.user_id,
-        user_nickname: item.user?.nickname || 'Anonimo',
-        user_avatar: item.user?.avatar || null,
-        quest_titolo: item.quest?.titolo || 'Quest',
-        quest_emoji: item.quest?.emoji || '🎯',
-        created_at: item.created_at,
-      }));
+      // Crea una mappa per associare file path a info quest
+      const proveMap = new Map<string, any>();
+      (proveResult.data || []).forEach((prova: any) => {
+        if (prova.contenuto) {
+          // Estrai il path dal contenuto (rimuovi dominio se presente)
+          const path = prova.contenuto.split('/storage/v1/object/public/prove-quest/')[1] || prova.contenuto;
+          proveMap.set(path, prova);
+        }
+      });
 
-      setAllItems(galleryItems);
+      // 2. Processa gli utenti in batch paralleli (max 5 alla volta)
+      const BATCH_SIZE = 5;
+      const allGalleryItems: GalleryItem[] = [];
+
+      for (let i = 0; i < users.length; i += BATCH_SIZE) {
+        const batch = users.slice(i, i + BATCH_SIZE);
+        
+        // Processa batch in parallelo
+        const batchResults = await Promise.all(
+          batch.map(async (user) => {
+            try {
+              // Lista file nella cartella principale (limita a 100 file)
+              const { data: filesData, error: filesError } = await supabase.storage
+                .from('prove-quest')
+                .list(user.id, {
+                  limit: 100,
+                  offset: 0,
+                  sortBy: { column: 'created_at', order: 'desc' }
+                });
+
+              if (filesError || !filesData) {
+                return [];
+              }
+
+              const userItems: GalleryItem[] = [];
+
+              // Processa file diretti
+              const mediaFiles = filesData.filter((file: any) => {
+                if (!file.id) return false;
+                const ext = file.name.toLowerCase().split('.').pop();
+                const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                const videoExts = ['mp4', 'mov', 'webm', 'avi'];
+                return imageExts.includes(ext || '') || videoExts.includes(ext || '');
+              });
+
+              // Crea URL pubblici in batch
+              const fileItems = await Promise.all(
+                mediaFiles.map(async (file: any) => {
+                  const filePath = `${user.id}/${file.name}`;
+                  const { data: urlData } = supabase.storage
+                    .from('prove-quest')
+                    .getPublicUrl(filePath);
+
+                  if (!urlData?.publicUrl) return null;
+
+                  const provaInfo = proveMap.get(filePath);
+                  const ext = file.name.toLowerCase().split('.').pop();
+                  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                  const tipo = imageExts.includes(ext || '') ? 'foto' : 'video';
+
+                  return {
+                    id: file.id || `${user.id}-${file.name}`,
+                    tipo: tipo as 'foto' | 'video',
+                    contenuto: urlData.publicUrl,
+                    user_id: user.id,
+                    user_nickname: user.nickname || 'Anonimo',
+                    user_avatar: user.avatar || undefined,
+                    quest_titolo: provaInfo?.quest?.titolo || 'Foto personale',
+                    quest_emoji: provaInfo?.quest?.emoji || '📸',
+                    created_at: file.created_at || file.updated_at || new Date().toISOString(),
+                  };
+                })
+              );
+
+              userItems.push(...fileItems.filter((item) => item !== null) as GalleryItem[]);
+
+              // Processa sottocartelle (solo prime 10 cartelle, max 20 file per cartella)
+              const folders = filesData.filter((file: any) => !file.id && file.name).slice(0, 10);
+              
+              const folderPromises = folders.map(async (folder: any) => {
+                try {
+                  const { data: subFilesData } = await supabase.storage
+                    .from('prove-quest')
+                    .list(`${user.id}/${folder.name}`, {
+                      limit: 20,
+                      offset: 0,
+                      sortBy: { column: 'created_at', order: 'desc' }
+                    });
+
+                  if (!subFilesData) return [];
+
+                  const mediaSubFiles = subFilesData.filter((subFile: any) => {
+                    if (!subFile.id) return false;
+                    const ext = subFile.name.toLowerCase().split('.').pop();
+                    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                    const videoExts = ['mp4', 'mov', 'webm', 'avi'];
+                    return imageExts.includes(ext || '') || videoExts.includes(ext || '');
+                  });
+
+                  return Promise.all(
+                    mediaSubFiles.map(async (subFile: any) => {
+                      const filePath = `${user.id}/${folder.name}/${subFile.name}`;
+                      const { data: urlData } = supabase.storage
+                        .from('prove-quest')
+                        .getPublicUrl(filePath);
+
+                      if (!urlData?.publicUrl) return null;
+
+                      const provaInfo = proveMap.get(filePath);
+                      const ext = subFile.name.toLowerCase().split('.').pop();
+                      const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                      const tipo = imageExts.includes(ext || '') ? 'foto' : 'video';
+
+                      return {
+                        id: subFile.id || `${user.id}-${folder.name}-${subFile.name}`,
+                        tipo: tipo as 'foto' | 'video',
+                        contenuto: urlData.publicUrl,
+                        user_id: user.id,
+                        user_nickname: user.nickname || 'Anonimo',
+                        user_avatar: user.avatar || undefined,
+                        quest_titolo: provaInfo?.quest?.titolo || 'Foto personale',
+                        quest_emoji: provaInfo?.quest?.emoji || '📸',
+                        created_at: subFile.created_at || subFile.updated_at || new Date().toISOString(),
+                      };
+                    })
+                  );
+                } catch (err) {
+                  console.warn(`[Galleria] Errore sottocartella ${folder.name}:`, err);
+                  return [];
+                }
+              });
+
+              const folderItems = (await Promise.all(folderPromises)).flat();
+              userItems.push(...folderItems.filter((item) => item !== null) as GalleryItem[]);
+
+              return userItems;
+            } catch (err) {
+              console.warn(`[Galleria] Errore utente ${user.nickname}:`, err);
+              return [];
+            }
+          })
+        );
+
+        // Aggiungi risultati del batch
+        allGalleryItems.push(...batchResults.flat());
+
+        // Aggiorna UI progressivamente (opzionale, per feedback visivo)
+        if (i + BATCH_SIZE < users.length) {
+          setAllItems([...allGalleryItems]);
+        }
+      }
+
+      // Ordina per data (più recenti prima)
+      allGalleryItems.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      console.log('[Galleria] Totale elementi caricati:', allGalleryItems.length);
+      setAllItems(allGalleryItems);
     } catch (error) {
       console.error('[Galleria] Errore caricamento:', error);
     } finally {
