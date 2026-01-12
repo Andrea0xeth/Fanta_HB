@@ -403,10 +403,10 @@ export const HomePage: React.FC = () => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.5 }}
-                className="text-center text-gray-300 text-xl md:text-2xl lg:text-3xl mt-6 px-4"
+                className="text-center text-gray-300 text-xl md:text-2xl lg:text-3xl mt-6 px-4 italic"
                 style={{
-                  fontFamily: "'Dancing Script', 'Caveat', 'Indie Flower', cursive",
-                  fontStyle: 'normal',
+                  fontFamily: "'Caveat', 'Inter', system-ui, sans-serif",
+                  fontStyle: 'italic',
                   minHeight: '4rem',
                 }}
               >
