@@ -53,6 +53,7 @@ export const GalleriaPage: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'foto' | 'video'>('all');
   const [userFilter, setUserFilter] = useState<string>('all');
   const [zoomLevel, setZoomLevel] = useState<2 | 4 | 6>(2); // 2 = 8 foto, 4 = 16 foto, 6 = 32 foto
+  const [touchedItem, setTouchedItem] = useState<string | null>(null);
 
   // Blocca scroll quando modale è aperto
   useLockScroll(selectedItem !== null);
@@ -467,6 +468,8 @@ export const GalleriaPage: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedItem(item)}
+                onTouchStart={() => setTouchedItem(item.id)}
+                onTouchEnd={() => setTimeout(() => setTouchedItem(null), 300)}
                 className="relative aspect-square rounded-xl overflow-hidden bg-gray-900 cursor-pointer group touch-manipulation"
               >
                 {item.tipo === 'foto' ? (
@@ -488,7 +491,9 @@ export const GalleriaPage: React.FC = () => {
                 )}
                 
                 {/* Overlay con info - visibile solo al hover/touch */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-opacity duration-200 ${
+                  touchedItem === item.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                }`}>
                   <div className="absolute bottom-0 left-0 right-0 p-2">
                     <div className="flex items-center gap-1.5 mb-1">
                       <Avatar 
