@@ -49,8 +49,8 @@ export const VerificaPage: React.FC = () => {
     const diffTime = provaDateRome.getTime() - startDateRome.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     
-    // Restituisci il giorno (1-based) o 0 per le quest speciali
-    // Se la prova è stata inviata prima dell'inizio evento, considera come giorno 0 (speciali)
+    // Restituisci il giorno (1-based) o 0 per prove fuori evento
+    // Se la prova è stata inviata prima dell'inizio evento, considera come giorno 0 (fuori evento)
     if (diffDays < 0) return 0;
     return diffDays + 1; // +1 perché il primo giorno è 1, non 0
   };
@@ -151,7 +151,7 @@ export const VerificaPage: React.FC = () => {
   }, [filteredProve, gameState.data_inizio]);
 
   const giorniLabels: Record<number, string> = {
-    0: 'Quest Speciali',
+    0: 'Fuori evento',
     1: 'GIOVEDÌ 8',
     2: 'VENERDÌ 9',
     3: 'SABATO 10',

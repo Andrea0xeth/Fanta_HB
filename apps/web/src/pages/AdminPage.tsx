@@ -10,7 +10,7 @@ import { CreaGaraModal } from '../components/CreaGaraModal';
 import { adminMaintenance } from '../lib/adminMaintenance';
 import type { Gara } from '../types';
 
-type TabType = 'gare' | 'bonus' | 'squadre' | 'manutenzione' | 'quest-speciali' | 'premi' | 'utenti';
+type TabType = 'gare' | 'bonus' | 'squadre' | 'manutenzione' | 'premi' | 'utenti';
 
 export const AdminPage: React.FC = () => {
   const { 
@@ -28,8 +28,6 @@ export const AdminPage: React.FC = () => {
     modificaSquadra,
     eliminaSquadra,
     cambiaSquadraUtente,
-    assegnaPuntiQuestSpeciale,
-    quests,
     premi,
     creaPremio,
     eliminaPremio,
@@ -84,7 +82,17 @@ export const AdminPage: React.FC = () => {
     };
   }, []);
 
-  // Check admin access
+  const filteredUsers = leaderboardSingoli.filter(u =>
+    u.nickname.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const maintenanceUsers = useMemo(() => {
+    const q = maintenanceSearch.trim().toLowerCase();
+    if (!q) return leaderboardSingoli;
+    return leaderboardSingoli.filter(u => u.nickname.toLowerCase().includes(q));
+  }, [leaderboardSingoli, maintenanceSearch]);
+
+  // Check admin access (dopo gli hook)
   if (!user?.is_admin) {
     return (
       <div className="min-h-screen bg-dark flex items-center justify-center p-4">
@@ -96,16 +104,6 @@ export const AdminPage: React.FC = () => {
       </div>
     );
   }
-
-  const filteredUsers = leaderboardSingoli.filter(u =>
-    u.nickname.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const maintenanceUsers = useMemo(() => {
-    const q = maintenanceSearch.trim().toLowerCase();
-    if (!q) return leaderboardSingoli;
-    return leaderboardSingoli.filter(u => u.nickname.toLowerCase().includes(q));
-  }, [leaderboardSingoli, maintenanceSearch]);
 
   const toggleSelectedUser = (userId: string) => {
     setSelectedUsers(prev => {
@@ -229,17 +227,6 @@ export const AdminPage: React.FC = () => {
           >
             <Users size={14} />
             <span>Squadre</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('quest-speciali')}
-            className={`flex-shrink-0 py-2 px-3 rounded-xl font-semibold text-xs flex items-center justify-center gap-1.5 transition-all duration-200 ${
-              activeTab === 'quest-speciali' 
-                ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white shadow-lg shadow-yellow-500/30 scale-105' 
-                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/50'
-            }`}
-          >
-            <Trophy size={14} />
-            <span>Quest ⭐</span>
           </button>
           <button
             onClick={() => setActiveTab('premi')}
@@ -1050,271 +1037,6 @@ export const AdminPage: React.FC = () => {
                   ))
                 )}
               </div>
-            </motion.div>
-          )}
-
-          {/* QUEST SPECIALI TAB */}
-          {activeTab === 'quest-speciali' && (
-            <motion.div
-              key="quest-speciali"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-3 pt-3"
-            >
-              <div className="flex items-center gap-1.5 mb-2">
-                <Trophy size={14} className="text-party-300" />
-                <h2 className="font-display font-bold text-sm">Quest Speciali</h2>
-              </div>
-
-              {(() => {
-                // Filtra TUTTE le prove delle quest speciali (qualsiasi stato)
-                const specialQuestsIds = quests.filter(q => q.is_special).map(q => q.id);
-                const specialProofs = proveInVerifica.filter(
-                  p => specialQuestsIds.includes(p.quest_id)
-                );
-
-                // Separa per stato: in verifica, validate, rifiutate, pending
-                const proofsInVerifica = specialProofs.filter(p => p.stato === 'in_verifica');
-                const proofsValidate = specialProofs.filter(p => p.stato === 'validata');
-                const proofsRifiutate = specialProofs.filter(p => p.stato === 'rifiutata');
-                const proofsPending = specialProofs.filter(p => p.stato === 'pending' || !p.stato);
-
-                if (specialProofs.length === 0) {
-                  return (
-                    <div className="text-center py-8 text-gray-400 text-xs">
-                      <Trophy size={32} className="mx-auto mb-2 opacity-50" />
-                      <p>Nessuna quest speciale da gestire</p>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="space-y-4">
-                    {/* Prove in Verifica */}
-                    {proofsInVerifica.length > 0 && (
-                      <div>
-                        <h3 className="text-xs font-semibold text-turquoise-400 mb-2 uppercase tracking-wide">
-                          In Verifica ({proofsInVerifica.length})
-                        </h3>
-                  <div className="space-y-2">
-                          {proofsInVerifica.map((prova) => {
-                      const quest = quests.find(q => q.id === prova.quest_id);
-                      const user = leaderboardSingoli.find(u => u.id === prova.user_id);
-                      const percentuale = prova.voti_totali > 0 
-                        ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
-                        : 0;
-
-                      return (
-                        <motion.div
-                          key={prova.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                                className="glass rounded-xl p-3 border border-turquoise-500/30"
-                              >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-lg">{quest?.emoji || '⭐'}</span>
-                                      <h3 className="font-semibold text-sm truncate">{quest?.titolo || 'Quest Speciale'}</h3>
-                                    </div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Avatar user={user || { id: prova.user_id, nickname: 'Utente', punti_personali: 0, is_admin: false, created_at: '', squadra_id: null }} size="sm" />
-                                      <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-xs">{user?.nickname || 'Utente sconosciuto'}</p>
-                                        <p className="text-[10px] text-gray-400">{prova.voti_positivi}/{prova.voti_totali} voti positivi ({percentuale}%)</p>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs">
-                                      <span className="text-party-300 font-bold">{quest?.punti || 0} punti</span>
-                                      <span className="text-gray-400">•</span>
-                                      <span className="text-turquoise-400">In Verifica</span>
-                                    </div>
-                                  </div>
-                                  <button
-                                    onClick={async () => {
-                                      if (!window.confirm(`Confermare e assegnare ${quest?.punti || 0} punti a ${user?.nickname || 'questo utente'}?`)) return;
-                                      try {
-                                        await assegnaPuntiQuestSpeciale(prova.id);
-                                        alert('Punti assegnati con successo!');
-                                        await refreshData();
-                                      } catch (error: any) {
-                                        alert(`Errore: ${error.message}`);
-                                      }
-                                    }}
-                                    className="btn-primary text-xs py-1.5 px-3 flex-shrink-0"
-                                  >
-                                    Conferma & Assegna
-                                  </button>
-                                </div>
-                              </motion.div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Prove Validate */}
-                    {proofsValidate.length > 0 && (
-                      <div>
-                        <h3 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                          Validate ({proofsValidate.length})
-                        </h3>
-                        <div className="space-y-2">
-                          {proofsValidate.map((prova) => {
-                            const quest = quests.find(q => q.id === prova.quest_id);
-                            const user = leaderboardSingoli.find(u => u.id === prova.user_id);
-                            const percentuale = prova.voti_totali > 0 
-                              ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
-                              : 0;
-
-                            return (
-                              <motion.div
-                                key={prova.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="glass rounded-xl p-3 border border-party-300/20 opacity-75"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-lg">{quest?.emoji || '⭐'}</span>
-                                <h3 className="font-semibold text-sm truncate">{quest?.titolo || 'Quest Speciale'}</h3>
-                              </div>
-                              <div className="flex items-center gap-2 mb-2">
-                                <Avatar user={user || { id: prova.user_id, nickname: 'Utente', punti_personali: 0, is_admin: false, created_at: '', squadra_id: null }} size="sm" />
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-semibold text-xs">{user?.nickname || 'Utente sconosciuto'}</p>
-                                  <p className="text-[10px] text-gray-400">{prova.voti_positivi}/{prova.voti_totali} voti positivi ({percentuale}%)</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 text-xs">
-                                <span className="text-party-300 font-bold">{quest?.punti || 0} punti</span>
-                                <span className="text-gray-400">•</span>
-                                <span className="text-gray-400">Validata</span>
-                              </div>
-                            </div>
-                            <button
-                              onClick={async () => {
-                                if (!window.confirm(`Assegnare ${quest?.punti || 0} punti a ${user?.nickname || 'questo utente'}?`)) return;
-                                try {
-                                  await assegnaPuntiQuestSpeciale(prova.id);
-                                  alert('Punti assegnati con successo!');
-                                        await refreshData();
-                                } catch (error: any) {
-                                  alert(`Errore: ${error.message}`);
-                                }
-                              }}
-                              className="btn-primary text-xs py-1.5 px-3 flex-shrink-0"
-                            >
-                              Assegna Punti
-                            </button>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Prove Rifiutate */}
-                    {proofsRifiutate.length > 0 && (
-                      <div>
-                        <h3 className="text-xs font-semibold text-red-400 mb-2 uppercase tracking-wide">
-                          Rifiutate ({proofsRifiutate.length})
-                        </h3>
-                        <div className="space-y-2">
-                          {proofsRifiutate.map((prova) => {
-                            const quest = quests.find(q => q.id === prova.quest_id);
-                            const user = leaderboardSingoli.find(u => u.id === prova.user_id);
-                            const percentuale = prova.voti_totali > 0 
-                              ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
-                              : 0;
-
-                            return (
-                              <motion.div
-                                key={prova.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="glass rounded-xl p-3 border border-red-500/20 opacity-60"
-                              >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-lg">{quest?.emoji || '⭐'}</span>
-                                      <h3 className="font-semibold text-sm truncate">{quest?.titolo || 'Quest Speciale'}</h3>
-                                    </div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Avatar user={user || { id: prova.user_id, nickname: 'Utente', punti_personali: 0, is_admin: false, created_at: '', squadra_id: null }} size="sm" />
-                                      <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-xs">{user?.nickname || 'Utente sconosciuto'}</p>
-                                        <p className="text-[10px] text-gray-400">{prova.voti_positivi}/{prova.voti_totali} voti positivi ({percentuale}%)</p>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs">
-                                      <span className="text-party-300 font-bold">{quest?.punti || 0} punti</span>
-                                      <span className="text-gray-400">•</span>
-                                      <span className="text-red-400">Rifiutata</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Prove Pending */}
-                    {proofsPending.length > 0 && (
-                      <div>
-                        <h3 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                          Pending ({proofsPending.length})
-                        </h3>
-                        <div className="space-y-2">
-                          {proofsPending.map((prova) => {
-                            const quest = quests.find(q => q.id === prova.quest_id);
-                            const user = leaderboardSingoli.find(u => u.id === prova.user_id);
-                            const percentuale = prova.voti_totali > 0 
-                              ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
-                              : 0;
-
-                            return (
-                              <motion.div
-                                key={prova.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="glass rounded-xl p-3 border border-gray-500/20 opacity-60"
-                              >
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-lg">{quest?.emoji || '⭐'}</span>
-                                      <h3 className="font-semibold text-sm truncate">{quest?.titolo || 'Quest Speciale'}</h3>
-                                    </div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Avatar user={user || { id: prova.user_id, nickname: 'Utente', punti_personali: 0, is_admin: false, created_at: '', squadra_id: null }} size="sm" />
-                                      <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-xs">{user?.nickname || 'Utente sconosciuto'}</p>
-                                        <p className="text-[10px] text-gray-400">{prova.voti_positivi}/{prova.voti_totali} voti positivi ({percentuale}%)</p>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs">
-                                      <span className="text-party-300 font-bold">{quest?.punti || 0} punti</span>
-                                      <span className="text-gray-400">•</span>
-                                      <span className="text-gray-400">Pending</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
             </motion.div>
           )}
 

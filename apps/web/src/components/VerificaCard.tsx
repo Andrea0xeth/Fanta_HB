@@ -21,25 +21,14 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [expandedImageUrl, setExpandedImageUrl] = useState<string | null>(null);
   
-  // Per quest normali: 5 conferme (voti positivi)
-  // Per quest speciali: 10 voti totali + 66% positivi
+  // Soglia unica: 5 conferme (voti positivi)
   const MIN_VOTES_FOR_VALIDATION_NORMAL = 5;
-  const MIN_VOTES_FOR_VALIDATION_SPECIAL = 10;
-  const POSITIVE_THRESHOLD_PERCENT = 66;
-  
-  const isSpecial = prova.quest?.is_special ?? false;
   
   const percentuale = prova.voti_totali > 0 
     ? Math.round((prova.voti_positivi / prova.voti_totali) * 100) 
     : 0;
   
-  // Logica diversa per quest normali vs speciali
-  const hasMinVotes = isSpecial 
-    ? prova.voti_totali >= MIN_VOTES_FOR_VALIDATION_SPECIAL 
-    : prova.voti_positivi >= MIN_VOTES_FOR_VALIDATION_NORMAL;
-  const hasThreshold = isSpecial 
-    ? percentuale >= POSITIVE_THRESHOLD_PERCENT 
-    : true; // Per quest normali non serve il 66%, solo 5 conferme
+  const hasMinVotes = prova.voti_positivi >= MIN_VOTES_FOR_VALIDATION_NORMAL;
   
   const timeAgo = () => {
     const diff = Date.now() - new Date(prova.created_at).getTime();
@@ -311,26 +300,16 @@ export const VerificaCard: React.FC<VerificaCardProps> = ({ prova, onVote }) => 
         <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${Math.min(100, isSpecial ? percentuale : (prova.voti_positivi / MIN_VOTES_FOR_VALIDATION_NORMAL) * 100)}%` }}
+            animate={{ width: `${Math.min(100, (prova.voti_positivi / MIN_VOTES_FOR_VALIDATION_NORMAL) * 100)}%` }}
             className={`h-full ${
-              hasMinVotes && hasThreshold ? 'bg-green-500' : 'bg-coral-500'
+              hasMinVotes ? 'bg-green-500' : 'bg-coral-500'
             }`}
           />
         </div>
         <p className="text-[10px] text-gray-400 mt-1 text-center">
-          {isSpecial ? (
-            // Quest speciali: 10 voti + 66%
-            prova.voti_totali < MIN_VOTES_FOR_VALIDATION_SPECIAL
-              ? `Servono ${MIN_VOTES_FOR_VALIDATION_SPECIAL} voti (mancano ${MIN_VOTES_FOR_VALIDATION_SPECIAL - prova.voti_totali})`
-              : percentuale >= POSITIVE_THRESHOLD_PERCENT
-                ? '✅ Soglia raggiunta!'
-                : `Serve 66% (ancora ${POSITIVE_THRESHOLD_PERCENT - percentuale}%)`
-          ) : (
-            // Quest normali: solo 5 conferme
-            prova.voti_positivi < MIN_VOTES_FOR_VALIDATION_NORMAL
-              ? `Servono ${MIN_VOTES_FOR_VALIDATION_NORMAL} conferme (mancano ${MIN_VOTES_FOR_VALIDATION_NORMAL - prova.voti_positivi})`
-              : '✅ Soglia raggiunta!'
-          )}
+          {prova.voti_positivi < MIN_VOTES_FOR_VALIDATION_NORMAL
+            ? `Servono ${MIN_VOTES_FOR_VALIDATION_NORMAL} conferme (mancano ${MIN_VOTES_FOR_VALIDATION_NORMAL - prova.voti_positivi})`
+            : '✅ Soglia raggiunta!'}
         </p>
       </div>
 

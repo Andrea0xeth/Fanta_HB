@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy, Play, Calendar, Image as ImageIcon } from 'lucide-react';
 import { useGame } from '../context/GameContext';
-import { QuestCard } from '../components/QuestCard';
 import { GaraCard } from '../components/GaraCard';
 import { CircusNeonDecorations } from '../components/CircusNeonDecorations';
 import { Avatar } from '../components/Avatar';
@@ -16,12 +15,10 @@ export const HomePage: React.FC = () => {
   const { 
     user, 
     mySquadra, 
-    quests, 
     gare, 
     proveInVerifica,
     gameState,
     notifiche,
-    submitProva,
     logout,
     updateAvatar,
     leaderboardSquadre
@@ -31,7 +28,6 @@ export const HomePage: React.FC = () => {
   const [showNotifiche, setShowNotifiche] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'daily' | 'special'>('daily'); // Tab attivo
   const [showVideo, setShowVideo] = useState(false);
   const BALLETTO_URL = '/videos/balletto.mp4';
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -287,37 +283,6 @@ export const HomePage: React.FC = () => {
           </motion.button>
         </div>
 
-        {/* Info per utenti senza squadra */}
-        {!mySquadra && hasStarted && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="glass rounded-2xl p-4 mb-2 border border-white/10"
-          >
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-0.5">
-                <Trophy size={18} className="text-party-300" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-200 text-xs mb-2">
-                  Sistema di Sfide
-                </h3>
-                <div className="space-y-1.5 text-[10px] text-gray-400 leading-relaxed">
-                  <p>
-                    <span className="font-semibold text-party-300">Sfide giornaliere:</span> casuali e uniche per ogni giocatore
-                  </p>
-                  <p>
-                    <span className="font-semibold text-coral-500">Sfide speciali:</span> uguali per tutti, punti assegnati l'ultimo giorno
-                  </p>
-                  <p>
-                    <span className="font-semibold text-turquoise-400">Sfide di squadra:</span> disponibili quando sarai assegnato a una squadra
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
       </div>
 
       {/* Content - Scrollable, snello */}
@@ -341,157 +306,6 @@ export const HomePage: React.FC = () => {
               </div>
               <Countdown targetDate={eventDate} />
             </motion.section>
-
-            {/* Sfide Speciali - Tab durante il countdown */}
-            {(() => {
-              const normalQuests = quests.filter(q => !q.is_special);
-              const specialQuests = quests.filter(q => q.is_special);
-              
-              return (normalQuests.length > 0 || specialQuests.length > 0) ? (
-                <section className="mt-6">
-                  {/* Tab Navigation - Sticky */}
-                  <div className="sticky top-0 z-10 glass rounded-xl p-0.5 mb-2 flex gap-0.5 bg-dark/95 backdrop-blur-sm max-w-md mx-auto">
-                  <motion.button
-                      onClick={() => setActiveTab('daily')}
-                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all relative ${
-                        activeTab === 'daily'
-                          ? 'text-white'
-                          : 'text-gray-400'
-                      }`}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                      {activeTab === 'daily' && (
-                      <motion.div
-                          layoutId="activeTab"
-                          className="absolute inset-0 bg-white/10 rounded-lg"
-                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                        />
-                      )}
-                      <span className="relative z-10 flex items-center justify-center gap-1">
-                        <span>Sfide del Giorno</span>
-                        {normalQuests.length > 0 && (
-                          <span className="text-[9px] bg-white/20 px-1 py-0.5 rounded-full">
-                            {normalQuests.length}
-                          </span>
-                        )}
-                      </span>
-                  </motion.button>
-
-                    <motion.button
-                      onClick={() => setActiveTab('special')}
-                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all relative ${
-                        activeTab === 'special'
-                          ? 'text-white'
-                          : 'text-gray-400'
-                      }`}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      {activeTab === 'special' && (
-                      <motion.div
-                          layoutId="activeTab"
-                          className="absolute inset-0 bg-white/10 rounded-lg"
-                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                        />
-                      )}
-                      <span className="relative z-10 flex items-center justify-center gap-1">
-                        <span className="text-xs">⭐</span>
-                        <span>Sfide Speciali</span>
-                        {specialQuests.length > 0 && (
-                          <span className="text-[9px] bg-white/20 px-1 py-0.5 rounded-full">
-                            {specialQuests.length}
-                          </span>
-                        )}
-                      </span>
-                    </motion.button>
-                        </div>
-                        
-                  {/* Tab Content */}
-                  <div className="-mx-4 px-4 pb-24">
-                    <AnimatePresence mode="wait">
-                      {activeTab === 'daily' && normalQuests.length > 0 && (
-                        <motion.div
-                          key="daily"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ duration: 0.2 }}
-                          className="space-y-2"
-                        >
-                          {normalQuests.map((quest, index) => (
-                            <motion.div
-                              key={quest.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                            >
-                              <QuestCard 
-                                quest={quest} 
-                                onSubmit={submitProva}
-                                completed={quest.completed}
-                              />
-                            </motion.div>
-                          ))}
-                        </motion.div>
-                      )}
-
-                      {activeTab === 'special' && specialQuests.length > 0 && (
-                        <motion.div
-                          key="special"
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <div className="mb-2 px-1">
-                            <p className="text-[9px] text-gray-400 text-center">
-                              Attive dal <span className="text-coral-500 font-semibold">08/01/2026 ore 15:20</span>
-                            </p>
-                          </div>
-                          <div className="space-y-2">
-                            {specialQuests.map((quest, index) => (
-                            <motion.div
-                              key={quest.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                            >
-                              <QuestCard 
-                                quest={quest} 
-                                onSubmit={submitProva}
-                                completed={quest.completed}
-                              />
-                            </motion.div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-
-                      {activeTab === 'daily' && normalQuests.length === 0 && (
-                        <motion.div
-                          key="daily-empty"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-center py-8 text-gray-400 text-sm"
-                        >
-                          Nessuna sfida del giorno disponibile
-                        </motion.div>
-                      )}
-
-                      {activeTab === 'special' && specialQuests.length === 0 && (
-                        <motion.div
-                          key="special-empty"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-center py-8 text-gray-400 text-sm"
-                        >
-                          Nessuna sfida speciale disponibile
-                        </motion.div>
-                      )}
-                  </AnimatePresence>
-                  </div>
-                </section>
-              ) : null;
-            })()}
           </>
         ) : (
           <>
@@ -506,7 +320,7 @@ export const HomePage: React.FC = () => {
               </section>
             )}
 
-            {/* Galleria Banner - Sopra le Sfide del Giorno */}
+            {/* Galleria Banner */}
             <motion.section
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -536,157 +350,6 @@ export const HomePage: React.FC = () => {
                 </div>
               </motion.button>
             </motion.section>
-
-            {/* Quest Section - Tab System */}
-            {(() => {
-              const normalQuests = quests.filter(q => !q.is_special);
-              const specialQuests = quests.filter(q => q.is_special);
-              
-              return (normalQuests.length > 0 || specialQuests.length > 0) ? (
-                    <section>
-                  {/* Tab Navigation - Sticky */}
-                  <div className="sticky top-0 z-10 glass rounded-xl p-0.5 mb-2 flex gap-0.5 bg-dark/95 backdrop-blur-sm max-w-md mx-auto">
-                      <motion.button
-                      onClick={() => setActiveTab('daily')}
-                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all relative ${
-                        activeTab === 'daily'
-                          ? 'text-white'
-                          : 'text-gray-400'
-                      }`}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                      {activeTab === 'daily' && (
-                          <motion.div
-                          layoutId="activeTab"
-                          className="absolute inset-0 bg-white/10 rounded-lg"
-                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                        />
-                      )}
-                      <span className="relative z-10 flex items-center justify-center gap-1">
-                        <span>Sfide del Giorno</span>
-                        {normalQuests.length > 0 && (
-                          <span className="text-[9px] bg-white/20 px-1 py-0.5 rounded-full">
-                            {normalQuests.length}
-                          </span>
-                            )}
-                      </span>
-                      </motion.button>
-
-                    <motion.button
-                      onClick={() => setActiveTab('special')}
-                      className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all relative ${
-                        activeTab === 'special'
-                          ? 'text-white'
-                          : 'text-gray-400'
-                      }`}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      {activeTab === 'special' && (
-                        <motion.div
-                          layoutId="activeTab"
-                          className="absolute inset-0 bg-white/10 rounded-lg"
-                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                        />
-                      )}
-                      <span className="relative z-10 flex items-center justify-center gap-1">
-                        <span className="text-xs">⭐</span>
-                        <span>Sfide Speciali</span>
-                        {specialQuests.length > 0 && (
-                          <span className="text-[9px] bg-white/20 px-1 py-0.5 rounded-full">
-                            {specialQuests.length}
-                          </span>
-                        )}
-                      </span>
-                    </motion.button>
-                  </div>
-
-                  {/* Tab Content */}
-                  <div className="-mx-4 px-4 pb-24">
-                    <AnimatePresence mode="wait">
-                      {activeTab === 'daily' && normalQuests.length > 0 && (
-                          <motion.div
-                        key="daily"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="space-y-2"
-                      >
-                              {normalQuests.map((quest, index) => (
-                                <motion.div
-                                  key={quest.id}
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: index * 0.05 }}
-                                >
-                                  <QuestCard 
-                                    quest={quest} 
-                                    onSubmit={submitProva}
-                                    completed={quest.completed}
-                                  />
-                                </motion.div>
-                              ))}
-                          </motion.div>
-                        )}
-
-                    {activeTab === 'special' && specialQuests.length > 0 && (
-                      <motion.div
-                        key="special"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <div className="mb-2 px-1">
-                          <p className="text-[9px] text-gray-400 text-center">
-                                Attive dal <span className="text-coral-500 font-semibold">08/01/2026 ore 15:20</span>
-                              </p>
-                        </div>
-                            <div className="space-y-2">
-                              {specialQuests.map((quest, index) => (
-                                <motion.div
-                                  key={quest.id}
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: index * 0.05 }}
-                                >
-                                  <QuestCard 
-                                    quest={quest} 
-                                    onSubmit={submitProva}
-                                    completed={quest.completed}
-                                  />
-                                </motion.div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-
-                    {activeTab === 'daily' && normalQuests.length === 0 && (
-                      <motion.div
-                        key="daily-empty"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-center py-8 text-gray-400 text-sm"
-                      >
-                        Nessuna sfida del giorno disponibile
-                      </motion.div>
-                    )}
-
-                    {activeTab === 'special' && specialQuests.length === 0 && (
-                      <motion.div
-                        key="special-empty"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-center py-8 text-gray-400 text-sm"
-                      >
-                        Nessuna sfida speciale disponibile
-                      </motion.div>
-                    )}
-                      </AnimatePresence>
-                  </div>
-                    </section>
-              ) : null;
-            })()}
           </>
         )}
       </div>
