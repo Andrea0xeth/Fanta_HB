@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Users, Trophy, Gift, Crown } from 'lucide-react';
+import { Home, Users, Trophy, Image as ImageIcon, Crown } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 
 interface NavItemProps {
@@ -61,9 +61,9 @@ export const BottomNav: React.FC = () => {
           label="Classifica" 
         />
         <NavItem 
-          to="/premi" 
-          icon={<Gift size={22} />} 
-          label="Premi" 
+          to="/galleria" 
+          icon={<ImageIcon size={22} />} 
+          label="Galleria" 
         />
         {user?.is_admin && (
           <NavItem 

@@ -12,7 +12,6 @@ import type {
   RegistrationData,
   EmailPasswordCredentials,
   EmailPasswordRegistrationData,
-  QuestDifficulty,
 } from '../types';
 import type { Database } from '../lib/database.types';
 import { registerPasskey, authenticateWithPasskey } from '../lib/webauthn';
@@ -57,7 +56,6 @@ interface GameContextType {
   aggiungiBonus: (userId: string, punti: number, motivo: string) => Promise<void>;
   refreshData: () => Promise<void>;
   updateAvatar: (file: File) => Promise<void>;
-  assegnaPuntiQuestSpeciale: (provaId: string) => Promise<void>; // Admin only
   
   // Squadre management (admin only)
   creaSquadra: (squadra: { nome: string; emoji: string; colore: string; userIds?: string[] }) => Promise<void>;
@@ -212,160 +210,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       setSquadre(squadreWithMembers);
       setAllUsers(publicUsers); // Salva solo utenti pubblici per la leaderboard singoli
 
-      // Carica quest del giorno corrente
-      // Assicurati che il giorno sia sempre tra 1 e 3 (il constraint del database lo richiede)
-      const giornoRaw = gameStateData ? (gameStateData as Database['public']['Tables']['game_state']['Row']).giorno_corrente : 1;
-      const giornoCorrente = (giornoRaw >= 1 && giornoRaw <= 3) ? giornoRaw : 1;
-      
-      // Se c'è un utente, carica le sue quest assegnate, altrimenti carica tutte le quest (per admin/preview)
-      if (user) {
-        const attachUserProofsToQuests = async (questsList: Quest[]) => {
-          try {
-            const questIds = questsList.map((q) => q.id);
-            if (questIds.length === 0) return questsList;
-
-            // Carica l'ultima prova dell'utente per ciascuna quest (qualsiasi stato)
-            const { data: myProofs, error: myProofsError } = await supabase
-              .from('prove_quest')
-              .select('id, quest_id, stato, voti_positivi, voti_totali, created_at')
-              .eq('user_id', user.id)
-              .in('quest_id', questIds)
-              .order('created_at', { ascending: false });
-
-            if (myProofsError) throw myProofsError;
-
-            const map = new Map<string, any>();
-            (myProofs || []).forEach((p: any) => {
-              // keep the latest per quest_id (data already ordered desc)
-              if (!map.has(p.quest_id)) map.set(p.quest_id, p);
-            });
-
-            return questsList.map((q) => {
-              const p = map.get(q.id);
-              if (!p) return q;
-              return {
-                ...q,
-                prova: {
-                  id: p.id,
-                  stato: p.stato,
-                  voti_positivi: p.voti_positivi ?? 0,
-                  voti_totali: p.voti_totali ?? 0,
-                },
-              };
-            });
-          } catch (e) {
-            console.warn('[Quests] Impossibile caricare prove utente per UI:', e);
-            return questsList;
-          }
-        };
-
-        // Assegna le quest giornaliere se non già assegnate
-        const { error: assignError } = await supabase.rpc('assign_daily_quests', {
-          p_user_id: user.id,
-          p_giorno: giornoCorrente,
-        } as any);
-
-        if (assignError) {
-          console.error('Errore assegnazione quest:', assignError);
-        }
-
-        // Carica le quest assegnate all'utente
-        const { data: userQuestsData, error: userQuestsError } = await supabase.rpc('get_user_quests', {
-          p_user_id: user.id,
-          p_giorno: giornoCorrente,
-        } as any);
-
-        if (userQuestsError) {
-          console.error('Errore caricamento quest utente:', userQuestsError);
-          // Fallback: carica tutte le quest
-          const { data: questsData, error: questsError } = await supabase
-            .from('quest')
-            .select('*')
-            .eq('giorno', giornoCorrente)
-            .eq('attiva', true)
-            .order('punti', { ascending: false });
-
-          if (questsError) throw questsError;
-
-          const questsList = (questsData || []).map((q: Database['public']['Tables']['quest']['Row']) => ({
-            id: q.id,
-            giorno: q.giorno,
-            titolo: q.titolo,
-            descrizione: q.descrizione || '',
-            punti: q.punti,
-            difficolta: q.difficolta,
-            tipo_prova: q.tipo_prova as ('foto' | 'video' | 'testo')[],
-            emoji: q.emoji,
-            scadenza: q.scadenza || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          }));
-
-          setQuests(await attachUserProofsToQuests(questsList));
-        } else {
-          // Mappa le quest assegnate al formato Quest
-          const questsList = ((userQuestsData as any[]) || []).map((q: any) => ({
-            id: q.quest_id,
-            giorno: giornoCorrente,
-            titolo: q.titolo,
-            descrizione: q.descrizione || '',
-            punti: q.punti,
-            difficolta: q.difficolta,
-            tipo_prova: q.tipo_prova as ('foto' | 'video' | 'testo')[],
-            emoji: q.emoji,
-            scadenza: q.scadenza || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-            is_special: q.is_special || false,
-            completed: q.completed || false, // Indica se la quest è stata inviata
-          }));
-
-          // Carica anche le quest speciali (sempre disponibili)
-          const { data: specialQuestsData } = await supabase
-            .from('quest')
-            .select('*')
-            .eq('is_special', true)
-            .eq('attiva', true)
-            .order('punti', { ascending: false });
-
-          const specialQuests: Quest[] = (specialQuestsData || []).map((q: Database['public']['Tables']['quest']['Row'] & { is_special?: boolean }) => ({
-            id: q.id,
-            giorno: 0, // Quest speciali hanno giorno 0
-            titolo: q.titolo,
-            descrizione: q.descrizione || '',
-            punti: q.punti,
-            difficolta: q.difficolta as QuestDifficulty,
-            tipo_prova: (q.tipo_prova || []) as ('foto' | 'video' | 'testo')[],
-            emoji: q.emoji || '🎯',
-            scadenza: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // Scadenza lontana per quest speciali
-            is_special: true,
-          }));
-
-          // Combina quest giornaliere e quest speciali
-          const allQuests = [...questsList, ...specialQuests];
-          setQuests(await attachUserProofsToQuests(allQuests));
-        }
-      } else {
-        // Se non c'è utente, carica tutte le quest (per preview/admin)
-        const { data: questsData, error: questsError } = await supabase
-          .from('quest')
-          .select('*')
-          .eq('giorno', giornoCorrente)
-          .eq('attiva', true)
-          .order('punti', { ascending: false });
-
-        if (questsError) throw questsError;
-
-        const questsList = (questsData || []).map((q: Database['public']['Tables']['quest']['Row']) => ({
-          id: q.id,
-          giorno: q.giorno,
-          titolo: q.titolo,
-          descrizione: q.descrizione || '',
-          punti: q.punti,
-          difficolta: q.difficolta,
-          tipo_prova: q.tipo_prova as ('foto' | 'video' | 'testo')[],
-          emoji: q.emoji,
-          scadenza: q.scadenza || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        }));
-
-        setQuests(questsList);
-      }
+      // Sfide rimosse (giornaliere + speciali): non carichiamo/assegniamo quest.
+      setQuests([]);
 
       // Carica gare
       const { data: gareData, error: gareError } = await supabase
@@ -1102,7 +948,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         let errorData;
         try {
           errorData = await createUserResponse.json();
-        } catch (e) {
+        } catch {
           const text = await createUserResponse.text();
           console.error('[Register] Errore Edge Function (non JSON):', {
             status: createUserResponse.status,
@@ -1881,39 +1727,6 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     }
   };
 
-  const assegnaPuntiQuestSpeciale = async (provaId: string) => {
-    if (!user?.is_admin) {
-      throw new Error('Solo gli admin possono assegnare punti alle quest speciali');
-    }
-
-    if (!isSupabaseConfigured()) {
-      throw new Error('Supabase non configurato');
-    }
-
-    try {
-      setIsLoading(true);
-      console.log('[Assegna Punti Quest Speciale] Assegnazione punti per prova:', provaId);
-
-      const { error } = await supabase.rpc('assegna_punti_quest_speciale', {
-        p_prova_id: provaId,
-        p_admin_id: user.id,
-      } as any);
-
-      if (error) {
-        console.error('[Assegna Punti Quest Speciale] Errore:', error);
-        throw new Error(`Errore durante l'assegnazione punti: ${error.message}`);
-      }
-
-      console.log('[Assegna Punti Quest Speciale] ✅ Punti assegnati');
-      await loadData();
-    } catch (error) {
-      console.error('[Assegna Punti Quest Speciale] ❌ Errore completo:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const creaPremio = async (premio: { titolo: string; descrizione?: string; immagine: string; tipo: 'squadra' | 'singolo' | 'giornaliero' | 'speciale'; punti_richiesti: number | null; posizione_classifica?: number }) => {
     if (!user?.is_admin) {
       throw new Error('Solo gli admin possono creare premi');
@@ -2049,7 +1862,11 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
       return { ...squadra, puntiTotali } as Squadra & { puntiTotali: number };
     })
     .sort((a, b) => (b as Squadra & { puntiTotali: number }).puntiTotali - (a as Squadra & { puntiTotali: number }).puntiTotali)
-    .map(({ puntiTotali, ...squadra }) => squadra); // Rimuovi puntiTotali dal risultato finale
+    .map((s) => {
+      const { puntiTotali, ...squadra } = s as Squadra & { puntiTotali: number };
+      void puntiTotali; // consumato solo per rimuoverlo dall'output
+      return squadra;
+    }); // Rimuovi puntiTotali dal risultato finale
   
   // Calcola leaderboard singoli da tutti gli utenti (inclusi quelli senza squadra)
   // Gli utenti nascosti sono già filtrati in allUsers
@@ -2092,7 +1909,6 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     modificaSquadra,
     eliminaSquadra,
     cambiaSquadraUtente,
-    assegnaPuntiQuestSpeciale,
     creaPremio,
     eliminaPremio,
     mySquadra,

@@ -1,19 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Trophy, Flame, Crown, Swords, Info, MessageCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Users, Trophy, Flame, Crown, Swords, Info, Target } from 'lucide-react';
 import { useGame } from '../context/GameContext';
-import { GaraCard } from '../components/GaraCard';
 import { Avatar } from '../components/Avatar';
 import { Countdown } from '../components/Countdown';
 import { SquadraModal } from '../components/SquadraModal';
 import { UserProfileModal } from '../components/UserProfileModal';
-import { SquadraChat } from '../components/SquadraChat';
 
 export const SquadraPage: React.FC = () => {
   const { user, mySquadra, gare, leaderboardSquadre, gameState } = useGame();
   const [showSquadraModal, setShowSquadraModal] = useState(false);
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'membri' | 'chat' | 'gare'>('chat');
 
   // Usa i membri reali della squadra se disponibili, altrimenti mock
   const teamMembers = useMemo(() => {
@@ -53,18 +50,57 @@ export const SquadraPage: React.FC = () => {
     }
   );
 
-  // Calcola gare vinte: considera sia vincitore_id (gare 1v1) che classifica (gare multisquadra)
-  const gareVinte = useMemo(() => {
-    return teamGare.filter(g => {
-      // Per gare con classifica (multisquadra), la squadra vincitrice è quella con posizione 1
+  // Calcola statistiche gare
+  const gareStats = useMemo(() => {
+    const vinte = teamGare.filter(g => {
       if (g.classifica && g.classifica.length > 0) {
         const primaPosizione = g.classifica.find(c => c.posizione === 1);
         return primaPosizione?.squadra_id === mySquadra?.id;
       }
-      // Per gare 1v1, usa vincitore_id
       return g.vincitore_id === mySquadra?.id;
     }).length;
+    
+    const perse = teamGare.filter(g => {
+      if (g.stato === 'completata') {
+        if (g.classifica && g.classifica.length > 0) {
+          const primaPosizione = g.classifica.find(c => c.posizione === 1);
+          return primaPosizione?.squadra_id !== mySquadra?.id;
+        }
+        return g.vincitore_id && g.vincitore_id !== mySquadra?.id;
+      }
+      return false;
+    }).length;
+    
+    return { vinte, perse, totali: teamGare.length };
   }, [teamGare, mySquadra?.id]);
+
+  // Calcola statistiche squadra
+  const squadraStats = useMemo(() => {
+    if (!mySquadra) {
+      return {
+        puntiTotali: 0,
+        sommaPuntiPersonali: 0,
+        puntiSquadra: 0,
+        mediaPunti: 0,
+        mvp: null,
+      };
+    }
+    
+    const sommaPuntiPersonali = mySquadra.membri.reduce((sum, m) => sum + m.punti_personali, 0);
+    const puntiTotali = Math.round(sommaPuntiPersonali * 0.5 + mySquadra.punti_squadra * 1);
+    const mediaPunti = teamMembers.length > 0 
+      ? Math.round(teamMembers.reduce((acc, m) => acc + m.punti, 0) / teamMembers.length)
+      : 0;
+    const mvp = teamMembers.length > 0 ? teamMembers[0] : null; // Primo in classifica = MVP
+    
+    return {
+      puntiTotali,
+      sommaPuntiPersonali,
+      puntiSquadra: mySquadra.punti_squadra,
+      mediaPunti,
+      mvp,
+    };
+  }, [mySquadra, teamMembers]);
 
   // Se l'utente non ha una squadra, mostra countdown e messaggio di attesa
   if (!mySquadra) {
@@ -174,93 +210,142 @@ export const SquadraPage: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Content - Scrollable, snello */}
-      <div className={`flex-1 px-3 py-2 pb-28 ${activeTab === 'chat' ? 'overflow-hidden' : 'space-y-2 overflow-y-auto'}`}>
-        {/* Team Stats - Minimizzato */}
-        <motion.div 
+      {/* Content - Recap Squadra */}
+      <div className="flex-1 px-3 py-4 pb-28 space-y-4 overflow-y-auto">
+        {/* Banner Gara Finita */}
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-around gap-1 py-1.5 border-b border-white/5"
+          className="glass rounded-xl p-4 border border-turquoise-500/30 text-center"
         >
-          <div className="flex items-center gap-1 text-[10px]">
-            <span className="text-coral-500 font-bold">{teamMembers.length}</span>
-            <span className="text-gray-500">membri</span>
+          <Trophy size={32} className="text-party-300 mx-auto mb-2" />
+          <h2 className="font-display font-bold text-lg mb-1 bg-gradient-to-r from-turquoise-400 via-coral-500 to-turquoise-400 bg-clip-text text-transparent">
+            Gara Finita! 🎉
+          </h2>
+          <p className="text-gray-400 text-xs">
+            Ecco il recap completo della tua squadra
+          </p>
+        </motion.div>
+
+        {/* Statistiche Principali */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-2 gap-2"
+        >
+          <div className="glass rounded-xl p-3 border border-turquoise-500/20">
+            <div className="flex items-center gap-2 mb-1">
+              <Trophy size={16} className="text-turquoise-400" />
+              <span className="text-[10px] text-gray-400">Posizione</span>
             </div>
-          <div className="w-px h-4 bg-white/10" />
-          <div className="flex items-center gap-1 text-[10px]">
-            <span className="text-turquoise-400 font-bold">{gareVinte}</span>
-            <span className="text-gray-500">gare</span>
-              </div>
-          <div className="w-px h-4 bg-white/10" />
-          <div className="flex items-center gap-1 text-[10px]">
-            <span className="text-party-300 font-bold">
-                {Math.round(teamMembers.reduce((acc, m) => acc + m.punti, 0) / teamMembers.length)}
-            </span>
-            <span className="text-gray-500">media</span>
+            <div className="text-2xl font-bold text-turquoise-400">#{myPosition}</div>
+            <div className="text-[9px] text-gray-500 mt-0.5">
+              di {leaderboardSquadre.length} squadre
+            </div>
+          </div>
+
+          <div className="glass rounded-xl p-3 border border-party-300/20">
+            <div className="flex items-center gap-2 mb-1">
+              <Flame size={16} className="text-party-300" />
+              <span className="text-[10px] text-gray-400">Punti Totali</span>
+            </div>
+            <div className="text-2xl font-bold text-party-300">{squadraStats.puntiTotali}</div>
+            <div className="text-[9px] text-gray-500 mt-0.5">
+              {(squadraStats.sommaPuntiPersonali * 0.5).toFixed(0)} + {squadraStats.puntiSquadra}
+            </div>
+          </div>
+
+          <div className="glass rounded-xl p-3 border border-coral-500/20">
+            <div className="flex items-center gap-2 mb-1">
+              <Users size={16} className="text-coral-500" />
+              <span className="text-[10px] text-gray-400">Membri</span>
+            </div>
+            <div className="text-2xl font-bold text-coral-500">{teamMembers.length}</div>
+            <div className="text-[9px] text-gray-500 mt-0.5">
+              Media: {squadraStats.mediaPunti} pts
+            </div>
+          </div>
+
+          <div className="glass rounded-xl p-3 border border-turquoise-400/20">
+            <div className="flex items-center gap-2 mb-1">
+              <Swords size={16} className="text-turquoise-400" />
+              <span className="text-[10px] text-gray-400">Gare Vinte</span>
+            </div>
+            <div className="text-2xl font-bold text-turquoise-400">{gareStats.vinte}</div>
+            <div className="text-[9px] text-gray-500 mt-0.5">
+              {gareStats.perse} perse / {gareStats.totali} totali
+            </div>
           </div>
         </motion.div>
 
-        {/* Tab Chat / Membri / Gare */}
-        <section className={activeTab === 'chat' ? 'h-[calc(100vh-280px)] min-h-[500px] flex flex-col' : ''}>
-          <div className="bg-gray-800/30 rounded-xl p-0.5 flex gap-0.5 mb-2">
+        {/* MVP Squadra */}
+        {squadraStats.mvp && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="glass rounded-xl p-4 border border-party-300/30"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Crown size={18} className="text-party-300" />
+              <h3 className="font-semibold text-sm text-party-300">MVP della Squadra</h3>
+            </div>
             <button
-              onClick={() => setActiveTab('membri')}
-              className={`flex-1 py-2 rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
-                activeTab === 'membri' 
-                  ? 'bg-turquoise-500 text-white' 
-                  : 'text-gray-400 hover:text-gray-300'
-              }`}
+              type="button"
+              onClick={() => setProfileUserId(squadraStats.mvp!.id)}
+              className="flex items-center gap-3 w-full"
             >
-              <Users size={14} />
-              Membri
+              <Avatar
+                user={{
+                  id: squadraStats.mvp.id,
+                  nickname: squadraStats.mvp.nickname,
+                  avatar: (squadraStats.mvp as any).avatar,
+                  punti_personali: squadraStats.mvp.punti,
+                  squadra_id: mySquadra.id,
+                  is_admin: false,
+                  created_at: '',
+                }}
+                size="md"
+              />
+              <div className="flex-1 text-left">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-base">{squadraStats.mvp.nickname}</span>
+                  <Crown size={14} className="text-party-300" />
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-turquoise-400 font-bold text-sm">{squadraStats.mvp.punti}</span>
+                  <span className="text-gray-400 text-[10px]">punti personali</span>
+                </div>
+              </div>
             </button>
-            {user && (
-              <button
-                onClick={() => setActiveTab('chat')}
-                className={`flex-1 py-2 rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
-                  activeTab === 'chat' 
-                    ? 'bg-turquoise-500 text-white' 
-                    : 'text-gray-400 hover:text-gray-300'
-                }`}
-              >
-                <MessageCircle size={14} />
-                Chat
-              </button>
-            )}
-            <button
-              onClick={() => setActiveTab('gare')}
-              className={`flex-1 py-2 rounded-lg font-semibold text-xs flex items-center justify-center gap-1.5 transition-all ${
-                activeTab === 'gare' 
-                  ? 'bg-turquoise-500 text-white' 
-                  : 'text-gray-400 hover:text-gray-300'
-              }`}
-            >
-              <Swords size={14} />
-              Gare
-            </button>
+          </motion.div>
+        )}
+
+        {/* Classifica Membri */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="glass rounded-xl p-4 border border-white/10"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Users size={18} className="text-turquoise-400" />
+            <h3 className="font-semibold text-sm">Classifica Membri</h3>
           </div>
-          
-          <AnimatePresence mode="wait">
-            {activeTab === 'membri' ? (
+          <div className="space-y-2">
+            {teamMembers.map((member, index) => (
               <motion.div
-                key="membri"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className="space-y-1.5"
-              >
-                {teamMembers.map((member, index) => (
-                  <motion.div
                 key={member.id}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className={`flex items-center gap-2 py-1.5 border-l-2 ${
+                transition={{ delay: 0.3 + index * 0.05 }}
+                className={`flex items-center gap-2 py-2 border-l-2 ${
                   member.id === user?.id ? 'border-coral-500/50 pl-2' : 'border-gray-700/30 pl-2'
                 }`}
               >
-                <div className="w-5 text-center font-bold text-gray-500 text-[10px] flex-shrink-0">
-                  {index + 1}
+                <div className="w-6 text-center font-bold text-gray-500 text-xs flex-shrink-0">
+                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                 </div>
                 <button
                   type="button"
@@ -283,16 +368,15 @@ export const SquadraPage: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="font-semibold text-sm truncate">{member.nickname}</span>
-                      {member.isMVP && <Crown size={12} className="text-party-300 flex-shrink-0" />}
                       {member.id === user?.id && (
                         <span className="badge-coral flex-shrink-0 text-[10px] px-1.5 py-0.5">Tu</span>
                       )}
                     </div>
-                        {(member.nome || member.cognome) && (
-                          <p className="text-[9px] text-gray-500 truncate mt-0.5">
-                            {[member.nome, member.cognome].filter(Boolean).join(' ')}
-                          </p>
-                        )}
+                    {(member.nome || member.cognome) && (
+                      <p className="text-[9px] text-gray-500 truncate mt-0.5">
+                        {[member.nome, member.cognome].filter(Boolean).join(' ')}
+                      </p>
+                    )}
                   </div>
                 </button>
                 <div className="text-right flex-shrink-0">
@@ -301,49 +385,54 @@ export const SquadraPage: React.FC = () => {
                 </div>
               </motion.div>
             ))}
-              </motion.div>
-            ) : activeTab === 'chat' ? (
-              <motion.div
-                key="chat"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex-1 min-h-0"
-              >
-                {user && <SquadraChat squadraId={mySquadra.id} currentUser={user} />}
-              </motion.div>
-            ) : (
-              <motion.div
-                key="gare"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-2"
-              >
-          {teamGare.length === 0 ? (
-            <div className="text-center text-gray-400 py-4 text-xs">
-              <Swords size={24} className="mx-auto mb-2 opacity-50" />
-              <p>Nessuna gara programmata</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {teamGare.map((gara) => (
-                <GaraCard key={gara.id} gara={gara} />
-              ))}
-            </div>
-          )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </section>
+          </div>
+        </motion.div>
 
+        {/* Dettagli Punti */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="glass rounded-xl p-4 border border-white/10"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Target size={18} className="text-coral-500" />
+            <h3 className="font-semibold text-sm">Dettaglio Punti</h3>
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Somma punti personali</span>
+              <span className="font-semibold text-gray-300">{squadraStats.sommaPuntiPersonali}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">× 0.5</span>
+              <span className="font-semibold text-turquoise-400">
+                {(squadraStats.sommaPuntiPersonali * 0.5).toFixed(0)}
+              </span>
+            </div>
+            <div className="h-px bg-white/10 my-2" />
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Punti squadra</span>
+              <span className="font-semibold text-gray-300">{squadraStats.puntiSquadra}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">× 1</span>
+              <span className="font-semibold text-turquoise-400">{squadraStats.puntiSquadra}</span>
+            </div>
+            <div className="h-px bg-turquoise-400/30 my-2" />
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-party-300">Totale</span>
+              <span className="font-bold text-2xl text-party-300">{squadraStats.puntiTotali}</span>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       <SquadraModal
         isOpen={showSquadraModal}
         squadra={mySquadra}
         posizione={myPosition}
-        gareVinte={gareVinte}
+        gareVinte={gareStats.vinte}
         members={teamMembers.map((m) => ({ id: m.id, nickname: m.nickname, punti: m.punti, avatar: (m as any).avatar }))}
         onClose={() => setShowSquadraModal(false)}
         onSelectMember={(id) => {
