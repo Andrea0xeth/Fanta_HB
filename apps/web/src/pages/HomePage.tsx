@@ -328,26 +328,6 @@ export const HomePage: React.FC = () => {
 
               {/* Logo Content */}
               <div className="flex flex-col items-center justify-center relative z-10">
-                {/* Di Ciaccio - 30 */}
-                <motion.p 
-                  className="text-sm md:text-base font-medium text-center mb-2 tracking-wider"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.5 }}
-                  transition={{ delay: 0.3 }}
-                  style={{
-                    WebkitTextStroke: '0.4px #ffffff',
-                    color: 'rgba(255, 255, 255, 0.4)',
-                    textShadow: `
-                      0 0 0.5px rgba(255, 255, 255, 0.3),
-                      0 0 1px rgba(255, 255, 255, 0.3),
-                      0 0 1.5px rgba(255, 255, 255, 0.2)
-                    `,
-                    fontWeight: 400,
-                  }}
-                >
-                  <span className="uppercase">D</span>i <span className="uppercase">C</span>iaccio - 30
-                </motion.p>
-
                 {/* DC-30 with Overlay Image */}
                 <div className="relative flex flex-col items-center -mt-2">
                   {/* DC-30 - Main Neon Text */}

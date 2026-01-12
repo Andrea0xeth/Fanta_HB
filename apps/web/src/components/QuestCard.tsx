@@ -277,8 +277,8 @@ export const QuestCard: React.FC<QuestCardProps> = ({ quest, onSubmit, completed
                 // Quest speciali: 10 voti + 66%
                 !hasMinVotes
                   ? `Servono ${MIN_VOTES_FOR_VALIDATION_SPECIAL} voti (mancano ${MIN_VOTES_FOR_VALIDATION_SPECIAL - votiTotali})`
-                  : hasThreshold
-                    ? '✅ Soglia raggiunta (≥66%)'
+                : hasThreshold
+                  ? '✅ Soglia raggiunta (≥66%)'
                     : `Serve ≥66% positivi (ancora ${POSITIVE_THRESHOLD_PERCENT - percentuale}%)`
               ) : (
                 // Quest normali: solo 5 conferme
