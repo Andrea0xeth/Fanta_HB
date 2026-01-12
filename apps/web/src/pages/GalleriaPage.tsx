@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Image as ImageIcon, Video, Loader2, Download, User } from 'lucide-react';
+import { X, Image as ImageIcon, Video, Loader2, Download, User, ZoomIn, ZoomOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Avatar } from '../components/Avatar';
 
@@ -52,6 +52,7 @@ export const GalleriaPage: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [filter, setFilter] = useState<'all' | 'foto' | 'video'>('all');
   const [userFilter, setUserFilter] = useState<string>('all');
+  const [zoomLevel, setZoomLevel] = useState<2 | 4 | 6>(2); // 2 = 8 foto, 4 = 16 foto, 6 = 32 foto
 
   // Blocca scroll quando modale è aperto
   useLockScroll(selectedItem !== null);
@@ -94,6 +95,7 @@ export const GalleriaPage: React.FC = () => {
             quest:quest(titolo, emoji)
           `)
           .in('tipo', ['foto', 'video'])
+          .in('stato', ['validata', 'in_verifica'])
       ]);
 
       if (usersResult.error) {
@@ -114,8 +116,135 @@ export const GalleriaPage: React.FC = () => {
         }
       });
 
-      // 2. Processa gli utenti in batch paralleli (max 5 alla volta)
-      const BATCH_SIZE = 5;
+      // Funzione ricorsiva per listare tutti i file in una cartella
+      const listAllFiles = async (path: string, maxDepth: number = 3): Promise<GalleryItem[]> => {
+        const items: GalleryItem[] = [];
+        
+        if (maxDepth <= 0) return items;
+
+        try {
+          // Lista tutti i file nella cartella (senza limite)
+          let allFiles: any[] = [];
+          let offset = 0;
+          const limit = 1000; // Supabase max limit
+          let hasMore = true;
+
+          while (hasMore) {
+            const { data: filesData, error: filesError } = await supabase.storage
+              .from('prove-quest')
+              .list(path, {
+                limit,
+                offset,
+                sortBy: { column: 'created_at', order: 'desc' }
+              });
+
+            if (filesError) {
+              console.warn(`[Galleria] Errore lista ${path}:`, filesError);
+              break;
+            }
+
+            if (!filesData || filesData.length === 0) {
+              break;
+            }
+
+            console.log(`[Galleria] Cartella ${path}: trovati ${filesData.length} elementi (offset: ${offset})`);
+            allFiles.push(...filesData);
+            hasMore = filesData.length === limit;
+            offset += limit;
+          }
+
+          console.log(`[Galleria] Cartella ${path}: totale ${allFiles.length} elementi`);
+
+          // Processa file diretti (tutti i file con id, non solo quelli con estensione media)
+          const mediaFiles = allFiles.filter((file: any) => {
+            // Se ha un id, è un file (non una cartella)
+            if (!file.id) return false;
+            
+            // Controlla estensione
+            const ext = file.name.toLowerCase().split('.').pop();
+            const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            const videoExts = ['mp4', 'mov', 'webm', 'avi', 'm4v', '3gp'];
+            
+            // Se non ha estensione o estensione sconosciuta, prova comunque (potrebbe essere un file senza estensione)
+            if (!ext || (!imageExts.includes(ext) && !videoExts.includes(ext))) {
+              console.log(`[Galleria] File senza estensione media riconosciuta: ${file.name} in ${path}`);
+              // Includilo comunque, potrebbe essere un'immagine/video
+              return true;
+            }
+            
+            return imageExts.includes(ext) || videoExts.includes(ext);
+          });
+
+          console.log(`[Galleria] Cartella ${path}: ${mediaFiles.length} file media su ${allFiles.length} totali`);
+
+          // Crea URL pubblici in batch
+          const fileItems = await Promise.all(
+            mediaFiles.map(async (file: any) => {
+              const filePath = path ? `${path}/${file.name}` : file.name;
+              
+              try {
+                const { data: urlData } = supabase.storage
+                  .from('prove-quest')
+                  .getPublicUrl(filePath);
+
+                if (!urlData?.publicUrl) {
+                  console.warn(`[Galleria] Nessun URL pubblico per ${filePath}`);
+                  return null;
+                }
+
+                const provaInfo = proveMap.get(filePath);
+                const ext = file.name.toLowerCase().split('.').pop();
+                const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                const tipo = imageExts.includes(ext || '') ? 'foto' : 'video';
+
+                // Estrai user_id dal path
+                const pathParts = filePath.split('/');
+                const userId = pathParts[0];
+                const user = users.find(u => u.id === userId);
+
+                return {
+                  id: file.id || filePath,
+                  tipo: tipo as 'foto' | 'video',
+                  contenuto: urlData.publicUrl,
+                  user_id: userId,
+                  user_nickname: user?.nickname || 'Anonimo',
+                  user_avatar: user?.avatar || undefined,
+                  quest_titolo: provaInfo?.quest?.titolo || 'Cerca Silverio',
+                  quest_emoji: provaInfo?.quest?.emoji || '🔍',
+                  created_at: file.created_at || file.updated_at || new Date().toISOString(),
+                };
+              } catch (err) {
+                console.warn(`[Galleria] Errore processamento file ${filePath}:`, err);
+                return null;
+              }
+            })
+          );
+
+          const validItems = fileItems.filter((item) => item !== null) as GalleryItem[];
+          console.log(`[Galleria] Cartella ${path}: ${validItems.length} file validi creati`);
+          items.push(...validItems);
+
+          // Processa sottocartelle ricorsivamente
+          const folders = allFiles.filter((file: any) => !file.id && file.name);
+          console.log(`[Galleria] Cartella ${path}: ${folders.length} sottocartelle da processare`);
+          
+          const folderItems = await Promise.all(
+            folders.map(async (folder: any) => {
+              const subPath = path ? `${path}/${folder.name}` : folder.name;
+              return listAllFiles(subPath, maxDepth - 1);
+            })
+          );
+
+          items.push(...folderItems.flat());
+        } catch (err) {
+          console.warn(`[Galleria] Errore lista cartella ${path}:`, err);
+        }
+
+        return items;
+      };
+
+      // 2. Processa gli utenti in batch paralleli (max 3 alla volta per non sovraccaricare)
+      const BATCH_SIZE = 3;
       const allGalleryItems: GalleryItem[] = [];
 
       for (let i = 0; i < users.length; i += BATCH_SIZE) {
@@ -125,120 +254,22 @@ export const GalleriaPage: React.FC = () => {
         const batchResults = await Promise.all(
           batch.map(async (user) => {
             try {
-              // Lista file nella cartella principale (limita a 100 file)
-              const { data: filesData, error: filesError } = await supabase.storage
-                .from('prove-quest')
-                .list(user.id, {
-                  limit: 100,
-                  offset: 0,
-                  sortBy: { column: 'created_at', order: 'desc' }
-                });
-
-              if (filesError || !filesData) {
-                return [];
-              }
-
-              const userItems: GalleryItem[] = [];
-
-              // Processa file diretti
-              const mediaFiles = filesData.filter((file: any) => {
-                if (!file.id) return false;
-                const ext = file.name.toLowerCase().split('.').pop();
-                const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                const videoExts = ['mp4', 'mov', 'webm', 'avi'];
-                return imageExts.includes(ext || '') || videoExts.includes(ext || '');
-              });
-
-              // Crea URL pubblici in batch
-              const fileItems = await Promise.all(
-                mediaFiles.map(async (file: any) => {
-                  const filePath = `${user.id}/${file.name}`;
-                  const { data: urlData } = supabase.storage
-                    .from('prove-quest')
-                    .getPublicUrl(filePath);
-
-                  if (!urlData?.publicUrl) return null;
-
-                  const provaInfo = proveMap.get(filePath);
-                  const ext = file.name.toLowerCase().split('.').pop();
-                  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                  const tipo = imageExts.includes(ext || '') ? 'foto' : 'video';
-
-                  return {
-                    id: file.id || `${user.id}-${file.name}`,
-                    tipo: tipo as 'foto' | 'video',
-                    contenuto: urlData.publicUrl,
-                    user_id: user.id,
-                    user_nickname: user.nickname || 'Anonimo',
-                    user_avatar: user.avatar || undefined,
-                    quest_titolo: provaInfo?.quest?.titolo || 'Foto personale',
-                    quest_emoji: provaInfo?.quest?.emoji || '📸',
-                    created_at: file.created_at || file.updated_at || new Date().toISOString(),
-                  };
-                })
-              );
-
-              userItems.push(...fileItems.filter((item) => item !== null) as GalleryItem[]);
-
-              // Processa sottocartelle (solo prime 10 cartelle, max 20 file per cartella)
-              const folders = filesData.filter((file: any) => !file.id && file.name).slice(0, 10);
+              console.log(`[Galleria] Caricamento file per ${user.nickname} (${user.id})...`);
+              const userItems = await listAllFiles(user.id, 3);
+              console.log(`[Galleria] ✅ Trovati ${userItems.length} file per ${user.nickname} (${user.id})`);
               
-              const folderPromises = folders.map(async (folder: any) => {
-                try {
-                  const { data: subFilesData } = await supabase.storage
-                    .from('prove-quest')
-                    .list(`${user.id}/${folder.name}`, {
-                      limit: 20,
-                      offset: 0,
-                      sortBy: { column: 'created_at', order: 'desc' }
-                    });
-
-                  if (!subFilesData) return [];
-
-                  const mediaSubFiles = subFilesData.filter((subFile: any) => {
-                    if (!subFile.id) return false;
-                    const ext = subFile.name.toLowerCase().split('.').pop();
-                    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                    const videoExts = ['mp4', 'mov', 'webm', 'avi'];
-                    return imageExts.includes(ext || '') || videoExts.includes(ext || '');
-                  });
-
-                  return Promise.all(
-                    mediaSubFiles.map(async (subFile: any) => {
-                      const filePath = `${user.id}/${folder.name}/${subFile.name}`;
-                      const { data: urlData } = supabase.storage
-                        .from('prove-quest')
-                        .getPublicUrl(filePath);
-
-                      if (!urlData?.publicUrl) return null;
-
-                      const provaInfo = proveMap.get(filePath);
-                      const ext = subFile.name.toLowerCase().split('.').pop();
-                      const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-                      const tipo = imageExts.includes(ext || '') ? 'foto' : 'video';
-
-                      return {
-                        id: subFile.id || `${user.id}-${folder.name}-${subFile.name}`,
-                        tipo: tipo as 'foto' | 'video',
-                        contenuto: urlData.publicUrl,
-                        user_id: user.id,
-                        user_nickname: user.nickname || 'Anonimo',
-                        user_avatar: user.avatar || undefined,
-                        quest_titolo: provaInfo?.quest?.titolo || 'Foto personale',
-                        quest_emoji: provaInfo?.quest?.emoji || '📸',
-                        created_at: subFile.created_at || subFile.updated_at || new Date().toISOString(),
-                      };
-                    })
-                  );
-                } catch (err) {
-                  console.warn(`[Galleria] Errore sottocartella ${folder.name}:`, err);
-                  return [];
-                }
-              });
-
-              const folderItems = (await Promise.all(folderPromises)).flat();
-              userItems.push(...folderItems.filter((item) => item !== null) as GalleryItem[]);
-
+              // Log dettagliato per debug
+              if (user.id === 'd54b1c76-f55b-482d-adad-40fddc81d10d') {
+                console.log(`[Galleria] DEBUG ${user.nickname}:`, {
+                  totalItems: userItems.length,
+                  items: userItems.map(item => ({
+                    id: item.id,
+                    path: item.contenuto,
+                    tipo: item.tipo
+                  }))
+                });
+              }
+              
               return userItems;
             } catch (err) {
               console.warn(`[Galleria] Errore utente ${user.nickname}:`, err);
@@ -250,10 +281,8 @@ export const GalleriaPage: React.FC = () => {
         // Aggiungi risultati del batch
         allGalleryItems.push(...batchResults.flat());
 
-        // Aggiorna UI progressivamente (opzionale, per feedback visivo)
-        if (i + BATCH_SIZE < users.length) {
-          setAllItems([...allGalleryItems]);
-        }
+        // Aggiorna UI progressivamente
+        setAllItems([...allGalleryItems]);
       }
 
       // Ordina per data (più recenti prima)
@@ -319,7 +348,7 @@ export const GalleriaPage: React.FC = () => {
         </div>
 
         {/* Filtri */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => setFilter('all')}
@@ -372,6 +401,45 @@ export const GalleriaPage: React.FC = () => {
               ))}
             </select>
           </div>
+
+          {/* Controllo Zoom */}
+          <div className="flex items-center gap-1 ml-auto">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                if (zoomLevel === 2) setZoomLevel(4);
+                else if (zoomLevel === 4) setZoomLevel(6);
+              }}
+              disabled={zoomLevel === 6}
+              className={`px-2 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+                zoomLevel === 6
+                  ? 'bg-white/5 text-gray-500 cursor-not-allowed'
+                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              }`}
+              title="Zoom out (più foto)"
+            >
+              <ZoomOut size={14} />
+            </motion.button>
+            <span className="text-xs text-gray-400 px-2">
+              {zoomLevel === 2 ? '8' : zoomLevel === 4 ? '16' : '32'} foto
+            </span>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                if (zoomLevel === 6) setZoomLevel(4);
+                else if (zoomLevel === 4) setZoomLevel(2);
+              }}
+              disabled={zoomLevel === 2}
+              className={`px-2 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+                zoomLevel === 2
+                  ? 'bg-white/5 text-gray-500 cursor-not-allowed'
+                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
+              }`}
+              title="Zoom in (meno foto)"
+            >
+              <ZoomIn size={14} />
+            </motion.button>
+          </div>
         </div>
       </div>
 
@@ -387,7 +455,11 @@ export const GalleriaPage: React.FC = () => {
             <p className="text-gray-400 text-sm">Nessun contenuto disponibile</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className={`grid gap-2 ${
+            zoomLevel === 2 ? 'grid-cols-2' : 
+            zoomLevel === 4 ? 'grid-cols-4' : 
+            'grid-cols-6'
+          }`}>
             {filteredItems.map((item) => (
               <motion.div
                 key={item.id}
@@ -431,9 +503,11 @@ export const GalleriaPage: React.FC = () => {
                         {item.user_nickname}
                       </span>
                     </div>
-                    <p className="text-[10px] text-gray-200 truncate">
-                      {item.quest_emoji} {item.quest_titolo}
-                    </p>
+                    {item.quest_titolo !== 'Cerca Silverio' && (
+                      <p className="text-[10px] text-gray-200 truncate">
+                        {item.quest_emoji} {item.quest_titolo}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -483,9 +557,11 @@ export const GalleriaPage: React.FC = () => {
                     <p className="text-sm font-semibold text-white truncate">
                       {selectedItem.user_nickname}
                     </p>
-                    <p className="text-xs text-gray-400 truncate">
-                      {selectedItem.quest_emoji} {selectedItem.quest_titolo}
-                    </p>
+                    {selectedItem.quest_titolo !== 'Cerca Silverio' && (
+                      <p className="text-xs text-gray-400 truncate">
+                        {selectedItem.quest_emoji} {selectedItem.quest_titolo}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
