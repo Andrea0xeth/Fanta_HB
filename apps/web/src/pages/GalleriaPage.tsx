@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Image as ImageIcon, Video, Loader2, Download } from 'lucide-react';
+import { X, Image as ImageIcon, Video, Loader2, Download, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Avatar } from '../components/Avatar';
 
@@ -47,17 +47,33 @@ interface GalleryItem {
 }
 
 export const GalleriaPage: React.FC = () => {
-  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [allItems, setAllItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [filter, setFilter] = useState<'all' | 'foto' | 'video'>('all');
+  const [userFilter, setUserFilter] = useState<string>('all');
 
   // Blocca scroll quando modale è aperto
   useLockScroll(selectedItem !== null);
 
   useEffect(() => {
     loadGalleryItems();
-  }, [filter]);
+  }, []);
+
+  // Lista utenti unici per il filtro
+  const uniqueUsers = useMemo(() => {
+    const users = new Map<string, { id: string; nickname: string; avatar?: string }>();
+    allItems.forEach(item => {
+      if (!users.has(item.user_id)) {
+        users.set(item.user_id, {
+          id: item.user_id,
+          nickname: item.user_nickname,
+          avatar: item.user_avatar,
+        });
+      }
+    });
+    return Array.from(users.values()).sort((a, b) => a.nickname.localeCompare(b.nickname));
+  }, [allItems]);
 
   const loadGalleryItems = async () => {
     try {
@@ -98,12 +114,7 @@ export const GalleriaPage: React.FC = () => {
         created_at: item.created_at,
       }));
 
-      // Filtra per tipo se necessario
-      const filtered = filter === 'all' 
-        ? galleryItems 
-        : galleryItems.filter(item => item.tipo === filter);
-
-      setItems(filtered);
+      setAllItems(galleryItems);
     } catch (error) {
       console.error('[Galleria] Errore caricamento:', error);
     } finally {
@@ -134,9 +145,22 @@ export const GalleriaPage: React.FC = () => {
     }
   };
 
-  const filteredItems = filter === 'all' 
-    ? items 
-    : items.filter(item => item.tipo === filter);
+  // Filtra items combinando tipo e utente
+  const filteredItems = useMemo(() => {
+    let filtered = allItems;
+    
+    // Filtra per tipo
+    if (filter !== 'all') {
+      filtered = filtered.filter(item => item.tipo === filter);
+    }
+    
+    // Filtra per utente
+    if (userFilter !== 'all') {
+      filtered = filtered.filter(item => item.user_id === userFilter);
+    }
+    
+    return filtered;
+  }, [allItems, filter, userFilter]);
 
   return (
     <div className="min-h-full bg-dark flex flex-col">
@@ -147,7 +171,7 @@ export const GalleriaPage: React.FC = () => {
         </div>
 
         {/* Filtri */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => setFilter('all')}
@@ -183,6 +207,23 @@ export const GalleriaPage: React.FC = () => {
             <Video size={14} />
             Video
           </motion.button>
+          
+          {/* Filtro persona */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+            <User size={14} className="text-gray-400 flex-shrink-0" />
+            <select
+              value={userFilter}
+              onChange={(e) => setUserFilter(e.target.value)}
+              className="text-xs font-semibold bg-transparent text-gray-300 focus:outline-none focus:ring-0 border-0 p-0 cursor-pointer"
+            >
+              <option value="all">Tutte</option>
+              {uniqueUsers.map(user => (
+                <option key={user.id} value={user.id}>
+                  {user.nickname}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
