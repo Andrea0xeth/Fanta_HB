@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Flame, CheckCircle2, Map, X, Camera, Loader2, Users, Trophy, Play, Calendar, Image as ImageIcon } from 'lucide-react';
+import { Flame, Map, X, Camera, Loader2, Users, Trophy, Play, Calendar, Image as ImageIcon } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { GaraCard } from '../components/GaraCard';
 import { CircusNeonDecorations } from '../components/CircusNeonDecorations';
@@ -16,9 +16,7 @@ export const HomePage: React.FC = () => {
     user, 
     mySquadra, 
     gare, 
-    proveInVerifica,
     gameState,
-    notifiche,
     logout,
     updateAvatar,
     leaderboardSquadre
@@ -33,17 +31,6 @@ export const HomePage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-
-  // Conta solo le prove a cui l'utente NON ha ancora votato
-  const pendingVerifications = proveInVerifica.filter(
-    p => p.stato === 'in_verifica' 
-      && p.user_id !== user?.id 
-      && (p.mio_voto === null || p.mio_voto === undefined)
-  );
-  
-  const pendingVerificationsCount = pendingVerifications.length;
-  const unreadNotifiche = notifiche.filter(n => !n.letta).length;
-
   const nextGara = gare.find(g => g.stato !== 'completata');
 
   // Controlla se l'evento è iniziato
@@ -53,6 +40,43 @@ export const HomePage: React.FC = () => {
   const now = Date.now();
   const start = new Date(eventDate).getTime();
   const hasStarted = now >= start || gameState.evento_iniziato || user?.is_admin;
+  
+  // Typing effect per il messaggio di ringraziamento
+  const messagePart1 = "La direzione del DC-30 ringrazia tutti gli invitati per la partecipazione e accende un cerino per ringrazziare la previdenza che ci ha fatto tornare tutti VIVI ";
+  const messagePart2 = "e vegeti";
+  const fullMessage = messagePart1 + messagePart2;
+  const [displayedMessage, setDisplayedMessage] = useState('');
+  const [showStrikethrough, setShowStrikethrough] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  
+  useEffect(() => {
+    if (!hasStarted) return;
+    
+    let currentIndex = 0;
+    const typingSpeed = 30; // millisecondi tra ogni carattere
+    
+    const typeText = () => {
+      if (currentIndex < fullMessage.length) {
+        setIsTyping(true);
+        setDisplayedMessage(fullMessage.substring(0, currentIndex + 1));
+        currentIndex++;
+        setTimeout(typeText, typingSpeed);
+      } else {
+        setIsTyping(false);
+        // Dopo aver scritto tutto, mostra lo strikethrough su "e vegeti"
+        setTimeout(() => setShowStrikethrough(true), 500);
+      }
+    };
+    
+    // Inizia a scrivere dopo un delay
+    const startDelay = setTimeout(() => {
+      typeText();
+    }, 1000);
+    
+    return () => {
+      clearTimeout(startDelay);
+    };
+  }, [hasStarted, fullMessage]);
 
   return (
     <div className="min-h-full bg-dark flex flex-col">
@@ -78,20 +102,6 @@ export const HomePage: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Notifiche */}
-            <motion.button 
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowNotifiche(true)}
-              className="relative p-1.5"
-            >
-              <Bell size={18} className="text-gray-400" />
-              {unreadNotifiche > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-coral-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white">
-                  {unreadNotifiche > 9 ? '9+' : unreadNotifiche}
-                </span>
-              )}
-            </motion.button>
-
             {/* Mappa */}
             <motion.button
               whileTap={{ scale: 0.95 }}
@@ -178,67 +188,41 @@ export const HomePage: React.FC = () => {
           );
         })()}
 
-        {/* Mappa e Video Balletto - Stessa riga */}
+        {/* CiaccioBallo e Agenda - Stessa riga */}
         <div className="flex gap-2 mb-2">
-        {/* Mappa Banner - Invito a scoprire Fuerteventura */}
-        <motion.button
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          onClick={() => navigate('/mappa')}
-            className="flex-1 glass rounded-xl p-2.5 text-left hover:bg-white/10 transition-colors border border-white/5"
-        >
-            <div className="flex items-center gap-2">
-            <div className="flex-shrink-0">
-                <Map size={16} className="text-gray-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-200 text-xs leading-tight">
-                  Fuerteventura Maps
-                </h3>
-                <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
-                  Scopri le Attrazioni
-                </p>
-              </div>
-            </div>
-          </motion.button>
-
           {/* Video Balletto Banner */}
           <motion.button
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
+            transition={{ delay: 0.2 }}
             onClick={() => setShowVideo(true)}
             className="flex-1 glass rounded-xl p-2.5 text-left hover:bg-white/10 transition-colors border border-white/5"
           >
             <div className="flex items-center gap-2">
               <div className="flex-shrink-0">
                 <Play size={16} className="text-coral-500" />
-            </div>
-            <div className="flex-1 min-w-0">
+              </div>
+              <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-gray-200 text-xs leading-tight">
                   Guarda il CiaccioBallo
-              </h3>
+                </h3>
                 <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
                   Video esclusivo 🎬
-              </p>
+                </p>
               </div>
             </div>
           </motion.button>
-        </div>
 
-        {/* Agenda e Verifica - Stessa riga */}
-        <div className="flex gap-2 mb-2">
-          {/* Agenda 3 Giorni */}
+          {/* Agenda */}
           <motion.button
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.25 }}
             onClick={() => navigate('/agenda')}
             className="flex-1 glass rounded-xl p-2.5 text-left hover:bg-white/10 transition-colors border border-white/5"
           >
             <div className="flex items-center gap-2">
-            <div className="flex-shrink-0">
+              <div className="flex-shrink-0">
                 <Calendar size={16} className="text-turquoise-400" />
               </div>
               <div className="flex-1 min-w-0">
@@ -248,38 +232,8 @@ export const HomePage: React.FC = () => {
                 <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
                   Programma attività
                 </p>
-            </div>
-          </div>
-        </motion.button>
-
-          {/* Verifica Quest */}
-          <motion.button
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            onClick={() => navigate('/verifica')}
-            className="flex-1 glass rounded-xl p-2.5 text-left hover:bg-white/10 transition-colors border border-white/5 relative"
-          >
-            <div className="flex items-center gap-2">
-              <div className="flex-shrink-0">
-                <CheckCircle2 size={16} className="text-turquoise-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-gray-200 text-xs leading-tight">
-                  Verifica Quest
-                </h3>
-                <p className="text-gray-400 text-[10px] leading-tight mt-0.5">
-                  {pendingVerificationsCount > 0 
-                    ? `${pendingVerificationsCount} da verificare`
-                    : 'Nessuna nuova'}
-                </p>
               </div>
             </div>
-            {pendingVerificationsCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-turquoise-500 rounded-full text-[10px] font-bold flex items-center justify-center text-white">
-                {pendingVerificationsCount > 9 ? '9+' : pendingVerificationsCount}
-              </span>
-            )}
           </motion.button>
         </div>
 
@@ -349,6 +303,151 @@ export const HomePage: React.FC = () => {
                   </div>
                 </div>
               </motion.button>
+            </motion.section>
+
+            {/* Logo Section */}
+            <motion.section
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="relative py-8 mb-3"
+            >
+              {/* Clown Background - Bottom left */}
+              <div className="absolute pointer-events-none z-0" style={{ bottom: '-10%', left: '-10%' }}>
+                <img 
+                  src="/clown.png" 
+                  alt="Clown Background" 
+                  className="object-contain opacity-20"
+                  style={{ 
+                    width: '50vw',
+                    height: '50vh',
+                    objectFit: 'contain'
+                  }}
+                />
+              </div>
+
+              {/* Logo Content */}
+              <div className="flex flex-col items-center justify-center relative z-10">
+                {/* Di Ciaccio - 30 */}
+                <motion.p 
+                  className="text-sm md:text-base font-medium text-center mb-2 tracking-wider"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.5 }}
+                  transition={{ delay: 0.3 }}
+                  style={{
+                    WebkitTextStroke: '0.4px #ffffff',
+                    color: 'rgba(255, 255, 255, 0.4)',
+                    textShadow: `
+                      0 0 0.5px rgba(255, 255, 255, 0.3),
+                      0 0 1px rgba(255, 255, 255, 0.3),
+                      0 0 1.5px rgba(255, 255, 255, 0.2)
+                    `,
+                    fontWeight: 400,
+                  }}
+                >
+                  <span className="uppercase">D</span>i <span className="uppercase">C</span>iaccio - 30
+                </motion.p>
+
+                {/* DC-30 with Overlay Image */}
+                <div className="relative flex flex-col items-center -mt-2">
+                  {/* DC-30 - Main Neon Text */}
+                  <div className="neon-3d-glow mb-0 relative z-10">
+                    <h1 
+                      className="neon-red-orange text-7xl md:text-8xl lg:text-9xl font-bold text-center tracking-wider"
+                      style={{
+                        color: 'transparent',
+                      }}
+                    >
+                      DC-30
+                    </h1>
+                  </div>
+
+                  {/* DC-10 Plane Image - Overlay on DC-30 */}
+                  <motion.div
+                    className="absolute top-16 md:top-20 lg:top-24 z-30 flex justify-center"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.4, duration: 0.5 }}
+                  >
+                    <img 
+                      src="/dc10plane.png" 
+                      alt="DC-10 Plane" 
+                      className="max-w-[140px] md:max-w-[180px] lg:max-w-[220px]"
+                      style={{ maxHeight: '120px', objectFit: 'contain', display: 'block' }}
+                    />
+                  </motion.div>
+                </div>
+
+                {/* CIACCIOLOCO Fuerteventura */}
+                <motion.div 
+                  className="neon-3d-glow-white mt-4"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.5, duration: 0.6 }}
+                >
+                  <h2 
+                    className="neon-white text-3xl md:text-4xl lg:text-5xl font-bold text-center tracking-wider uppercase"
+                    style={{
+                      width: 'auto',
+                      paddingTop: '0px',
+                      paddingBottom: '0px',
+                      opacity: 1,
+                      borderRadius: '172px',
+                      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+                      marginLeft: '0px',
+                      marginRight: '0px',
+                    }}
+                  >
+                    CIACCIOLOCO
+                  </h2>
+                  <p 
+                    className="text-lg md:text-xl lg:text-2xl font-semibold text-center tracking-wider uppercase mt-2"
+                    style={{
+                      WebkitTextStroke: '0.4px #ffffff',
+                      color: 'rgba(255, 255, 255, 0.4)',
+                      opacity: 0.5,
+                      textShadow: `
+                        0 0 0.5px rgba(255, 255, 255, 0.3),
+                        0 0 1px rgba(255, 255, 255, 0.3),
+                        0 0 1.5px rgba(255, 255, 255, 0.2)
+                      `
+                    }}
+                  >
+                    Fuerteventura
+                  </p>
+                </motion.div>
+              </div>
+
+              {/* Messaggio di ringraziamento */}
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+                className="text-center text-gray-300 text-xl md:text-2xl lg:text-3xl mt-6 px-4"
+                style={{
+                  fontFamily: "'Dancing Script', 'Caveat', 'Indie Flower', cursive",
+                  fontStyle: 'normal',
+                  minHeight: '4rem',
+                }}
+              >
+                {displayedMessage && (
+                  <>
+                    {displayedMessage.length <= messagePart1.length ? (
+                      displayedMessage
+                    ) : (
+                      <>
+                        {messagePart1}
+                        <span className={showStrikethrough ? 'line-through' : ''}>
+                          {displayedMessage.substring(messagePart1.length)}
+                        </span>
+                      </>
+                    )}
+                    {isTyping && (
+                      <span className="inline-block w-0.5 h-6 md:h-8 lg:h-10 bg-gray-300 ml-1 animate-pulse">|</span>
+                    )}
+                  </>
+                )}
+              </motion.p>
             </motion.section>
           </>
         )}
