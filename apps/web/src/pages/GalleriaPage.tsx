@@ -467,7 +467,7 @@ export const GalleriaPage: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedItem(item)}
-                className="relative aspect-square rounded-xl overflow-hidden bg-gray-900 cursor-pointer group"
+                className="relative aspect-square rounded-xl overflow-hidden bg-gray-900 cursor-pointer group touch-manipulation"
               >
                 {item.tipo === 'foto' ? (
                   <img
@@ -487,8 +487,8 @@ export const GalleriaPage: React.FC = () => {
                   />
                 )}
                 
-                {/* Overlay con info - sempre visibile */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+                {/* Overlay con info - visibile solo al hover/touch */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <div className="absolute bottom-0 left-0 right-0 p-2">
                     <div className="flex items-center gap-1.5 mb-1">
                       <Avatar 
