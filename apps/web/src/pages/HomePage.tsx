@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, Map, X, Camera, Loader2, Users, Trophy, Play, Calendar, Image as ImageIcon } from 'lucide-react';
 import { useGame } from '../context/GameContext';
@@ -40,6 +40,12 @@ export const HomePage: React.FC = () => {
   const now = Date.now();
   const start = new Date(eventDate).getTime();
   const hasStarted = now >= start || gameState.evento_iniziato || user?.is_admin;
+  
+  // Timing casuale per l'effetto flicker LED (come nel login)
+  const flickerTimings = useMemo(() => ({
+    dc30: 2.4 + Math.random() * 1.6, // Tra 2.4s e 4s
+    ciaccioloco: 2.4 + Math.random() * 1.6, // Tra 2.4s e 4s
+  }), []);
   
   // Typing effect per il messaggio di ringraziamento
   const messagePart1 = "La direzione del DC-30 ringrazia tutti gli invitati per la partecipazione e accende un cerino per ringrazziare la previdenza che ci ha fatto tornare tutti VIVI ";
@@ -279,7 +285,7 @@ export const HomePage: React.FC = () => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="mb-3"
+              className="mb-1"
             >
               <motion.button
                 whileTap={{ scale: 0.95 }}
@@ -310,7 +316,7 @@ export const HomePage: React.FC = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="relative py-8 mb-3"
+              className="relative py-4 mb-3"
             >
               {/* Clown Background - Bottom left */}
               <div className="absolute pointer-events-none z-0" style={{ bottom: '-10%', left: '-10%' }}>
@@ -335,6 +341,7 @@ export const HomePage: React.FC = () => {
                     <h1 
                       className="neon-red-orange text-7xl md:text-8xl lg:text-9xl font-bold text-center tracking-wider"
                       style={{
+                        animation: `neon-flicker ${flickerTimings.dc30}s infinite`,
                         color: 'transparent',
                       }}
                     >
@@ -368,6 +375,7 @@ export const HomePage: React.FC = () => {
                   <h2 
                     className="neon-white text-3xl md:text-4xl lg:text-5xl font-bold text-center tracking-wider uppercase"
                     style={{
+                      animation: `neon-flicker-white ${flickerTimings.ciaccioloco}s infinite`,
                       width: 'auto',
                       paddingTop: '0px',
                       paddingBottom: '0px',
